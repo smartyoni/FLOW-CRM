@@ -64,14 +64,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen bg-gray-100 relative overflow-hidden">
-      <CustomerList 
-        customers={customers} 
-        onSelect={handleSelectCustomer}
-        onAddClick={() => setIsFormOpen(true)}
-        onDelete={handleDeleteCustomer}
-        onToggleFavorite={handleToggleFavorite}
-      />
+    <div className="flex flex-col w-full h-full bg-gray-100 relative overflow-hidden">
+      <div className="flex-1 overflow-hidden">
+        <CustomerList
+          customers={customers}
+          onSelect={handleSelectCustomer}
+          onAddClick={() => setIsFormOpen(true)}
+          onDelete={handleDeleteCustomer}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      </div>
 
       <CustomerDetailSidebar 
         customer={selectedCustomer}

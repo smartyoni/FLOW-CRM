@@ -230,7 +230,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 overflow-hidden">
+    <div className="flex flex-col w-full h-full bg-gray-100 overflow-hidden">
       {/* Top Bar - Mobile Header */}
       <div className="bg-white border-b p-3 flex justify-between items-center shadow-sm shrink-0 md:hidden">
         <h1 className="text-lg font-bold text-gray-800">부동산 고객관리</h1>
