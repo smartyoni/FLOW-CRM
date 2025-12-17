@@ -64,7 +64,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto bg-gray-100 min-h-screen relative overflow-hidden">
+    <div className="w-screen h-screen bg-gray-100 relative overflow-hidden">
       <CustomerList 
         customers={customers} 
         onSelect={handleSelectCustomer}
