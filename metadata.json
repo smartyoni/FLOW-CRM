@@ -1,0 +1,7 @@
+{
+  "name": "Flow CRM",
+  "description": "A mobile-first Real Estate Customer Relationship Management (CRM) PWA. Features customer tracking, meeting planning with property portfolios, and interaction timelines.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
