@@ -3,6 +3,7 @@ import { Customer } from './types';
 import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
+import { Sidebar } from './components/Sidebar';
 import { getCustomers, saveCustomers } from './services/storage';
 
 const App: React.FC = () => {
@@ -64,7 +65,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-full bg-gray-100 relative overflow-hidden">
+    <div className="flex flex-row w-full h-full bg-gray-100 relative overflow-hidden">
+      {/* Left Sidebar */}
+      <Sidebar />
+
+      {/* Main Content - Kanban Board */}
       <div className="flex-1 overflow-hidden">
         <CustomerList
           customers={customers}
@@ -75,17 +80,19 @@ const App: React.FC = () => {
         />
       </div>
 
-      <CustomerDetailSidebar 
+      {/* Right Detail Sidebar (Overlay) */}
+      <CustomerDetailSidebar
         customer={selectedCustomer}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         onUpdate={handleUpdateCustomer}
       />
 
+      {/* Customer Form Modal */}
       {isFormOpen && (
-        <CustomerForm 
-          onClose={() => setIsFormOpen(false)} 
-          onSubmit={handleAddCustomer} 
+        <CustomerForm
+          onClose={() => setIsFormOpen(false)}
+          onSubmit={handleAddCustomer}
         />
       )}
     </div>
