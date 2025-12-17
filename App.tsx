@@ -4,7 +4,7 @@ import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
-import { getCustomers, saveCustomers } from './services/storage';
+import { getCustomers, saveCustomers, backupCustomers, migratePropertyData } from './services/storage';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -12,10 +12,20 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Load initial data
+  // Load initial data with migration
   useEffect(() => {
-    const loaded = getCustomers();
-    setCustomers(loaded);
+    try {
+      backupCustomers();  // 데이터 백업
+      const loaded = getCustomers();
+      const migrated = migratePropertyData(loaded);  // 마이그레이션 실행
+      setCustomers(migrated);
+      saveCustomers(migrated);  // 마이그레이션된 데이터 저장
+      console.log('✓ 데이터 로드 및 마이그레이션 완료');
+    } catch (error) {
+      console.error('데이터 로드 중 오류:', error);
+      const loaded = getCustomers();
+      setCustomers(loaded);
+    }
   }, []);
 
   // Save on change

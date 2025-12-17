@@ -7,9 +7,18 @@ export interface ChecklistItem {
 
 export interface Property {
   id: string;
-  description: string; // The "parsed" or manual info
-  rawInput: string;
-  photos: string[]; // Base64 data URLs
+  rawInput: string;           // 원본 입력 (TEN/네이버/정리본)
+  roomName: string;           // 호실명/건물명
+  jibun: string;              // 지번 주소
+  agency: string;             // 부동산명
+  agencyPhone: string;        // 부동산 연락처
+  photos: string[];           // Base64 data URLs
+  parsedText?: string;        // 정리본 텍스트 (선택사항)
+  unit?: string;              // 호실 정보
+
+  // 상태 관리
+  status?: '확인전' | '확인중' | '볼수있음' | '현장방문완료';  // 매물 상태
+  visitTime?: string;         // 방문 시간 (HH:mm 형식)
 }
 
 export interface Meeting {
@@ -45,4 +54,4 @@ export interface Customer {
 }
 
 export type ViewState = 'LIST' | 'DETAIL';
-export type TabState = 'BASIC' | 'MEETING' | 'GANTT';
+export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'REPORT';
