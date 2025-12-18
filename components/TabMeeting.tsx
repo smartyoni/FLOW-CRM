@@ -1046,7 +1046,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             {prop.jibun && (
                               <button
                                 onClick={() => {
-                                  const mapUrl = `https://map.naver.com/index.nhn?query=${encodeURIComponent(prop.jibun)}`;
+                                  const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(prop.jibun)}`;
                                   window.open(mapUrl, '_blank');
                                 }}
                                 className="px-3 py-1 bg-yellow-400 text-black rounded text-sm hover:bg-yellow-500 font-bold"
