@@ -1007,7 +1007,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                       {/* 미리보기 정보 */}
                       <div className="mb-3">
-                        {/* 지번과 지도 버튼 */}
+                        {/* 지번과 지도/삭제 버튼 */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="text-sm">
                             <span className="text-gray-600">지번:</span>
@@ -1042,17 +1042,46 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               </span>
                             )}
                           </div>
-                          {prop.jibun && (
+                          <div className="flex gap-2">
+                            {prop.jibun && (
+                              <button
+                                onClick={() => {
+                                  const mapUrl = `https://map.naver.com/index.nhn?query=${encodeURIComponent(prop.jibun)}`;
+                                  window.open(mapUrl, '_blank');
+                                }}
+                                className="px-3 py-1 bg-yellow-400 text-black rounded text-sm hover:bg-yellow-500 font-bold"
+                              >
+                                지도
+                              </button>
+                            )}
                             <button
                               onClick={() => {
-                                const mapUrl = `https://map.naver.com/index.nhn?query=${encodeURIComponent(prop.jibun)}`;
-                                window.open(mapUrl, '_blank');
+                                if (window.confirm('이 매물을 삭제하시겠습니까?')) {
+                                  if (activeMeeting) {
+                                    const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
+
+                                    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+                                    const updatedLocalMeeting = {
+                                      ...activeMeeting,
+                                      properties: updatedProperties
+                                    };
+                                    setLocalMeeting(updatedLocalMeeting);
+
+                                    // ⭐ 2. Firebase에 저장 (백그라운드)
+                                    onUpdate({
+                                      ...customer,
+                                      meetings: customer.meetings.map(m =>
+                                        m.id === activeMeeting.id ? updatedLocalMeeting : m
+                                      )
+                                    });
+                                  }
+                                }
                               }}
-                              className="px-3 py-1 bg-yellow-400 text-black rounded text-sm hover:bg-yellow-500 font-bold"
+                              className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 font-bold"
                             >
-                              지도
+                              삭제
                             </button>
-                          )}
+                          </div>
                         </div>
 
                         {/* 부동산과 연락처 */}
@@ -1259,52 +1288,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         )}
                       </div>
 
-                      {/* 수정/삭제 버튼 */}
-                      <div className="flex gap-2 mt-4">
-                        <button
-                          onClick={() => {
-                            // 수정 모드: 해당 매물 정보로 폼 채우기
-                            setPropertyText(prop.rawInput || prop.parsedText || '');
-                            setParsedRoomName(prop.roomName);
-                            setParsedJibun(prop.jibun);
-                            setParsedAgency(prop.agency);
-                            setParsedAgencyPhone(prop.agencyPhone);
-                            setParsedText(prop.parsedText || '');
-                            setEditingPropertyId(prop.id);
-                            setIsAddingProperty(true);
-                          }}
-                          className="flex-1 px-2 py-1.5 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 font-semibold"
-                        >
-                          수정
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm('이 매물을 삭제하시겠습니까?')) {
-                              if (activeMeeting) {
-                                const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
-
-                                // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-                                const updatedLocalMeeting = {
-                                  ...activeMeeting,
-                                  properties: updatedProperties
-                                };
-                                setLocalMeeting(updatedLocalMeeting);
-
-                                // ⭐ 2. Firebase에 저장 (백그라운드)
-                                onUpdate({
-                                  ...customer,
-                                  meetings: customer.meetings.map(m =>
-                                    m.id === activeMeeting.id ? updatedLocalMeeting : m
-                                  )
-                                });
-                              }
-                            }
-                          }}
-                          className="flex-1 px-2 py-1.5 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-semibold"
-                        >
-                          삭제
-                        </button>
-                      </div>
                     </div>
                   ))}
                 </div>
