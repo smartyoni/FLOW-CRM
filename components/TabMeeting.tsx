@@ -51,6 +51,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingFieldValue, setEditingFieldValue] = useState('');
 
   const reportRef = useRef<HTMLDivElement>(null);
+  const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
 
   // Initialize active meeting
   useEffect(() => {
@@ -513,26 +514,41 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // --- PDF Generation ---
   const generatePDF = async () => {
-    if (!reportRef.current || !activeMeeting) return;
-    
-    const reportEl = reportRef.current;
-    reportEl.style.display = 'block';
+    if (!activeMeeting || activeMeeting.properties.length === 0) return;
 
     try {
-      const canvas = await html2canvas(reportEl, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
-      
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let isFirstPage = true;
+
+      for (let i = 0; i < activeMeeting.properties.length; i++) {
+        const propRef = propertyRefsMap.current[activeMeeting.properties[i].id];
+        if (!propRef) continue;
+
+        propRef.style.display = 'block';
+
+        try {
+          const canvas = await html2canvas(propRef, { scale: 2, useCORS: true, allowTaint: true });
+          const imgData = canvas.toDataURL('image/png');
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+          // 첫 페이지가 아니면 새 페이지 추가
+          if (!isFirstPage) {
+            pdf.addPage();
+          }
+
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+          isFirstPage = false;
+        } finally {
+          propRef.style.display = 'none';
+        }
+      }
+
       pdf.save(`${customer.name}_${activeMeeting.round}차미팅_매물보고서.pdf`);
     } catch (err) {
       console.error(err);
       alert('PDF 생성 중 오류가 발생했습니다.');
-    } finally {
-      reportEl.style.display = 'none';
     }
   };
 
@@ -1298,80 +1314,74 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       </div>
       </div>
 
-      {/* Hidden PDF Report Template */}
-      <div 
-        ref={reportRef} 
-        style={{ display: 'none', width: '210mm', minHeight: '297mm', padding: '20mm', backgroundColor: 'white' }}
-      >
-        <div className="border-b-2 border-primary pb-4 mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">매물 안내 보고서</h1>
-          <p className="text-gray-500 mt-2">{activeMeeting?.round}차 미팅 자료</p>
-        </div>
-        
-        <div className="mb-8 grid grid-cols-2 gap-8 bg-gray-50 p-6 rounded-lg">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">고객명</p>
-            <p className="font-bold text-lg">{customer.name} 고객님</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">미팅일시</p>
-            <p className="font-bold text-lg">
-              {activeMeeting?.date ? new Date(activeMeeting.date).toLocaleString() : '미정'}
-            </p>
-          </div>
-        </div>
+      {/* Hidden PDF Report Template - 매물별 개별 페이지 */}
+      <div style={{ display: 'none' }}>
+        {activeMeeting?.properties.map((prop, idx) => (
+          <div
+            key={prop.id}
+            ref={(el) => {
+              if (el) propertyRefsMap.current[prop.id] = el;
+            }}
+            style={{ width: '210mm', minHeight: '297mm', padding: '20mm', backgroundColor: 'white' }}
+          >
+            {/* 매물 헤더 */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-primary">매물 #{idx + 1}</h1>
+            </div>
 
-        <div className="space-y-8">
-          {activeMeeting?.properties.map((prop, idx) => (
-            <div key={prop.id} className="break-inside-avoid border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-100 p-3 border-b border-gray-200">
-                 <h2 className="text-xl font-bold text-primary">매물 #{idx + 1}</h2>
-              </div>
-              <div className="p-5">
-                {/* 구조화된 정보 표시 */}
-                <div className="mb-6">
-                  <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded">
-                    <div>
-                      <p className="text-sm text-gray-500">호실명</p>
-                      <p className="font-bold text-lg">{prop.roomName || '미등록'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">지번</p>
-                      <p className="font-bold text-lg">{prop.jibun || '미등록'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">부동산</p>
-                      <p className="font-bold text-lg">{prop.agency || '미등록'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">연락처</p>
-                      <p className="font-bold text-lg">{prop.agencyPhone || '미등록'}</p>
-                    </div>
-                  </div>
-
-                  {/* 정리본 텍스트 (있으면 표시) */}
-                  {prop.parsedText && (
-                    <div className="border-t pt-4 mt-4">
-                      <p className="text-sm text-gray-500 mb-2">상세 정보</p>
-                      <p className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
-                        {prop.parsedText}
-                      </p>
-                    </div>
-                  )}
+            {/* 호실명과 지번 */}
+            <div className="mb-6 pb-6 border-b border-gray-300">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <p className="text-sm text-gray-500 font-semibold mb-2">호실명</p>
+                  <p className="text-lg font-bold text-gray-800">{prop.roomName || '미등록'}</p>
                 </div>
-                {prop.photos.length > 0 && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {prop.photos.map((p, i) => (
-                      <div key={i} className="aspect-video bg-gray-100 rounded overflow-hidden border">
-                        <img src={p} className="w-full h-full object-cover" alt="property" />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div>
+                  <p className="text-sm text-gray-500 font-semibold mb-2">지번</p>
+                  <p className="text-lg font-bold text-gray-800">{prop.jibun || '미등록'}</p>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* 매물 정보 (정리본 텍스트) */}
+            {prop.parsedText && (
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-gray-700 mb-3">매물정보</p>
+                <div className="bg-gray-50 p-4 rounded border border-gray-200">
+                  <p className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm font-medium">
+                    {prop.parsedText}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 메모 */}
+            {prop.memo && (
+              <div className="mb-6">
+                <p className="text-sm font-semibold text-gray-700 mb-3">메모</p>
+                <div className="bg-blue-50 p-4 rounded border border-blue-200">
+                  <p className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
+                    {prop.memo}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 사진들 */}
+            {prop.photos.length > 0 && (
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-3">첨부 사진</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {prop.photos.map((p, i) => (
+                    <div key={i} className="aspect-square bg-gray-100 rounded overflow-hidden border border-gray-300">
+                      <img src={p} className="w-full h-full object-cover" alt={`property-photo-${i}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
