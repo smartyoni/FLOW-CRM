@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => {
         VitePWA({
           registerType: 'autoUpdate',
           injectRegister: 'auto',
+          workboxOptions: {
+            skipWaiting: true,
+            clientsClaim: true,
+          },
           manifest: {
             name: '인사이트고객관리',
             short_name: '고객관리',

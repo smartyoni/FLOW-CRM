@@ -127,28 +127,63 @@ export const createCustomer = async (customer: Customer): Promise<void> => {
  */
 export const updateCustomer = async (customerId: string, updates: Partial<Customer>): Promise<void> => {
   try {
+    console.log('🔥 updateCustomer called for:', customerId);
+    console.log('📦 Updates received:', updates);
+    console.log('✅ checklists included?', updates.checklists !== undefined, 'length:', updates.checklists?.length);
+    console.log('✅ meetings included?', updates.meetings !== undefined, 'length:', updates.meetings?.length);
+
     const customerRef = doc(db, 'customers', customerId);
     const { checklists, meetings, ...basicUpdates } = updates;
 
-    // 1. 기본 정보 업데이트
+    // ⭐ 1. Firebase에서 최신 전체 데이터 가져오기 (멀티 디바이스 충돌 방지)
+    console.log('📥 Fetching latest data from Firestore...');
+    const latestCustomer = await getCustomerWithDetails(customerId);
+
+    if (!latestCustomer) {
+      throw new Error(`Customer ${customerId} not found`);
+    }
+
+    console.log('✅ Latest data fetched:', {
+      checklistsCount: latestCustomer.checklists?.length || 0,
+      meetingsCount: latestCustomer.meetings?.length || 0,
+    });
+
+    // ⭐ 2. 최신 데이터와 전달받은 업데이트 머지
+    // - 특정 필드가 업데이트되면 그 필드 사용
+    // - 업데이트되지 않으면 Firebase의 최신 데이터 사용
+    const mergedChecklists = checklists !== undefined ? checklists : latestCustomer.checklists;
+    const mergedMeetings = meetings !== undefined ? meetings : latestCustomer.meetings;
+
+    console.log('🔀 Merged data:', {
+      checklistsCount: mergedChecklists?.length || 0,
+      meetingsCount: mergedMeetings?.length || 0,
+    });
+
+    console.log('📝 Basic updates to save:', basicUpdates);
+
+    // 3. 기본 정보 업데이트
+    console.log('💾 Saving basic info to Firestore...');
     await updateDoc(customerRef, {
       ...basicUpdates,
       updatedAt: Timestamp.now(),
     });
+    console.log('✅ Basic info saved');
 
-    // 2. 체크리스트 동기화 (제공된 경우)
+    // 4. 체크리스트 동기화 (머지된 데이터 사용)
     if (checklists !== undefined) {
-      await syncChecklists(customerId, checklists);
+      console.log('🔄 Starting checklist sync with merged data...');
+      await syncChecklists(customerId, mergedChecklists);
     }
 
-    // 3. 미팅/매물 동기화 (제공된 경우)
+    // 5. 미팅/매물 동기화 (머지된 데이터 사용)
     if (meetings !== undefined) {
-      await syncMeetings(customerId, meetings);
+      console.log('🔄 Starting meeting sync with merged data...');
+      await syncMeetings(customerId, mergedMeetings);
     }
 
-    console.log('✓ Customer data synced:', customerId);
+    console.log('✓ Customer data synced safely (with multi-device protection):', customerId);
   } catch (error) {
-    console.error('Error updating customer:', error);
+    console.error('❌ Error updating customer:', error);
     throw error;
   }
 };
@@ -284,10 +319,17 @@ export const deleteProperty = async (customerId: string, meetingId: string, prop
 
 export const createChecklist = async (customerId: string, checklist: ChecklistItem): Promise<void> => {
   try {
+    console.log('📝 Creating checklist in Firestore:');
+    console.log('  Customer ID:', customerId);
+    console.log('  Checklist:', checklist);
+
     const checklistRef = doc(db, `customers/${customerId}/checklists`, checklist.id);
+    console.log('  Reference path:', `customers/${customerId}/checklists/${checklist.id}`);
+
     await setDoc(checklistRef, checklist);
+    console.log('✅ Checklist saved to Firestore successfully');
   } catch (error) {
-    console.error('Error creating checklist:', error);
+    console.error('❌ Error creating checklist:', error);
     throw error;
   }
 };
@@ -324,7 +366,10 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
   const customersRef = collection(db, 'customers');
   const q = query(customersRef, orderBy('createdAt', 'desc'));
 
+  console.log('👂 Setting up real-time listener for customers list');
+
   return onSnapshot(q, (snapshot) => {
+    console.log('📡 Customers snapshot received:', snapshot.docs.length, 'documents');
     const customers = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
@@ -333,7 +378,12 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
     } as Customer));
     callback(customers);
   }, (error) => {
-    console.error('Error in customers listener:', error);
+    console.error('❌ Error in customers listener:', error);
+    if (error.code === 'permission-denied') {
+      console.error('🔐 Permission denied - check Firebase rules');
+    } else if (error.code === 'unavailable') {
+      console.error('📵 Firestore unavailable - offline mode');
+    }
     callback([]);
   });
 };
@@ -341,17 +391,35 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
 export const subscribeToCustomer = (customerId: string, callback: (customer: Customer | null) => void): (() => void) => {
   const customerRef = doc(db, 'customers', customerId);
 
+  console.log('👂 Setting up real-time listener for customer:', customerId);
+
   return onSnapshot(customerRef, async (snapshot) => {
     if (!snapshot.exists()) {
+      console.log('⚠️ Customer document does not exist:', customerId);
       callback(null);
       return;
     }
 
+    console.log('📡 Customer snapshot received:', customerId);
+
     // Fetch full customer with details
     const customer = await getCustomerWithDetails(customerId);
+    if (customer) {
+      console.log('✅ Full customer details loaded with subcollections:', {
+        id: customer.id,
+        name: customer.name,
+        checklistsCount: customer.checklists?.length || 0,
+        meetingsCount: customer.meetings?.length || 0,
+      });
+    }
     callback(customer);
   }, (error) => {
-    console.error('Error in customer listener:', error);
+    console.error('❌ Error in customer listener:', error);
+    if (error.code === 'permission-denied') {
+      console.error('🔐 Permission denied - check Firebase rules');
+    } else if (error.code === 'unavailable') {
+      console.error('📵 Firestore unavailable - offline mode');
+    }
     callback(null);
   });
 };
@@ -410,29 +478,45 @@ function diffArrays<T extends { id: string }>(
  */
 async function syncChecklists(customerId: string, newChecklists: ChecklistItem[]): Promise<void> {
   try {
+    console.log('🔄 Starting checklist sync for customer:', customerId);
+    console.log('📥 New checklists from UI:', newChecklists);
+
     // Firestore에서 현재 체크리스트 가져오기
     const checklistsRef = collection(db, `customers/${customerId}/checklists`);
     const checklistsSnap = await getDocs(checklistsRef);
-    const oldChecklists = checklistsSnap.docs.map(doc => doc.data() as ChecklistItem);
+    const oldChecklists = checklistsSnap.docs.map(doc => {
+      const data = doc.data();
+      console.log('📤 Existing checklist from Firestore:', data);
+      return data as ChecklistItem;
+    });
+
+    console.log('🔍 Old checklists from Firestore:', oldChecklists);
 
     // Diff 계산
     const { added, updated, removed } = diffArrays(oldChecklists, newChecklists);
 
+    console.log('📊 Diff result:', { added, updated, removed });
+
     // 변경사항 적용
     for (const item of added) {
+      console.log('➕ Creating checklist:', item);
       await createChecklist(customerId, item);
     }
 
     for (const item of updated) {
+      console.log('✏️ Updating checklist:', item);
       await updateChecklist(customerId, item.id, item);
     }
 
     for (const id of removed) {
+      console.log('❌ Deleting checklist:', id);
       await deleteChecklist(customerId, id);
     }
 
     if (added.length > 0 || updated.length > 0 || removed.length > 0) {
       console.log(`✓ Checklists synced: +${added.length} ~${updated.length} -${removed.length}`);
+    } else {
+      console.log('⚪ No changes detected in checklists');
     }
   } catch (error) {
     console.error('Error syncing checklists:', error);
@@ -478,6 +562,9 @@ async function syncProperties(
  */
 async function syncMeetings(customerId: string, newMeetings: Meeting[]): Promise<void> {
   try {
+    console.log('🔄 Starting meeting sync for customer:', customerId);
+    console.log('📥 New meetings from UI:', newMeetings);
+
     // Firestore에서 현재 미팅 가져오기
     const meetingsRef = collection(db, `customers/${customerId}/meetings`);
     const meetingsSnap = await getDocs(meetingsRef);
@@ -485,6 +572,7 @@ async function syncMeetings(customerId: string, newMeetings: Meeting[]): Promise
     const oldMeetings: Meeting[] = [];
     for (const meetingDoc of meetingsSnap.docs) {
       const meetingData = meetingDoc.data();
+      console.log('📤 Existing meeting from Firestore:', meetingData);
 
       // 각 미팅의 매물도 가져오기
       const propertiesRef = collection(db, `customers/${customerId}/meetings/${meetingDoc.id}/properties`);
@@ -498,16 +586,22 @@ async function syncMeetings(customerId: string, newMeetings: Meeting[]): Promise
       } as Meeting);
     }
 
+    console.log('🔍 Old meetings from Firestore:', oldMeetings);
+
     // Diff 계산
     const { added, updated, removed } = diffArrays(oldMeetings, newMeetings);
 
+    console.log('📊 Diff result:', { added, updated, removed });
+
     // 미팅 추가
     for (const meeting of added) {
+      console.log('➕ Creating meeting:', meeting);
       await createMeeting(customerId, meeting);
     }
 
     // 미팅 수정 (매물도 함께 동기화)
     for (const meeting of updated) {
+      console.log('✏️ Updating meeting:', meeting);
       await updateMeeting(customerId, meeting.id, meeting);
 
       const oldMeeting = oldMeetings.find(m => m.id === meeting.id);
@@ -518,11 +612,14 @@ async function syncMeetings(customerId: string, newMeetings: Meeting[]): Promise
 
     // 미팅 삭제
     for (const id of removed) {
+      console.log('❌ Deleting meeting:', id);
       await deleteMeeting(customerId, id);
     }
 
     if (added.length > 0 || updated.length > 0 || removed.length > 0) {
       console.log(`✓ Meetings synced: +${added.length} ~${updated.length} -${removed.length}`);
+    } else {
+      console.log('⚪ No changes detected in meetings');
     }
   } catch (error) {
     console.error('Error syncing meetings:', error);
