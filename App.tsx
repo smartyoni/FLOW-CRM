@@ -11,6 +11,7 @@ const App: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -170,8 +171,20 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Mobile Sidebar Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          aria-label="사이드바 닫기"
+        />
+      )}
+
       {/* Left Sidebar */}
-      <Sidebar />
+      <Sidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
 
       {/* Main Content - Kanban Board */}
       <div className="flex-1 overflow-hidden">
@@ -181,6 +194,7 @@ const App: React.FC = () => {
           onAddClick={() => setIsFormOpen(true)}
           onDelete={handleDeleteCustomer}
           onToggleFavorite={handleToggleFavorite}
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
         />
       </div>
 

@@ -831,7 +831,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           )}
                         </div>
                         {prop.photos.length > 0 ? (
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             {prop.photos.map((photo, pIdx) => (
                               <div key={pIdx} className="relative aspect-square bg-gray-200 rounded overflow-hidden group border border-gray-300">
                                 <img src={photo} alt={`photo-${pIdx}`} className="w-full h-full object-cover" />

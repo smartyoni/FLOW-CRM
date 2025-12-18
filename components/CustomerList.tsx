@@ -7,6 +7,7 @@ interface Props {
   onAddClick: () => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
   onToggleFavorite: (id: string) => void;
+  onMenuClick: () => void;
 }
 
 const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: string; icon: string; bg: string }> = {
@@ -81,8 +82,11 @@ const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: strin
 const STAGE_ORDER: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행'];
 const CHECKPOINT_ORDER: CustomerCheckpoint[] = ['계약진행', '재미팅잡기', '약속확정', '미팅진행'];
 
-export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite }) => {
+export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
+  const [mobileSectionTab, setMobileSectionTab] = useState<'stages' | 'checkpoints'>('stages');
+  const [activeStageTab, setActiveStageTab] = useState<CustomerStage>('접수고객');
+  const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('계약진행');
 
   const handleSearchChange = (key: string, value: string) => {
     setSearchQueries(prev => ({ ...prev, [key]: value }));
@@ -115,12 +119,81 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       });
   };
 
+  const renderMobileColumn = (key: string, items: Customer[]) => {
+    const filtered = filterAndSortCustomers(items, searchQueries[key] || '');
+
+    return (
+      <div className="h-full flex flex-col bg-white">
+        {/* 검색바 */}
+        <div className="p-3 border-b shrink-0">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="검색..."
+              className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              value={searchQueries[key] || ''}
+              onChange={(e) => handleSearchChange(key, e.target.value)}
+            />
+            {searchQueries[key] && (
+              <button
+                onClick={() => handleSearchChange(key, '')}
+                className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 transition-colors"
+              >
+                <i className="fas fa-times-circle text-sm"></i>
+              </button>
+            )}
+            <i className="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          </div>
+        </div>
+
+        {/* 고객 카드 목록 */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {filtered.map(customer => (
+            <div
+              key={customer.id}
+              onClick={() => onSelect(customer)}
+              onContextMenu={(e) => handleRightClick(e, customer.id)}
+              className="bg-white border rounded-lg p-4 cursor-pointer shadow-sm active:scale-95 transition-transform"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {customer.isFavorite && (
+                    <i className="fas fa-star text-yellow-400 text-sm"></i>
+                  )}
+                  <h3 className="font-bold text-base text-gray-800">{customer.name}</h3>
+                </div>
+                <button
+                  onClick={(e) => onDelete(customer.id, e)}
+                  className="text-gray-300 hover:text-red-500 p-2 transition-colors"
+                >
+                  <i className="fas fa-trash-alt text-sm"></i>
+                </button>
+              </div>
+              {customer.contact && (
+                <p className="text-sm text-gray-600">{customer.contact}</p>
+              )}
+            </div>
+          ))}
+
+          {filtered.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                <i className="fas fa-user text-gray-300 text-2xl"></i>
+              </div>
+              <p className="text-gray-400 text-sm">고객 없음</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderColumn = (
-    title: string, 
-    desc: string, 
-    items: Customer[], 
-    config: any, 
-    searchKey: string, 
+    title: string,
+    desc: string,
+    items: Customer[],
+    config: any,
+    searchKey: string,
     showAddButton: boolean = false
   ) => {
     return (
@@ -232,12 +305,104 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
   return (
     <div className="flex flex-col w-full h-full bg-gray-100 overflow-hidden">
       {/* Top Bar - Mobile Header */}
-      <div className="bg-white border-b p-3 flex justify-between items-center shadow-sm shrink-0 md:hidden">
-        <h1 className="text-lg font-bold text-gray-800">부동산 고객관리</h1>
+      <div className="bg-white border-b p-3 flex items-center gap-3 shadow-sm shrink-0 md:hidden">
+        {/* Hamburger Button */}
+        <button
+          onClick={onMenuClick}
+          className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
+          aria-label="메뉴 열기"
+        >
+          <i className="fas fa-bars text-lg"></i>
+        </button>
+
+        {/* Title */}
+        <h1 className="flex-1 text-lg font-bold text-gray-800">부동산 고객관리</h1>
+
+        {/* Add Customer FAB */}
+        <button
+          onClick={onAddClick}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-primary text-white shadow-lg hover:bg-blue-600 transition-colors"
+          aria-label="고객 추가"
+        >
+          <i className="fas fa-plus"></i>
+        </button>
       </div>
 
-      {/* Row 1: Stages (Pre-meeting) */}
-      <div className="flex-1 overflow-x-auto p-3 border-b border-gray-200">
+      {/* Mobile Section Tabs - "미팅 전" vs "미팅 후" */}
+      <div className="md:hidden bg-white border-b shrink-0">
+        <div className="flex">
+          <button
+            onClick={() => setMobileSectionTab('stages')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
+              mobileSectionTab === 'stages'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            미팅 전
+          </button>
+          <button
+            onClick={() => setMobileSectionTab('checkpoints')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
+              mobileSectionTab === 'checkpoints'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-gray-500'
+            }`}
+          >
+            미팅 후
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Stage Tabs - Individual stage selector */}
+      <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
+        <div className="flex p-2 gap-2">
+          {(mobileSectionTab === 'stages' ? STAGE_ORDER : CHECKPOINT_ORDER).map(stage => {
+            const config = mobileSectionTab === 'stages' ? STAGE_CONFIG[stage] : CHECKPOINT_CONFIG[stage];
+            const count = customers.filter(c =>
+              mobileSectionTab === 'stages'
+                ? (c.stage || '접수고객') === stage
+                : c.checkpoint === stage
+            ).length;
+
+            return (
+              <button
+                key={stage}
+                onClick={() =>
+                  mobileSectionTab === 'stages'
+                    ? setActiveStageTab(stage as CustomerStage)
+                    : setActiveCheckpointTab(stage as CustomerCheckpoint)
+                }
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  (mobileSectionTab === 'stages' ? activeStageTab : activeCheckpointTab) === stage
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <i className={`fas ${config.icon} mr-1.5`}></i>
+                {config.label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Mobile Single Column View */}
+      <div className="flex-1 overflow-hidden md:hidden">
+        {renderMobileColumn(
+          mobileSectionTab === 'stages' ? activeStageTab : activeCheckpointTab,
+          customers.filter(c =>
+            mobileSectionTab === 'stages'
+              ? (c.stage || '접수고객') === activeStageTab
+              : c.checkpoint === activeCheckpointTab
+          )
+        )}
+      </div>
+
+      {/* Desktop View - Hidden on Mobile */}
+      <div className="hidden md:flex md:flex-col w-full h-full">
+        {/* Row 1: Stages (Pre-meeting) */}
+        <div className="flex-1 overflow-x-auto p-3 border-b border-gray-200">
         <div className="flex h-full">
           {STAGE_ORDER.map(stage => {
             const config = STAGE_CONFIG[stage];
@@ -284,6 +449,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );
