@@ -120,18 +120,30 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!activeMeeting) return;
     const newDate = e.target.value;
+
+    const updatedLocalMeeting = { ...activeMeeting, date: newDate };
     // 로컬 상태 먼저 업데이트 (즉시 입력창에 반영)
-    setLocalMeeting({ ...activeMeeting, date: newDate });
+    setLocalMeeting(updatedLocalMeeting);
+
     // Firebase에 저장
-    updateMeeting(activeMeeting.id, { date: newDate });
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedLocalMeeting : m
+      )
+    });
   };
 
   const updateMeeting = (meetingId: string, updates: Partial<Meeting>) => {
+    // ⭐ activeMeeting(로컬 상태)를 기준으로 업데이트
+    // localMeeting이 이미 업데이트되었으므로, 전체 meetings 배열을 올바르게 구성
+    const updatedMeetings = (customer.meetings || []).map(m =>
+      m.id === meetingId ? { ...m, ...updates } : m
+    );
+
     onUpdate({
       ...customer,
-      meetings: customer.meetings.map(m => 
-        m.id === meetingId ? { ...m, ...updates } : m
-      )
+      meetings: updatedMeetings
     });
   };
 
@@ -189,8 +201,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     setLocalMeeting(updatedLocalMeeting);
 
     // Firebase에 저장 (백그라운드)
-    updateMeeting(activeMeeting.id, {
-      properties: updatedProperties
+    // 전체 고객 데이터와 함께 미팅 업데이트
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedLocalMeeting : m
+      )
     });
 
     // 상태 초기화
@@ -217,8 +233,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     setLocalMeeting(updatedLocalMeeting);
 
     // ⭐ 2. Firebase에 저장 (백그라운드)
-    updateMeeting(activeMeeting.id, {
-      properties: updatedProperties
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedLocalMeeting : m
+      )
     });
   };
 
@@ -238,8 +257,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     setLocalMeeting(updatedLocalMeeting);
 
     // ⭐ 2. Firebase에 저장 (백그라운드)
-    updateMeeting(activeMeeting.id, {
-      properties: updatedProperties
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedLocalMeeting : m
+      )
     });
   };
 
@@ -1030,8 +1052,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 setLocalMeeting(updatedLocalMeeting);
 
                                 // ⭐ 2. Firebase에 저장 (백그라운드)
-                                updateMeeting(activeMeeting.id, {
-                                  properties: updatedProperties
+                                onUpdate({
+                                  ...customer,
+                                  meetings: customer.meetings.map(m =>
+                                    m.id === activeMeeting.id ? updatedLocalMeeting : m
+                                  )
                                 });
                               }
                             }
