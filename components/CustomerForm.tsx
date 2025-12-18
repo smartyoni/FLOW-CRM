@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Customer } from '../types';
 import { generateId } from '../services/storage';
+import { formatPhoneNumber } from '../utils/phoneUtils';
 
 interface Props {
   onClose: () => void;
@@ -66,11 +67,11 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
           
           <div>
             <label className="block text-sm font-medium text-gray-700">연락처</label>
-            <input 
-              type="tel" 
+            <input
+              type="tel"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-primary focus:ring-primary"
               value={formData.contact}
-              onChange={e => setFormData({...formData, contact: e.target.value})}
+              onChange={e => setFormData({...formData, contact: formatPhoneNumber(e.target.value)})}
             />
           </div>
 

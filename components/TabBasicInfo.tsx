@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint } from '../types';
 import { generateId } from '../services/storage';
+import { formatPhoneNumber } from '../utils/phoneUtils';
 
 interface Props {
   customer: Customer;
@@ -233,11 +234,11 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                   </div>
                   <div>
                     <span className="text-gray-500 block text-xs">연락처</span>
-                    <input 
+                    <input
                       type="text"
                       className="w-full border rounded px-2 py-1"
                       value={infoForm.contact || ''}
-                      onChange={e => setInfoForm({...infoForm, contact: e.target.value})}
+                      onChange={e => setInfoForm({...infoForm, contact: formatPhoneNumber(e.target.value)})}
                     />
                   </div>
                   <div>
