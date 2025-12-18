@@ -42,6 +42,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   // ⭐ 로컬 미팅 상태 (즉시 미리보기를 위함)
   const [localMeeting, setLocalMeeting] = useState<Meeting | null>(null);
 
+  // 매물 메모 편집 상태
+  const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
+  const [memoText, setMemoText] = useState('');
+
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Initialize active meeting
@@ -467,6 +471,33 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         p.id === propId ? { ...p, photos: updatedPhotos } : p
       )
     });
+  };
+
+  // 매물 메모 저장
+  const saveMemo = (propId: string) => {
+    if (!activeMeeting) return;
+
+    const updatedProperties = activeMeeting.properties.map(p =>
+      p.id === propId ? { ...p, memo: memoText } : p
+    );
+
+    // ⭐ 로컬 상태 먼저 업데이트
+    const updatedLocalMeeting = {
+      ...activeMeeting,
+      properties: updatedProperties
+    };
+    setLocalMeeting(updatedLocalMeeting);
+
+    // Firebase에 저장
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedLocalMeeting : m
+      )
+    });
+
+    setEditingMemoId(null);
+    setMemoText('');
   };
 
   // --- PDF Generation ---
@@ -981,6 +1012,39 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">
                               {prop.parsedText}
                             </pre>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 메모 섹션 */}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <span className="text-xs font-semibold text-gray-600">메모</span>
+                        {editingMemoId === prop.id ? (
+                          // 편집 모드
+                          <textarea
+                            autoFocus
+                            className="w-full border rounded px-2 py-1 mt-1 focus:ring-1 focus:ring-primary outline-none text-sm"
+                            value={memoText}
+                            onChange={(e) => setMemoText(e.target.value)}
+                            onBlur={() => saveMemo(prop.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && e.ctrlKey) {
+                                saveMemo(prop.id);
+                              }
+                            }}
+                            rows={3}
+                            placeholder="메모를 입력하세요..."
+                          />
+                        ) : (
+                          // 조회 모드
+                          <div
+                            onDoubleClick={() => {
+                              setEditingMemoId(prop.id);
+                              setMemoText(prop.memo || '');
+                            }}
+                            className="w-full border rounded px-2 py-1 mt-1 min-h-[60px] bg-gray-50 whitespace-pre-wrap text-sm cursor-pointer hover:bg-gray-100"
+                          >
+                            {prop.memo || '(메모 없음)'}
                           </div>
                         )}
                       </div>

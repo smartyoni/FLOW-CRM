@@ -15,6 +15,7 @@ export interface Property {
   photos: string[];           // Base64 data URLs
   parsedText?: string;        // 정리본 텍스트 (선택사항)
   unit?: string;              // 호실 정보
+  memo?: string;              // 매물 메모 (선택사항)
 
   // 상태 관리
   status?: '확인전' | '확인중' | '볼수있음' | '현장방문완료';  // 매물 상태
