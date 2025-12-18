@@ -236,27 +236,31 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const handlePhotoUpload = async (files: File[]) => {
-    console.log('🎬 handlePhotoUpload called with', files.length, 'files');
-    console.log('📍 photoUploadPropId:', photoUploadPropId);
-    console.log('📍 activeMeeting:', activeMeeting?.id);
+    // ⭐ 함수 시작 시 상태 스냅샷 저장 (async 진행 중 상태 변경 방지)
+    const propId = photoUploadPropId;
+    const meeting = activeMeeting;
 
-    if (!photoUploadPropId) {
-      console.error('❌ photoUploadPropId is not set');
+    console.log('🎬 handlePhotoUpload called with', files.length, 'files');
+    console.log('📍 propId:', propId);
+    console.log('📍 meeting:', meeting?.id);
+
+    if (!propId) {
+      console.error('❌ propId is not set');
       alert('매물이 선택되지 않았습니다.');
       return;
     }
 
-    if (!activeMeeting) {
-      console.error('❌ activeMeeting is not set');
+    if (!meeting) {
+      console.error('❌ meeting is not set');
       alert('미팅이 선택되지 않았습니다.');
       return;
     }
 
-    const currentProp = activeMeeting.properties.find(p => p.id === photoUploadPropId);
+    const currentProp = meeting.properties.find(p => p.id === propId);
     console.log('🔍 currentProp found:', !!currentProp);
 
     if (!currentProp) {
-      console.error('❌ currentProp not found for id:', photoUploadPropId);
+      console.error('❌ currentProp not found for id:', propId);
       alert('해당 매물을 찾을 수 없습니다.');
       return;
     }
@@ -340,9 +344,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       console.log(`✅ 로컬 상태 업데이트: ${base64Images.length}장의 사진 추가`);
       const updatedPhotos = [...currentProp.photos, ...base64Images];
       const updatedLocalMeeting = {
-        ...activeMeeting,
-        properties: activeMeeting.properties.map(p =>
-          p.id === photoUploadPropId
+        ...meeting,
+        properties: meeting.properties.map(p =>
+          p.id === propId
             ? { ...p, photos: updatedPhotos }
             : p
         )
@@ -354,9 +358,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
       // ⭐ Step 4: Firebase에 저장 (백그라운드, 시간 걸려도 상관없음)
       console.log('💾 Saving to Firebase in background...');
-      updateMeeting(activeMeeting.id, {
-        properties: activeMeeting.properties.map(p =>
-          p.id === photoUploadPropId
+      updateMeeting(meeting.id, {
+        properties: meeting.properties.map(p =>
+          p.id === propId
             ? { ...p, photos: updatedPhotos }
             : p
         )
