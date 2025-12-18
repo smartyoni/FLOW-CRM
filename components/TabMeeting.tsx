@@ -139,23 +139,23 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       }
     }
 
+    let updatedProperties;
+
     if (editingPropertyId) {
       // 수정 모드: 기존 매물 업데이트
-      updateMeeting(activeMeeting.id, {
-        properties: activeMeeting.properties.map(p =>
-          p.id === editingPropertyId
-            ? {
-                ...p,
-                rawInput: propertyText,
-                roomName: parsedRoomName,
-                jibun: parsedJibun,
-                agency: parsedAgency,
-                agencyPhone: parsedAgencyPhone,
-                parsedText: parsedText || propertyText
-              }
-            : p
-        )
-      });
+      updatedProperties = activeMeeting.properties.map(p =>
+        p.id === editingPropertyId
+          ? {
+              ...p,
+              rawInput: propertyText,
+              roomName: parsedRoomName,
+              jibun: parsedJibun,
+              agency: parsedAgency,
+              agencyPhone: parsedAgencyPhone,
+              parsedText: parsedText || propertyText
+            }
+          : p
+      );
     } else {
       // 신규 등록 모드: 새로운 매물 추가
       const newProperty: Property = {
@@ -169,10 +169,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         parsedText: parsedText || propertyText
       };
 
-      updateMeeting(activeMeeting.id, {
-        properties: [...activeMeeting.properties, newProperty]
-      });
+      updatedProperties = [...activeMeeting.properties, newProperty];
     }
+
+    // ⭐ 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    const updatedLocalMeeting = {
+      ...activeMeeting,
+      properties: updatedProperties
+    };
+    setLocalMeeting(updatedLocalMeeting);
+
+    // Firebase에 저장 (백그라운드)
+    updateMeeting(activeMeeting.id, {
+      properties: updatedProperties
+    });
 
     // 상태 초기화
     setPropertyText('');
