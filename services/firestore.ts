@@ -123,19 +123,30 @@ export const createCustomer = async (customer: Customer): Promise<void> => {
 };
 
 /**
- * Update customer basic info (not subcollections)
+ * Update customer basic info and synchronize all subcollections
  */
 export const updateCustomer = async (customerId: string, updates: Partial<Customer>): Promise<void> => {
   try {
     const customerRef = doc(db, 'customers', customerId);
+    const { checklists, meetings, ...basicUpdates } = updates;
 
-    // Remove subcollections from updates
-    const { checklists, meetings, ...updateData } = updates;
-
+    // 1. 기본 정보 업데이트
     await updateDoc(customerRef, {
-      ...updateData,
+      ...basicUpdates,
       updatedAt: Timestamp.now(),
     });
+
+    // 2. 체크리스트 동기화 (제공된 경우)
+    if (checklists !== undefined) {
+      await syncChecklists(customerId, checklists);
+    }
+
+    // 3. 미팅/매물 동기화 (제공된 경우)
+    if (meetings !== undefined) {
+      await syncMeetings(customerId, meetings);
+    }
+
+    console.log('✓ Customer data synced:', customerId);
   } catch (error) {
     console.error('Error updating customer:', error);
     throw error;
@@ -347,3 +358,174 @@ export const subscribeToCustomer = (customerId: string, callback: (customer: Cus
 
 // Utility
 export const generateId = () => Math.random().toString(36).substr(2, 9);
+
+// =====================
+// DIFF UTILITIES
+// =====================
+
+interface DiffResult<T extends { id: string }> {
+  added: T[];
+  updated: T[];
+  removed: string[];
+}
+
+/**
+ * 두 배열을 비교하여 추가/수정/삭제된 항목 반환
+ */
+function diffArrays<T extends { id: string }>(
+  oldArray: T[],
+  newArray: T[]
+): DiffResult<T> {
+  const oldMap = new Map(oldArray.map(item => [item.id, item]));
+  const newMap = new Map(newArray.map(item => [item.id, item]));
+
+  const added: T[] = [];
+  const updated: T[] = [];
+  const removed: string[] = [];
+
+  // 추가 및 수정 감지
+  for (const [id, newItem] of newMap) {
+    if (!oldMap.has(id)) {
+      added.push(newItem);
+    } else {
+      const oldItem = oldMap.get(id)!;
+      if (JSON.stringify(oldItem) !== JSON.stringify(newItem)) {
+        updated.push(newItem);
+      }
+    }
+  }
+
+  // 삭제 감지
+  for (const id of oldMap.keys()) {
+    if (!newMap.has(id)) {
+      removed.push(id);
+    }
+  }
+
+  return { added, updated, removed };
+}
+
+/**
+ * 체크리스트 서브컬렉션을 현재 상태와 동기화
+ */
+async function syncChecklists(customerId: string, newChecklists: ChecklistItem[]): Promise<void> {
+  try {
+    // Firestore에서 현재 체크리스트 가져오기
+    const checklistsRef = collection(db, `customers/${customerId}/checklists`);
+    const checklistsSnap = await getDocs(checklistsRef);
+    const oldChecklists = checklistsSnap.docs.map(doc => doc.data() as ChecklistItem);
+
+    // Diff 계산
+    const { added, updated, removed } = diffArrays(oldChecklists, newChecklists);
+
+    // 변경사항 적용
+    for (const item of added) {
+      await createChecklist(customerId, item);
+    }
+
+    for (const item of updated) {
+      await updateChecklist(customerId, item.id, item);
+    }
+
+    for (const id of removed) {
+      await deleteChecklist(customerId, id);
+    }
+
+    if (added.length > 0 || updated.length > 0 || removed.length > 0) {
+      console.log(`✓ Checklists synced: +${added.length} ~${updated.length} -${removed.length}`);
+    }
+  } catch (error) {
+    console.error('Error syncing checklists:', error);
+    throw error;
+  }
+}
+
+/**
+ * 특정 미팅 내의 매물 동기화
+ */
+async function syncProperties(
+  customerId: string,
+  meetingId: string,
+  oldProperties: Property[],
+  newProperties: Property[]
+): Promise<void> {
+  try {
+    const { added, updated, removed } = diffArrays(oldProperties, newProperties);
+
+    for (const property of added) {
+      await createProperty(customerId, meetingId, property);
+    }
+
+    for (const property of updated) {
+      await updateProperty(customerId, meetingId, property.id, property);
+    }
+
+    for (const id of removed) {
+      await deleteProperty(customerId, meetingId, id);
+    }
+
+    if (added.length > 0 || updated.length > 0 || removed.length > 0) {
+      console.log(`✓ Properties synced: +${added.length} ~${updated.length} -${removed.length}`);
+    }
+  } catch (error) {
+    console.error('Error syncing properties:', error);
+    throw error;
+  }
+}
+
+/**
+ * 미팅 및 중첩된 매물 동기화
+ */
+async function syncMeetings(customerId: string, newMeetings: Meeting[]): Promise<void> {
+  try {
+    // Firestore에서 현재 미팅 가져오기
+    const meetingsRef = collection(db, `customers/${customerId}/meetings`);
+    const meetingsSnap = await getDocs(meetingsRef);
+
+    const oldMeetings: Meeting[] = [];
+    for (const meetingDoc of meetingsSnap.docs) {
+      const meetingData = meetingDoc.data();
+
+      // 각 미팅의 매물도 가져오기
+      const propertiesRef = collection(db, `customers/${customerId}/meetings/${meetingDoc.id}/properties`);
+      const propertiesSnap = await getDocs(propertiesRef);
+      const properties = propertiesSnap.docs.map(doc => doc.data() as Property);
+
+      oldMeetings.push({
+        id: meetingDoc.id,
+        ...meetingData,
+        properties,
+      } as Meeting);
+    }
+
+    // Diff 계산
+    const { added, updated, removed } = diffArrays(oldMeetings, newMeetings);
+
+    // 미팅 추가
+    for (const meeting of added) {
+      await createMeeting(customerId, meeting);
+    }
+
+    // 미팅 수정 (매물도 함께 동기화)
+    for (const meeting of updated) {
+      await updateMeeting(customerId, meeting.id, meeting);
+
+      const oldMeeting = oldMeetings.find(m => m.id === meeting.id);
+      if (oldMeeting) {
+        await syncProperties(customerId, meeting.id, oldMeeting.properties, meeting.properties);
+      }
+    }
+
+    // 미팅 삭제
+    for (const id of removed) {
+      await deleteMeeting(customerId, id);
+    }
+
+    if (added.length > 0 || updated.length > 0 || removed.length > 0) {
+      console.log(`✓ Meetings synced: +${added.length} ~${updated.length} -${removed.length}`);
+    }
+  } catch (error) {
+    console.error('Error syncing meetings:', error);
+    throw error;
+  }
+}
