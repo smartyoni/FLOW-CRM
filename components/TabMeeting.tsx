@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, Property, Meeting } from '../types';
 import { generateId } from '../services/firestore';
-import { uploadPhotos, fileToBase64, deletePhoto } from '../services/storage-firebase';
+import { fileToBase64 } from '../services/storage-firebase';
 import {
   parsePropertyDetails,
   generateStructuredPropertyInfo,
@@ -235,8 +235,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       return;
     }
 
-    // File size validation (1MB max)
-    const MAX_FILE_SIZE = 1024 * 1024;
+    // File size validation (5MB max for Firestore storage)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     const validFiles: File[] = [];
     let invalidCount = 0;
 
@@ -249,7 +249,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
 
     if (invalidCount > 0) {
-      alert(`${invalidCount}개의 파일이 1MB를 초과하여 제외되었습니다.`);
+      alert(`${invalidCount}개의 파일이 5MB를 초과하여 제외되었습니다.`);
     }
 
     if (validFiles.length === 0) {
@@ -259,31 +259,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     const filesToProcess = validFiles.slice(0, remainingSlots);
 
     try {
-      // Step 1: Show Base64 previews immediately (optimistic UI)
-      const base64Previews = await Promise.all(
+      // Convert files to Base64 and save to Firestore
+      const base64Images = await Promise.all(
         filesToProcess.map(file => fileToBase64(file))
       );
 
-      const startIndex = currentProp.photos.length;
-      updateMeeting(activeMeeting.id, {
-        properties: activeMeeting.properties.map(p =>
-          p.id === photoUploadPropId
-            ? { ...p, photos: [...p.photos, ...base64Previews] }
-            : p
-        )
-      });
-
-      // Step 2: Upload to Firebase Storage in background
-      const storageUrls = await uploadPhotos(
-        filesToProcess,
-        customer.id,
-        activeMeeting.id,
-        photoUploadPropId,
-        startIndex
-      );
-
-      // Step 3: Replace Base64 with Storage URLs
-      const updatedPhotos = [...currentProp.photos, ...storageUrls];
+      // Save directly to Firestore
+      const updatedPhotos = [...currentProp.photos, ...base64Images];
 
       updateMeeting(activeMeeting.id, {
         properties: activeMeeting.properties.map(p =>
@@ -297,42 +279,22 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     } catch (error) {
       console.error('사진 업로드 중 오류:', error);
       alert('사진 업로드 중 오류가 발생했습니다.');
-
-      // Revert optimistic update
-      updateMeeting(activeMeeting.id, {
-        properties: activeMeeting.properties.map(p =>
-          p.id === photoUploadPropId
-            ? { ...p, photos: currentProp.photos }
-            : p
-        )
-      });
-
       setPhotoUploadPropId(null);
     }
   };
 
-  const removePhoto = async (propId: string, photoIndex: number) => {
+  const removePhoto = (propId: string, photoIndex: number) => {
     if (!activeMeeting) return;
     const currentProp = activeMeeting.properties.find(p => p.id === propId);
     if (!currentProp) return;
 
-    try {
-      const photoUrl = currentProp.photos[photoIndex];
-      const updatedPhotos = currentProp.photos.filter((_, i) => i !== photoIndex);
+    const updatedPhotos = currentProp.photos.filter((_, i) => i !== photoIndex);
 
-      // Optimistic update
-      updateMeeting(activeMeeting.id, {
-        properties: activeMeeting.properties.map(p =>
-          p.id === propId ? { ...p, photos: updatedPhotos } : p
-        )
-      });
-
-      // Delete from Firebase Storage (don't await - fire and forget)
-      deletePhoto(photoUrl).catch(() => {});
-    } catch (error) {
-      console.error('사진 삭제 중 오류:', error);
-      alert('사진 삭제 중 오류가 발생했습니다.');
-    }
+    updateMeeting(activeMeeting.id, {
+      properties: activeMeeting.properties.map(p =>
+        p.id === propId ? { ...p, photos: updatedPhotos } : p
+      )
+    });
   };
 
   // --- PDF Generation ---

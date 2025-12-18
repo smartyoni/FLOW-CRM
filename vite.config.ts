@@ -131,20 +131,6 @@ export default defineConfig(({ mode }) => {
                   }
                 }
               },
-              {
-                urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
-                handler: 'CacheFirst',
-                options: {
-                  cacheName: 'firebase-storage-cache',
-                  expiration: {
-                    maxEntries: 100,
-                    maxAgeSeconds: 60 * 60 * 24 * 7
-                  },
-                  cacheableResponse: {
-                    statuses: [0, 200]
-                  }
-                }
-              }
             ],
             navigateFallback: null,
             cleanupOutdatedCaches: true

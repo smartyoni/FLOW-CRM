@@ -13,7 +13,12 @@
       "Bash(npm run deploy:*)",
       "mcp__ide__getDiagnostics",
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(cat:*)",
+      "Bash(npm run preview:*)",
+      "Bash(firebase deploy:*)",
+      "Bash(firebase login:*)"
     ]
   }
 }
