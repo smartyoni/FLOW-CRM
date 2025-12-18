@@ -1,0 +1,19 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow all read access (photos are public)
+    match /{allPaths=**} {
+      allow read: if true;
+    }
+
+    // Allow write/delete for photos in the correct structure
+    match /customers/{customerId}/meetings/{meetingId}/properties/{propertyId}/{photoFile} {
+      // Allow upload if file is an image and under 1MB
+      allow write: if request.resource.size < 1 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+
+      // Allow delete
+      allow delete: if true;
+    }
+  }
+}

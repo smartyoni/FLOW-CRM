@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, Property, Meeting } from '../types';
-import { generateId } from '../services/storage';
+import { generateId } from '../services/firestore';
+import { uploadPhotos, fileToBase64, deletePhoto } from '../services/storage-firebase';
 import {
   parsePropertyDetails,
   generateStructuredPropertyInfo,
@@ -222,7 +223,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   };
 
-  const handlePhotoUpload = (files: File[]) => {
+  const handlePhotoUpload = async (files: File[]) => {
     if (!photoUploadPropId || !activeMeeting) return;
 
     const currentProp = activeMeeting.properties.find(p => p.id === photoUploadPropId);
@@ -234,8 +235,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       return;
     }
 
-    // 파일 크기 검증 (1MB = 1,048,576 bytes)
-    const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+    // File size validation (1MB max)
+    const MAX_FILE_SIZE = 1024 * 1024;
     const validFiles: File[] = [];
     let invalidCount = 0;
 
@@ -257,37 +258,81 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
     const filesToProcess = validFiles.slice(0, remainingSlots);
 
-    Promise.all(filesToProcess.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    })).then(base64Images => {
+    try {
+      // Step 1: Show Base64 previews immediately (optimistic UI)
+      const base64Previews = await Promise.all(
+        filesToProcess.map(file => fileToBase64(file))
+      );
+
+      const startIndex = currentProp.photos.length;
       updateMeeting(activeMeeting.id, {
         properties: activeMeeting.properties.map(p =>
-          p.id === photoUploadPropId ? { ...p, photos: [...p.photos, ...base64Images] } : p
+          p.id === photoUploadPropId
+            ? { ...p, photos: [...p.photos, ...base64Previews] }
+            : p
         )
       });
+
+      // Step 2: Upload to Firebase Storage in background
+      const storageUrls = await uploadPhotos(
+        filesToProcess,
+        customer.id,
+        activeMeeting.id,
+        photoUploadPropId,
+        startIndex
+      );
+
+      // Step 3: Replace Base64 with Storage URLs
+      const updatedPhotos = [...currentProp.photos, ...storageUrls];
+
+      updateMeeting(activeMeeting.id, {
+        properties: activeMeeting.properties.map(p =>
+          p.id === photoUploadPropId
+            ? { ...p, photos: updatedPhotos }
+            : p
+        )
+      });
+
       setPhotoUploadPropId(null);
-    }).catch(error => {
+    } catch (error) {
       console.error('사진 업로드 중 오류:', error);
       alert('사진 업로드 중 오류가 발생했습니다.');
+
+      // Revert optimistic update
+      updateMeeting(activeMeeting.id, {
+        properties: activeMeeting.properties.map(p =>
+          p.id === photoUploadPropId
+            ? { ...p, photos: currentProp.photos }
+            : p
+        )
+      });
+
       setPhotoUploadPropId(null);
-    });
+    }
   };
 
-  const removePhoto = (propId: string, photoIndex: number) => {
+  const removePhoto = async (propId: string, photoIndex: number) => {
     if (!activeMeeting) return;
     const currentProp = activeMeeting.properties.find(p => p.id === propId);
     if (!currentProp) return;
 
-    updateMeeting(activeMeeting.id, {
-      properties: activeMeeting.properties.map(p => 
-        p.id === propId ? { ...p, photos: p.photos.filter((_, i) => i !== photoIndex) } : p
-      )
-    });
+    try {
+      const photoUrl = currentProp.photos[photoIndex];
+      const updatedPhotos = currentProp.photos.filter((_, i) => i !== photoIndex);
+
+      // Optimistic update
+      updateMeeting(activeMeeting.id, {
+        properties: activeMeeting.properties.map(p =>
+          p.id === propId ? { ...p, photos: updatedPhotos } : p
+        )
+      });
+
+      // Delete from Firebase Storage (don't await - fire and forget)
+      deletePhoto(photoUrl).catch(() => {});
+    } catch (error) {
+      console.error('사진 삭제 중 오류:', error);
+      alert('사진 삭제 중 오류가 발생했습니다.');
+    }
   };
 
   // --- PDF Generation ---
