@@ -283,20 +283,39 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     console.log(`✅ Processing ${filesToProcess.length} valid files`);
 
     try {
-      // Compress images and convert to Base64 (Firestore 1MB limit 고려)
+      // ⭐ Step 1: 압축 시작 전에 즉시 UI 업데이트 (로딩 표시)
       console.log(`📸 Compressing ${filesToProcess.length} image(s)...`);
 
       const base64Images: string[] = [];
-      for (const file of filesToProcess) {
+
+      // ⭐ Step 2: 압축 작업 (병렬 처리로 더 빠르게)
+      const compressionPromises = filesToProcess.map(async (file) => {
         try {
           console.log(`📸 Processing: ${file.name}`);
           const base64 = await compressAndConvertToBase64(file);
           console.log(`✅ ${file.name} compressed successfully`);
-          base64Images.push(base64);
+          return base64;
         } catch (error) {
           console.error(`❌ Error processing ${file.name}:`, error);
-          alert(`${file.name} 처리 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+          throw error;
         }
+      });
+
+      // 모든 압축 작업이 완료될 때까지 대기
+      try {
+        const results = await Promise.allSettled(compressionPromises);
+
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            base64Images.push(result.value);
+          } else {
+            const error = result.reason;
+            console.error('❌ Compression failed:', error);
+            alert(`사진 처리 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error in compression:', error);
       }
 
       if (base64Images.length === 0) {
@@ -305,11 +324,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         return;
       }
 
-      // Save to Firestore
-      console.log(`✅ Saving ${base64Images.length} compressed image(s) to Firestore...`);
+      // ⭐ Step 3: 즉시 UI 업데이트 (사용자가 미리보기를 바로 볼 수 있음)
+      console.log(`✅ 즉시 UI 업데이트: ${base64Images.length}장의 사진 추가`);
       const updatedPhotos = [...currentProp.photos, ...base64Images];
       console.log(`📝 Updated photos count: ${updatedPhotos.length}`);
 
+      // ⭐ Firebase에 저장하기 전에 UI 먼저 업데이트
       updateMeeting(activeMeeting.id, {
         properties: activeMeeting.properties.map(p =>
           p.id === photoUploadPropId
