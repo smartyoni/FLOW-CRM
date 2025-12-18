@@ -168,7 +168,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         p.id === editingPropertyId
           ? {
               ...p,
-              rawInput: propertyText,
+              // ⭐ rawInput: 원본 텍스트 (parsedText가 있으면 그걸 사용, 없으면 propertyText)
+              rawInput: parsedText || propertyText,
               roomName: parsedRoomName,
               jibun: parsedJibun,
               agency: parsedAgency,
@@ -181,7 +182,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       // 신규 등록 모드: 새로운 매물 추가
       const newProperty: Property = {
         id: generateId(),
-        rawInput: propertyText,
+        // ⭐ rawInput: 원본 텍스트 (parsedText가 있으면 그걸 사용, 없으면 propertyText)
+        rawInput: parsedText || propertyText,
         roomName: parsedRoomName,
         jibun: parsedJibun,
         agency: parsedAgency,
@@ -283,6 +285,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       // 2. 선택된 플랫폼 형식의 정리본 생성
       const structured = generateStructuredPropertyInfoByPlatform(propertyText, selectedPlatform);
       setParsedText(structured);
+      // ⭐ 원본 텍스트는 비우고 생성된 정리본만 유지
+      setPropertyText('');
 
       // 파싱 성공 여부 피드백
       const parsedCount = [fields.roomName, fields.jibun, fields.agency, fields.agencyPhone]
