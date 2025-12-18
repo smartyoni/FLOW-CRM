@@ -111,7 +111,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!activeMeeting) return;
-    updateMeeting(activeMeeting.id, { date: e.target.value });
+    const newDate = e.target.value;
+    // 로컬 상태 먼저 업데이트 (즉시 입력창에 반영)
+    setLocalMeeting({ ...activeMeeting, date: newDate });
+    // Firebase에 저장
+    updateMeeting(activeMeeting.id, { date: newDate });
   };
 
   const updateMeeting = (meetingId: string, updates: Partial<Meeting>) => {
