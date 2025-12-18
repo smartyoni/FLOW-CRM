@@ -39,6 +39,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [photoUploadPropId, setPhotoUploadPropId] = useState<string | null>(null);
 
+  // ⭐ 로컬 미팅 상태 (즉시 미리보기를 위함)
+  const [localMeeting, setLocalMeeting] = useState<Meeting | null>(null);
+
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Initialize active meeting
@@ -55,7 +58,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   }, [customer.meetings]);
 
-  const activeMeeting = customer.meetings?.find(m => m.id === activeMeetingId);
+  // ⭐ Props에서 받은 activeMeeting과 로컬 상태 동기화
+  const propsActiveMeeting = customer.meetings?.find(m => m.id === activeMeetingId);
+  useEffect(() => {
+    if (propsActiveMeeting) {
+      setLocalMeeting(propsActiveMeeting);
+    }
+  }, [propsActiveMeeting?.id]);
+
+  // ⭐ 렌더링할 때는 로컬 상태를 사용 (Firebase 저장 대기 없이 즉시 표시)
+  const activeMeeting = localMeeting || propsActiveMeeting;
 
   // --- Meeting Management ---
 
@@ -324,12 +336,24 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         return;
       }
 
-      // ⭐ Step 3: 즉시 UI 업데이트 (사용자가 미리보기를 바로 볼 수 있음)
-      console.log(`✅ 즉시 UI 업데이트: ${base64Images.length}장의 사진 추가`);
+      // ⭐ Step 3: 로컬 상태 먼저 업데이트 (즉시 미리보기 표시)
+      console.log(`✅ 로컬 상태 업데이트: ${base64Images.length}장의 사진 추가`);
       const updatedPhotos = [...currentProp.photos, ...base64Images];
+      const updatedLocalMeeting = {
+        ...activeMeeting,
+        properties: activeMeeting.properties.map(p =>
+          p.id === photoUploadPropId
+            ? { ...p, photos: updatedPhotos }
+            : p
+        )
+      };
+
+      // 즉시 로컬 상태 반영 (렌더링 즉시 일어남)
+      setLocalMeeting(updatedLocalMeeting);
       console.log(`📝 Updated photos count: ${updatedPhotos.length}`);
 
-      // ⭐ Firebase에 저장하기 전에 UI 먼저 업데이트
+      // ⭐ Step 4: Firebase에 저장 (백그라운드, 시간 걸려도 상관없음)
+      console.log('💾 Saving to Firebase in background...');
       updateMeeting(activeMeeting.id, {
         properties: activeMeeting.properties.map(p =>
           p.id === photoUploadPropId
@@ -354,6 +378,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
     const updatedPhotos = currentProp.photos.filter((_, i) => i !== photoIndex);
 
+    // ⭐ 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    const updatedLocalMeeting = {
+      ...activeMeeting,
+      properties: activeMeeting.properties.map(p =>
+        p.id === propId ? { ...p, photos: updatedPhotos } : p
+      )
+    };
+    setLocalMeeting(updatedLocalMeeting);
+
+    // Firebase에 저장 (백그라운드)
     updateMeeting(activeMeeting.id, {
       properties: activeMeeting.properties.map(p =>
         p.id === propId ? { ...p, photos: updatedPhotos } : p
