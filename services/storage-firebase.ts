@@ -105,3 +105,44 @@ export const fileToBase64 = (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 };
+
+/**
+ * Compress image and convert to Base64 (Firestore 1MB document limit)
+ * Automatically handles image compression to prevent Firestore document size limit (1MB)
+ */
+import imageCompression from 'browser-image-compression';
+
+export const compressAndConvertToBase64 = async (file: File): Promise<string> => {
+  // 압축 옵션 (Firestore 1MB 문서 크기 제한 고려)
+  const options = {
+    maxSizeMB: 0.2,              // 최대 200KB
+    maxWidthOrHeight: 1920,      // 최대 해상도
+    useWebWorker: true,          // 백그라운드 처리
+    fileType: 'image/jpeg',      // JPEG 변환
+    initialQuality: 0.8,         // 초기 품질 80%
+  };
+
+  try {
+    console.log('🖼️ Original file size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+
+    // 1. 이미지 압축
+    const compressedFile = await imageCompression(file, options);
+    console.log('✅ Compressed file size:', (compressedFile.size / 1024).toFixed(2), 'KB');
+
+    // 2. Base64 변환
+    const base64 = await fileToBase64(compressedFile);
+    const base64Size = base64.length * 0.75 / 1024; // Base64 → bytes 변환
+    console.log('📦 Base64 size:', base64Size.toFixed(2), 'KB');
+
+    // 3. 크기 검증 (안전 여유 300KB)
+    const MAX_BASE64_SIZE = 300 * 1024; // 300KB
+    if (base64.length > MAX_BASE64_SIZE) {
+      throw new Error(`압축 후에도 파일이 너무 큽니다. (${base64Size.toFixed(0)}KB > 300KB)`);
+    }
+
+    return base64;
+  } catch (error) {
+    console.error('❌ Image compression failed:', error);
+    throw new Error('이미지 압축에 실패했습니다. 다른 사진을 선택해주세요.');
+  }
+};

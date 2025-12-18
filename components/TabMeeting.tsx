@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, Property, Meeting } from '../types';
 import { generateId } from '../services/firestore';
-import { fileToBase64 } from '../services/storage-firebase';
+import { fileToBase64, compressAndConvertToBase64 } from '../services/storage-firebase';
 import {
   parsePropertyDetails,
   generateStructuredPropertyInfo,
@@ -235,21 +235,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       return;
     }
 
-    // File size validation (5MB max for Firestore storage)
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    // File type validation
     const validFiles: File[] = [];
-    let invalidCount = 0;
+    const invalidTypes: string[] = [];
 
     for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
-        invalidCount++;
-      } else {
+      if (file.type.startsWith('image/')) {
         validFiles.push(file);
+      } else {
+        invalidTypes.push(file.name);
       }
     }
 
-    if (invalidCount > 0) {
-      alert(`${invalidCount}개의 파일이 5MB를 초과하여 제외되었습니다.`);
+    if (invalidTypes.length > 0) {
+      alert(`이미지 파일만 업로드 가능합니다: ${invalidTypes.join(', ')}`);
     }
 
     if (validFiles.length === 0) {
@@ -259,12 +258,28 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     const filesToProcess = validFiles.slice(0, remainingSlots);
 
     try {
-      // Convert files to Base64 and save to Firestore
-      const base64Images = await Promise.all(
-        filesToProcess.map(file => fileToBase64(file))
-      );
+      // Compress images and convert to Base64 (Firestore 1MB limit 고려)
+      console.log(`📸 Compressing ${filesToProcess.length} image(s)...`);
 
-      // Save directly to Firestore
+      const base64Images: string[] = [];
+      for (const file of filesToProcess) {
+        try {
+          console.log(`📸 Processing: ${file.name}`);
+          const base64 = await compressAndConvertToBase64(file);
+          base64Images.push(base64);
+        } catch (error) {
+          console.error(`❌ Error processing ${file.name}:`, error);
+          alert(`${file.name} 처리 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        }
+      }
+
+      if (base64Images.length === 0) {
+        console.warn('⚠️ 압축된 이미지가 없습니다.');
+        return;
+      }
+
+      // Save to Firestore
+      console.log(`✅ Saving ${base64Images.length} compressed image(s) to Firestore...`);
       const updatedPhotos = [...currentProp.photos, ...base64Images];
 
       updateMeeting(activeMeeting.id, {
@@ -275,9 +290,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         )
       });
 
+      console.log(`✅ ${base64Images.length}장의 사진이 업로드되었습니다.`);
       setPhotoUploadPropId(null);
     } catch (error) {
-      console.error('사진 업로드 중 오류:', error);
+      console.error('❌ 사진 업로드 중 오류:', error);
       alert('사진 업로드 중 오류가 발생했습니다.');
       setPhotoUploadPropId(null);
     }

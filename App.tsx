@@ -4,7 +4,7 @@ import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
-import { subscribeToCustomers, createCustomer, deleteCustomer, updateCustomer, generateId } from './services/firestore';
+import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId } from './services/firestore';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -37,17 +37,48 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Listen for full customer details (with subcollections) when customer is selected
+  useEffect(() => {
+    if (!selectedCustomer) return;
+
+    console.log('👁️ Loading full customer details:', selectedCustomer.id);
+    const unsubscribe = subscribeToCustomer(selectedCustomer.id, (customer) => {
+      if (customer) {
+        console.log('✓ Full customer details loaded:', customer);
+        setSelectedCustomer(customer);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [selectedCustomer?.id]);
+
   // Online/Offline detection
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    console.log('🌐 Initial online status:', navigator.onLine ? 'ONLINE' : 'OFFLINE');
+
+    const handleOnline = () => {
+      console.log('📶 Network status: ONLINE (connection restored)');
+      setIsOnline(true);
+    };
+
+    const handleOffline = () => {
+      console.log('📵 Network status: OFFLINE (no connection)');
+      setIsOnline(false);
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
+    // Check periodically (for mobile network changes)
+    const checkInterval = setInterval(() => {
+      const current = navigator.onLine;
+      console.log('🔄 Network check:', current ? 'ONLINE' : 'OFFLINE');
+    }, 30000); // Every 30 seconds
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      clearInterval(checkInterval);
     };
   }, []);
 
@@ -80,9 +111,10 @@ const App: React.FC = () => {
     e.stopPropagation();
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
 
+    // Optimistic update
+    const deletedCustomer = customers.find(c => c.id === id);
+
     try {
-      // Optimistic update
-      const deletedCustomer = customers.find(c => c.id === id);
       setCustomers(prev => prev.filter(c => c.id !== id));
 
       // Close sidebar if deleted customer is selected
