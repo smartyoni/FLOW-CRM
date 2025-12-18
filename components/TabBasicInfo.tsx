@@ -17,7 +17,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
   const [newChecklistText, setNewChecklistText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
-  
+
   // Customer Info Edit State
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState<Partial<Customer>>({});
@@ -26,6 +26,17 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
   const [memoModalItem, setMemoModalItem] = useState<ChecklistItem | null>(null);
   const [memoModalMode, setMemoModalMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [memoText, setMemoText] = useState('');
+
+  // ⭐ 로컬 고객 상태 (즉시 미리보기를 위함)
+  const [localCustomer, setLocalCustomer] = useState<Customer | null>(null);
+
+  // ⭐ Props 고객과 로컬 상태 동기화
+  useEffect(() => {
+    setLocalCustomer(customer);
+  }, [customer.id]);
+
+  // ⭐ 렌더링할 때는 로컬 상태 우선 사용
+  const activeCustomer = localCustomer || customer;
 
   // Customer Edit Handlers
   const startInfoEdit = (e: React.MouseEvent) => {
@@ -43,11 +54,18 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
 
   const saveInfoEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onUpdate({
-      ...customer,
+
+    const updatedCustomer = {
+      ...activeCustomer,
       ...infoForm,
       priceType: infoForm.rentPrice ? 'rent' : 'sale'
-    } as Customer);
+    } as Customer;
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
+
     setIsEditingInfo(false);
   };
 
@@ -57,19 +75,27 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
   };
 
   const handleStageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onUpdate({ ...customer, stage: e.target.value as CustomerStage });
+    const updatedCustomer = { ...activeCustomer, stage: e.target.value as CustomerStage };
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
   };
 
   const handleCheckpointChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCheckpoint = e.target.value as CustomerCheckpoint;
     const updates: Partial<Customer> = { checkpoint: newCheckpoint };
-    
+
     // Automatically set stage to '미팅진행함' if a checkpoint is selected
     if (newCheckpoint) {
       updates.stage = '미팅진행함';
     }
-    
-    onUpdate({ ...customer, ...updates });
+
+    const updatedCustomer = { ...activeCustomer, ...updates };
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
   };
 
   // Add Checklist
@@ -84,20 +110,32 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
       memo: ''
     };
 
-    onUpdate({
-      ...customer,
-      checklists: [newItem, ...customer.checklists]
-    });
+    const updatedCustomer = {
+      ...activeCustomer,
+      checklists: [newItem, ...activeCustomer.checklists]
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
+
     setNewChecklistText('');
   };
 
   // Delete Checklist
   const handleDeleteChecklist = (id: string) => {
     if (!window.confirm('삭제하시겠습니까?')) return;
-    onUpdate({
-      ...customer,
-      checklists: customer.checklists.filter(item => item.id !== id)
-    });
+
+    const updatedCustomer = {
+      ...activeCustomer,
+      checklists: activeCustomer.checklists.filter(item => item.id !== id)
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
   };
 
   // Start Inline Edit
@@ -109,12 +147,18 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
   // Save Inline Edit
   const saveEditing = () => {
     if (editingItemId) {
-      onUpdate({
-        ...customer,
-        checklists: customer.checklists.map(item => 
+      const updatedCustomer = {
+        ...activeCustomer,
+        checklists: activeCustomer.checklists.map(item =>
           item.id === editingItemId ? { ...item, text: editingText } : item
         )
-      });
+      };
+
+      // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+      setLocalCustomer(updatedCustomer);
+      // ⭐ 2. Firebase에 저장 (백그라운드)
+      onUpdate(updatedCustomer);
+
       setEditingItemId(null);
     }
   };
@@ -129,12 +173,18 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
   // Save Memo
   const saveMemo = () => {
     if (memoModalItem) {
-      onUpdate({
-        ...customer,
-        checklists: customer.checklists.map(item =>
+      const updatedCustomer = {
+        ...activeCustomer,
+        checklists: activeCustomer.checklists.map(item =>
           item.id === memoModalItem.id ? { ...item, memo: memoText } : item
         )
-      });
+      };
+
+      // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+      setLocalCustomer(updatedCustomer);
+      // ⭐ 2. Firebase에 저장 (백그라운드)
+      onUpdate(updatedCustomer);
+
       setMemoModalMode('VIEW');
     }
   };
@@ -143,20 +193,20 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
     <div className="flex flex-col h-full bg-white">
       {/* Accordion Header - Basic Info */}
       <div className="border-b border-gray-200">
-        <button 
+        <button
           onClick={toggleHeader}
           className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <span className="font-bold text-gray-700">기본 정보</span>
-            {customer.stage && (
+            {activeCustomer.stage && (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                {customer.stage}
+                {activeCustomer.stage}
               </span>
             )}
-            {customer.checkpoint && (
-               <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                {customer.checkpoint}
+            {activeCustomer.checkpoint && (
+              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                {activeCustomer.checkpoint}
               </span>
             )}
           </div>
@@ -171,8 +221,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                 {/* Stage Dropdown */}
                 <div className="flex items-center bg-gray-50 rounded px-2 py-1 border border-gray-200 w-fit">
                   <span className="text-gray-500 text-xs mr-2 font-bold">진행단계</span>
-                  <select 
-                    value={customer.stage || '접수고객'} 
+                  <select
+                    value={activeCustomer.stage || '접수고객'}
                     onChange={handleStageChange}
                     onClick={(e) => e.stopPropagation()}
                     className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
@@ -186,8 +236,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                 {/* Checkpoint Dropdown */}
                 <div className="flex items-center bg-gray-50 rounded px-2 py-1 border border-gray-200 w-fit">
                   <span className="text-gray-500 text-xs mr-2 font-bold">분기점</span>
-                  <select 
-                    value={customer.checkpoint || ''} 
+                  <select
+                    value={activeCustomer.checkpoint || ''}
                     onChange={handleCheckpointChange}
                     onClick={(e) => e.stopPropagation()}
                     className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
@@ -285,28 +335,28 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-500 block">고객명</span>
-                    <span className="font-medium">{customer.name}</span>
+                    <span className="font-medium">{activeCustomer.name}</span>
                   </div>
                   <div>
                     <span className="text-gray-500 block">연락처</span>
-                    <span className="font-medium">{customer.contact}</span>
+                    <span className="font-medium">{activeCustomer.contact}</span>
                   </div>
                   <div>
                     <span className="text-gray-500 block">입주일자</span>
-                    <span className="font-medium">{customer.moveInDate || '-'}</span>
+                    <span className="font-medium">{activeCustomer.moveInDate || '-'}</span>
                   </div>
                   <div>
                     <span className="text-gray-500 block">가격조건</span>
                     <span className="font-medium">
-                      {customer.price} 
-                      {customer.rentPrice ? ` / ${customer.rentPrice}` : ''}
+                      {activeCustomer.price}
+                      {activeCustomer.rentPrice ? ` / ${activeCustomer.rentPrice}` : ''}
                     </span>
                   </div>
                 </div>
                 <div>
                   <span className="text-gray-500 block">메모</span>
                   <p className="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-1 border">
-                    {customer.memo}
+                    {activeCustomer.memo}
                   </p>
                 </div>
               </>
@@ -341,12 +391,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
 
         {/* List */}
         <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-          {customer.checklists.map(item => (
+          {activeCustomer.checklists.map(item => (
             <div key={item.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 mr-2" onDoubleClick={() => startEditing(item)}>
                   {editingItemId === item.id ? (
-                    <input 
+                    <input
                       autoFocus
                       className="w-full border-b-2 border-primary outline-none"
                       value={editingText}
@@ -375,7 +425,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
               </div>
             </div>
           ))}
-          {customer.checklists.length === 0 && (
+          {activeCustomer.checklists.length === 0 && (
             <div className="text-center text-gray-400 py-10">
               등록된 체크리스트가 없습니다.
             </div>

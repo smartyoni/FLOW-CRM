@@ -81,11 +81,15 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       createdAt: Date.now()
     };
 
+    // ⭐ 1. 로컬 상태 먼저 설정 (즉시 UI 반영)
+    setLocalMeeting(newMeeting);
+    setActiveMeetingId(newMeeting.id);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
     onUpdate({
       ...customer,
       meetings: [...(customer.meetings || []), newMeeting]
     });
-    setActiveMeetingId(newMeeting.id);
   };
 
   const handleDeleteMeeting = (e: React.MouseEvent, meetingId: string) => {
@@ -99,14 +103,18 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       round: index + 1
     }));
 
+    // ⭐ 1. 활성 미팅 ID 먼저 변경 (즉시 UI 반영)
+    if (activeMeetingId === meetingId) {
+      const newActiveMeetingId = reorderedMeetings.length > 0 ? reorderedMeetings[reorderedMeetings.length - 1].id : null;
+      setActiveMeetingId(newActiveMeetingId);
+      setLocalMeeting(reorderedMeetings.find(m => m.id === newActiveMeetingId) || null);
+    }
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
     onUpdate({
       ...customer,
       meetings: reorderedMeetings
     });
-
-    if (activeMeetingId === meetingId) {
-      setActiveMeetingId(reorderedMeetings.length > 0 ? reorderedMeetings[reorderedMeetings.length - 1].id : null);
-    }
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,19 +206,40 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const handleDeleteProperty = (propId: string) => {
     if (!window.confirm('매물을 삭제하시겠습니까?') || !activeMeeting) return;
-    
+
+    const updatedProperties = activeMeeting.properties.filter(p => p.id !== propId);
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    const updatedLocalMeeting = {
+      ...activeMeeting,
+      properties: updatedProperties
+    };
+    setLocalMeeting(updatedLocalMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
     updateMeeting(activeMeeting.id, {
-      properties: activeMeeting.properties.filter(p => p.id !== propId)
+      properties: updatedProperties
     });
   };
 
   // 매물의 구조화된 필드를 업데이트합니다
   const updatePropertyField = (propId: string, field: keyof Property, value: string) => {
     if (!activeMeeting) return;
+
+    const updatedProperties = activeMeeting.properties.map(p =>
+      p.id === propId ? { ...p, [field]: value } : p
+    );
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    const updatedLocalMeeting = {
+      ...activeMeeting,
+      properties: updatedProperties
+    };
+    setLocalMeeting(updatedLocalMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
     updateMeeting(activeMeeting.id, {
-      properties: activeMeeting.properties.map(p =>
-        p.id === propId ? { ...p, [field]: value } : p
-      )
+      properties: updatedProperties
     });
   };
 
@@ -991,11 +1020,19 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           onClick={() => {
                             if (window.confirm('이 매물을 삭제하시겠습니까?')) {
                               if (activeMeeting) {
-                                const updated = {
+                                const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
+
+                                // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+                                const updatedLocalMeeting = {
                                   ...activeMeeting,
-                                  properties: activeMeeting.properties.filter(p => p.id !== prop.id)
+                                  properties: updatedProperties
                                 };
-                                onUpdate({ ...customer, meetings: customer.meetings.map(m => m.id === activeMeeting.id ? updated : m) });
+                                setLocalMeeting(updatedLocalMeeting);
+
+                                // ⭐ 2. Firebase에 저장 (백그라운드)
+                                updateMeeting(activeMeeting.id, {
+                                  properties: updatedProperties
+                                });
                               }
                             }
                           }}
