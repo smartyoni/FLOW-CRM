@@ -130,7 +130,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   // --- Property Management (within Active Meeting) ---
 
   const handleAddProperty = () => {
-    if (!propertyText.trim() || !activeMeeting) return;
+    // propertyText 또는 parsedText 중 하나라도 있으면 등록 가능
+    if ((!propertyText.trim() && !parsedText.trim()) || !activeMeeting) return;
 
     // 필수 필드 검증 (선택적)
     if (!parsedRoomName && !parsedJibun && !parsedAgency && !parsedAgencyPhone) {
