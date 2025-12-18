@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint } from '../types';
 import { generateId } from '../services/storage';
 import { formatPhoneNumber } from '../utils/phoneUtils';
