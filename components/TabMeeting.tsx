@@ -224,12 +224,34 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const handlePhotoUpload = async (files: File[]) => {
-    if (!photoUploadPropId || !activeMeeting) return;
+    console.log('🎬 handlePhotoUpload called with', files.length, 'files');
+    console.log('📍 photoUploadPropId:', photoUploadPropId);
+    console.log('📍 activeMeeting:', activeMeeting?.id);
+
+    if (!photoUploadPropId) {
+      console.error('❌ photoUploadPropId is not set');
+      alert('매물이 선택되지 않았습니다.');
+      return;
+    }
+
+    if (!activeMeeting) {
+      console.error('❌ activeMeeting is not set');
+      alert('미팅이 선택되지 않았습니다.');
+      return;
+    }
 
     const currentProp = activeMeeting.properties.find(p => p.id === photoUploadPropId);
-    if (!currentProp) return;
+    console.log('🔍 currentProp found:', !!currentProp);
+
+    if (!currentProp) {
+      console.error('❌ currentProp not found for id:', photoUploadPropId);
+      alert('해당 매물을 찾을 수 없습니다.');
+      return;
+    }
 
     const remainingSlots = 4 - currentProp.photos.length;
+    console.log('📸 remainingSlots:', remainingSlots, 'currentPhotos:', currentProp.photos.length);
+
     if (remainingSlots <= 0) {
       alert('사진은 최대 4장까지만 등록 가능합니다.');
       return;
@@ -240,6 +262,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     const invalidTypes: string[] = [];
 
     for (const file of files) {
+      console.log(`📄 File check: ${file.name}, type: ${file.type}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
       if (file.type.startsWith('image/')) {
         validFiles.push(file);
       } else {
@@ -252,10 +275,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
 
     if (validFiles.length === 0) {
+      console.warn('⚠️ No valid image files');
       return;
     }
 
     const filesToProcess = validFiles.slice(0, remainingSlots);
+    console.log(`✅ Processing ${filesToProcess.length} valid files`);
 
     try {
       // Compress images and convert to Base64 (Firestore 1MB limit 고려)
@@ -266,6 +291,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         try {
           console.log(`📸 Processing: ${file.name}`);
           const base64 = await compressAndConvertToBase64(file);
+          console.log(`✅ ${file.name} compressed successfully`);
           base64Images.push(base64);
         } catch (error) {
           console.error(`❌ Error processing ${file.name}:`, error);
@@ -275,12 +301,14 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
       if (base64Images.length === 0) {
         console.warn('⚠️ 압축된 이미지가 없습니다.');
+        alert('압축에 실패한 사진이 있습니다. 다시 시도해주세요.');
         return;
       }
 
       // Save to Firestore
       console.log(`✅ Saving ${base64Images.length} compressed image(s) to Firestore...`);
       const updatedPhotos = [...currentProp.photos, ...base64Images];
+      console.log(`📝 Updated photos count: ${updatedPhotos.length}`);
 
       updateMeeting(activeMeeting.id, {
         properties: activeMeeting.properties.map(p =>

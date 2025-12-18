@@ -117,19 +117,23 @@ export const compressAndConvertToBase64 = async (file: File): Promise<string> =>
   const options = {
     maxSizeMB: 0.2,              // 최대 200KB
     maxWidthOrHeight: 1920,      // 최대 해상도
-    useWebWorker: true,          // 백그라운드 처리
+    useWebWorker: false,         // 모바일 호환성을 위해 비활성화
     fileType: 'image/jpeg',      // JPEG 변환
     initialQuality: 0.8,         // 초기 품질 80%
   };
 
   try {
     console.log('🖼️ Original file size:', (file.size / 1024 / 1024).toFixed(2), 'MB');
+    console.log('📝 File type:', file.type);
 
     // 1. 이미지 압축
+    console.log('⏳ Starting image compression...');
     const compressedFile = await imageCompression(file, options);
     console.log('✅ Compressed file size:', (compressedFile.size / 1024).toFixed(2), 'KB');
+    console.log('✅ Compressed file type:', compressedFile.type);
 
     // 2. Base64 변환
+    console.log('⏳ Converting to Base64...');
     const base64 = await fileToBase64(compressedFile);
     const base64Size = base64.length * 0.75 / 1024; // Base64 → bytes 변환
     console.log('📦 Base64 size:', base64Size.toFixed(2), 'KB');
@@ -140,6 +144,7 @@ export const compressAndConvertToBase64 = async (file: File): Promise<string> =>
       throw new Error(`압축 후에도 파일이 너무 큽니다. (${base64Size.toFixed(0)}KB > 300KB)`);
     }
 
+    console.log('✅ Compression and conversion complete!');
     return base64;
   } catch (error) {
     console.error('❌ Image compression failed:', error);
