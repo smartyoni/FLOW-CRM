@@ -18,27 +18,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
 
   // 오늘 미팅 고객 필터링
   const todayMeetingCustomers = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // 현재 날짜를 YYYY-MM-DD 형식 문자열로 가져오기 (타임존 무시)
+    const todayString = new Date().toLocaleDateString('en-CA'); // 'en-CA' 형식: YYYY-MM-DD
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    console.log('📅 오늘 미팅 필터링 시작:', {
+      오늘: todayString,
+      전체고객수: customers.length
+    });
 
-    return customers.filter(customer => {
+    const result = customers.filter(customer => {
       if (!customer.meetings || customer.meetings.length === 0) {
         return false;
       }
 
-      return customer.meetings.some(meeting => {
-        const meetingDate = new Date(meeting.date);
+      const hasTodayMeeting = customer.meetings.some(meeting => {
+        try {
+          // 미팅 날짜를 Date로 변환
+          const meetingDate = new Date(meeting.date);
 
-        if (isNaN(meetingDate.getTime())) {
+          if (isNaN(meetingDate.getTime())) {
+            console.warn('⚠️ 잘못된 날짜 형식:', customer.name, meeting.date);
+            return false;
+          }
+
+          // 미팅 날짜를 YYYY-MM-DD 형식으로 변환
+          const meetingDateString = meetingDate.toLocaleDateString('en-CA');
+
+          console.log('🔍 미팅 날짜 비교:', {
+            고객: customer.name,
+            저장된미팅: meeting.date,
+            파싱된미팅: meetingDateString,
+            오늘: todayString,
+            일치: meetingDateString === todayString
+          });
+
+          const isToday = meetingDateString === todayString;
+          if (isToday) {
+            console.log('✅ 오늘 미팅 고객 발견:', customer.name);
+          }
+          return isToday;
+        } catch (error) {
+          console.error('❌ 미팅 날짜 처리 오류:', customer.name, meeting.date, error);
           return false;
         }
-
-        return meetingDate >= today && meetingDate < tomorrow;
       });
+
+      return hasTodayMeeting;
     });
+
+    console.log('📊 오늘미팅 필터링 결과:', result.length, '명');
+    return result;
   }, [customers]);
 
   return (

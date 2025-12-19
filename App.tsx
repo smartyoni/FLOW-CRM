@@ -5,7 +5,7 @@ import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId } from './services/firestore';
+import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays } from './services/firestore';
 
 type ViewMode = 'dashboard' | 'customerList';
 
@@ -20,6 +20,28 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+
+  // 마이그레이션: 서브컬렉션 데이터를 배열 필드로 전환 (최초 1회만 실행)
+  useEffect(() => {
+    const runMigration = async () => {
+      try {
+        // 최초 1회만 실행 확인
+        if (!localStorage.getItem('migration_completed_v1')) {
+          console.log('🔄 Starting migration...');
+          await migrateSubcollectionsToArrays();
+          localStorage.setItem('migration_completed_v1', 'true');
+          console.log('✓ Migration completed and marked as done');
+        } else {
+          console.log('✓ Migration already completed, skipping');
+        }
+      } catch (error) {
+        console.error('❌ 마이그레이션 실패:', error);
+        setError('데이터 마이그레이션 중 오류가 발생했습니다.');
+      }
+    };
+
+    runMigration();
+  }, []);
 
   // Real-time listener for customers
   useEffect(() => {
@@ -42,7 +64,8 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Listen for full customer details (with subcollections) when customer is selected
+  // Listen for full customer details when customer is selected
+  // After migration, subscribeToCustomer returns complete data with array fields
   useEffect(() => {
     if (!selectedCustomer) return;
 
@@ -229,8 +252,6 @@ const App: React.FC = () => {
       <Sidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
-        showFavoritesOnly={showFavoritesOnly}
-        onToggleFavoriteFilter={handleToggleFavoriteFilter}
         currentView={currentView}
         onViewChange={handleViewChange}
       />
@@ -244,7 +265,7 @@ const App: React.FC = () => {
           />
         ) : (
           <CustomerList
-            customers={showFavoritesOnly ? customers.filter(c => c.isFavorite) : customers}
+            customers={customers}
             onSelect={handleSelectCustomer}
             onAddClick={() => setIsFormOpen(true)}
             onDelete={handleDeleteCustomer}
