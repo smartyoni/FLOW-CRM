@@ -262,6 +262,7 @@ const App: React.FC = () => {
           <Dashboard
             customers={customers}
             onSelectCustomer={handleSelectCustomer}
+            onMenuClick={() => setIsMobileSidebarOpen(true)}
           />
         ) : (
           <CustomerList

@@ -5,9 +5,10 @@ import { DashboardCard } from './DashboardCard';
 interface DashboardProps {
   customers: Customer[];
   onSelectCustomer: (customer: Customer) => void;
+  onMenuClick: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustomer }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustomer, onMenuClick }) => {
   // 집중고객 (즐겨찾기) 필터링
   const favoriteCustomers = useMemo(() => {
     return customers
@@ -71,8 +72,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
   }, [customers]);
 
   return (
-    <div className="w-full h-full bg-gray-100 overflow-y-auto p-4 md:p-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl mx-auto">
+    <div className="w-full h-full bg-gray-100 overflow-y-auto">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+        <button
+          onClick={onMenuClick}
+          className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
+          aria-label="메뉴 열기"
+        >
+          <i className="fas fa-bars text-lg"></i>
+        </button>
+        <h2 className="text-lg font-bold text-gray-800">대시보드</h2>
+        <div className="w-10"></div>
+      </div>
+
+      {/* Dashboard Content */}
+      <div className="p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl mx-auto">
         {/* 카드 1: 집중고객 */}
         <DashboardCard
           title="집중고객"
@@ -116,6 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
           isEmpty={true}
           color="gray"
         />
+        </div>
       </div>
     </div>
   );
