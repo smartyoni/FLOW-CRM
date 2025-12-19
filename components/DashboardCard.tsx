@@ -77,7 +77,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
       </div>
 
       {/* 컨텐츠 */}
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className="flex-1 overflow-y-auto space-y-1">
         {isEmpty ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <i className={`fas fa-box-open ${theme.icon} text-4xl mb-3 opacity-50`}></i>
@@ -88,17 +88,14 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
             <div
               key={customer.id}
               onClick={() => onSelectCustomer(customer)}
-              className={`bg-white border border-gray-200 rounded-lg p-3 cursor-pointer ${theme.hover} transition-all shadow-sm hover:shadow-md active:scale-95`}
+              className={`bg-white border border-gray-200 rounded-lg p-2 cursor-pointer ${theme.hover} transition-all shadow-sm hover:shadow-md active:scale-95`}
             >
               <div className="flex items-center gap-2">
                 {customer.isFavorite && title === '집중고객' && (
                   <i className="fas fa-star text-yellow-400 text-sm"></i>
                 )}
-                <span className="font-medium text-gray-800">{customer.name}</span>
+                <span className="font-medium text-gray-800 text-sm">{customer.name}</span>
               </div>
-              {customer.contact && (
-                <p className="text-xs text-gray-500 mt-1">{customer.contact}</p>
-              )}
             </div>
           ))
         ) : (
