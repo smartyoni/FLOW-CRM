@@ -22,6 +22,10 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
   const [memoModalMode, setMemoModalMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [memoText, setMemoText] = useState('');
 
+  // Checklist Edit State
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
   // 1. Merge Checklists and Meetings
   const events: TimelineEvent[] = [];
 
@@ -79,14 +83,36 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
       const updatedChecklists = customer.checklists.map(item =>
         item.id === memoModalItem.id ? { ...item, memo: memoText } : item
       );
-      
+
       onUpdate({
         ...customer,
         checklists: updatedChecklists
       });
-      
+
       setMemoModalItem({ ...memoModalItem, memo: memoText });
       setMemoModalMode('VIEW');
+    }
+  };
+
+  // Start Inline Edit for Checklist
+  const startEditing = (item: ChecklistItem) => {
+    setEditingItemId(item.id);
+    setEditingText(item.text);
+  };
+
+  // Save Inline Edit for Checklist
+  const saveEditing = () => {
+    if (editingItemId) {
+      const updatedChecklists = customer.checklists.map(item =>
+        item.id === editingItemId ? { ...item, text: editingText } : item
+      );
+
+      onUpdate({
+        ...customer,
+        checklists: updatedChecklists
+      });
+
+      setEditingItemId(null);
     }
   };
 
@@ -129,13 +155,24 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                 <div className={`absolute -left-6 top-5 w-4 h-px ${isMeeting ? 'bg-blue-300' : 'bg-gray-200'}`}></div>
                                 {/* Connector Dot on Timeline */}
                                 <div className={`absolute -left-[23px] top-[18px] w-1.5 h-1.5 rounded-full ${isMeeting ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
-                                
+
                                 <div className="flex justify-between items-start gap-2">
-                                    <div className="flex-1">
-                                      <h4 className={`font-bold text-sm leading-snug break-all ${isMeeting ? 'text-blue-800' : 'text-gray-800'}`}>
-                                          {isMeeting && <i className="fas fa-handshake mr-1.5"></i>}
-                                          {event.title}
-                                      </h4>
+                                    <div className="flex-1" onDoubleClick={() => !isMeeting && startEditing(checklistItem!)}>
+                                      {!isMeeting && editingItemId === event.id ? (
+                                        <input
+                                          autoFocus
+                                          className="w-full border-b-2 border-primary outline-none text-sm font-bold text-gray-800"
+                                          value={editingText}
+                                          onChange={(e) => setEditingText(e.target.value)}
+                                          onBlur={saveEditing}
+                                          onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
+                                        />
+                                      ) : (
+                                        <h4 className={`font-bold text-sm leading-snug break-all cursor-pointer ${isMeeting ? 'text-blue-800' : 'text-gray-800'}`} title={!isMeeting ? "더블클릭하여 수정" : undefined}>
+                                            {isMeeting && <i className="fas fa-handshake mr-1.5"></i>}
+                                            {event.title}
+                                        </h4>
+                                      )}
                                       {event.subText && (
                                         <p className="text-xs text-gray-500 mt-1 pl-0.5">{event.subText}</p>
                                       )}
@@ -145,7 +182,7 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                           {event.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                       </span>
                                       {!isMeeting && (
-                                        <button 
+                                        <button
                                           onClick={() => openMemo(checklistItem!)}
                                           className="text-gray-300 hover:text-blue-500 transition-colors p-1"
                                           title="메모 관리"
@@ -155,10 +192,10 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                       )}
                                     </div>
                                 </div>
-                                
+
                                 {/* Show Memo for Checklist Items */}
                                 {!isMeeting && checklistItem?.memo && (
-                                    <div 
+                                    <div
                                       className="mt-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-100 cursor-pointer hover:bg-yellow-100 transition-colors"
                                       onClick={() => openMemo(checklistItem)}
                                       title="클릭하여 메모 수정"
