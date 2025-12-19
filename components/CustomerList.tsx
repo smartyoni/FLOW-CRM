@@ -84,7 +84,7 @@ const CHECKPOINT_ORDER: CustomerCheckpoint[] = ['계약진행', '재미팅잡기
 
 export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
-  const [mobileSectionTab, setMobileSectionTab] = useState<'stages' | 'checkpoints'>('stages');
+  const [activeTabGroup, setActiveTabGroup] = useState<'stages' | 'checkpoints'>('stages');
   const [activeStageTab, setActiveStageTab] = useState<CustomerStage>('접수고객');
   const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('계약진행');
 
@@ -328,58 +328,27 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
         </button>
       </div>
 
-      {/* Mobile Section Tabs - "미팅 전" vs "미팅 후" */}
-      <div className="md:hidden bg-white border-b shrink-0">
-        <div className="flex">
-          <button
-            onClick={() => setMobileSectionTab('stages')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
-              mobileSectionTab === 'stages'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500'
-            }`}
-          >
-            미팅 전
-          </button>
-          <button
-            onClick={() => setMobileSectionTab('checkpoints')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
-              mobileSectionTab === 'checkpoints'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500'
-            }`}
-          >
-            미팅 후
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Stage Tabs - Individual stage selector */}
+      {/* Top Stage Tabs - 미팅 전 (Always Visible) */}
       <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
-        <div className="flex p-2 gap-2">
-          {(mobileSectionTab === 'stages' ? STAGE_ORDER : CHECKPOINT_ORDER).map(stage => {
-            const config = mobileSectionTab === 'stages' ? STAGE_CONFIG[stage] : CHECKPOINT_CONFIG[stage];
-            const count = customers.filter(c =>
-              mobileSectionTab === 'stages'
-                ? (c.stage || '접수고객') === stage
-                : c.checkpoint === stage
-            ).length;
+        <div className="flex p-2 gap-2 min-w-max">
+          {STAGE_ORDER.map(stage => {
+            const config = STAGE_CONFIG[stage];
+            const count = customers.filter(c => (c.stage || '접수고객') === stage).length;
+            const isActive = activeTabGroup === 'stages' && activeStageTab === stage;
 
             return (
               <button
                 key={stage}
-                onClick={() =>
-                  mobileSectionTab === 'stages'
-                    ? setActiveStageTab(stage as CustomerStage)
-                    : setActiveCheckpointTab(stage as CustomerCheckpoint)
-                }
-                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                  (mobileSectionTab === 'stages' ? activeStageTab : activeCheckpointTab) === stage
+                onClick={() => {
+                  setActiveStageTab(stage);
+                  setActiveTabGroup('stages');
+                }}
+                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  isActive
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                <i className={`fas ${config.icon} mr-1.5`}></i>
                 {config.label} ({count})
               </button>
             );
@@ -390,13 +359,41 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       {/* Mobile Single Column View */}
       <div className="flex-1 overflow-hidden md:hidden">
         {renderMobileColumn(
-          mobileSectionTab === 'stages' ? activeStageTab : activeCheckpointTab,
+          activeTabGroup === 'stages' ? activeStageTab : activeCheckpointTab,
           customers.filter(c =>
-            mobileSectionTab === 'stages'
+            activeTabGroup === 'stages'
               ? (c.stage || '접수고객') === activeStageTab
               : c.checkpoint === activeCheckpointTab
           )
         )}
+      </div>
+
+      {/* Bottom Checkpoint Tabs - 미팅 후 (Footer Always Visible) */}
+      <div className="md:hidden bg-white border-t shrink-0 overflow-x-auto">
+        <div className="flex p-2 gap-2 min-w-max">
+          {CHECKPOINT_ORDER.map(checkpoint => {
+            const config = CHECKPOINT_CONFIG[checkpoint];
+            const count = customers.filter(c => c.checkpoint === checkpoint).length;
+            const isActive = activeTabGroup === 'checkpoints' && activeCheckpointTab === checkpoint;
+
+            return (
+              <button
+                key={checkpoint}
+                onClick={() => {
+                  setActiveCheckpointTab(checkpoint);
+                  setActiveTabGroup('checkpoints');
+                }}
+                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  isActive
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {config.label} ({count})
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Desktop View - Hidden on Mobile */}
