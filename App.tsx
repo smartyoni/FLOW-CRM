@@ -4,7 +4,10 @@ import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
+import { Dashboard } from './components/Dashboard';
 import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId } from './services/firestore';
+
+type ViewMode = 'dashboard' | 'customerList';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -16,6 +19,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
 
   // Real-time listener for customers
   useEffect(() => {
@@ -168,6 +172,10 @@ const App: React.FC = () => {
     setShowFavoritesOnly(prev => !prev);
   };
 
+  const handleViewChange = (view: ViewMode) => {
+    setCurrentView(view);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -223,18 +231,27 @@ const App: React.FC = () => {
         onClose={() => setIsMobileSidebarOpen(false)}
         showFavoritesOnly={showFavoritesOnly}
         onToggleFavoriteFilter={handleToggleFavoriteFilter}
+        currentView={currentView}
+        onViewChange={handleViewChange}
       />
 
-      {/* Main Content - Kanban Board */}
+      {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        <CustomerList
-          customers={showFavoritesOnly ? customers.filter(c => c.isFavorite) : customers}
-          onSelect={handleSelectCustomer}
-          onAddClick={() => setIsFormOpen(true)}
-          onDelete={handleDeleteCustomer}
-          onToggleFavorite={handleToggleFavorite}
-          onMenuClick={() => setIsMobileSidebarOpen(true)}
-        />
+        {currentView === 'dashboard' ? (
+          <Dashboard
+            customers={customers}
+            onSelectCustomer={handleSelectCustomer}
+          />
+        ) : (
+          <CustomerList
+            customers={showFavoritesOnly ? customers.filter(c => c.isFavorite) : customers}
+            onSelect={handleSelectCustomer}
+            onAddClick={() => setIsFormOpen(true)}
+            onDelete={handleDeleteCustomer}
+            onToggleFavorite={handleToggleFavorite}
+            onMenuClick={() => setIsMobileSidebarOpen(true)}
+          />
+        )}
       </div>
 
       {/* Right Detail Sidebar (Overlay) */}

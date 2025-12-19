@@ -5,13 +5,17 @@ interface SidebarProps {
   onClose?: () => void;
   showFavoritesOnly?: boolean;
   onToggleFavoriteFilter?: () => void;
+  currentView?: 'dashboard' | 'customerList';
+  onViewChange?: (view: 'dashboard' | 'customerList') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
   showFavoritesOnly = false,
-  onToggleFavoriteFilter
+  onToggleFavoriteFilter,
+  currentView = 'dashboard',
+  onViewChange
 }) => {
   const handleMenuClick = () => {
     onToggleFavoriteFilter?.();
@@ -58,18 +62,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <ul className="space-y-2">
           <li>
             <button
-              onClick={handleMenuClick}
+              onClick={() => {
+                onViewChange?.('dashboard');
+                onClose?.();
+              }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                showFavoritesOnly
+                currentView === 'dashboard'
+                  ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <i className={`fas fa-chart-line w-5 ${
+                currentView === 'dashboard' ? 'text-blue-500' : 'text-gray-500'
+              }`}></i>
+              <span className="font-medium text-sm">대시보드</span>
+              {currentView === 'dashboard' && (
+                <i className="fas fa-check ml-auto text-blue-600 text-xs"></i>
+              )}
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => {
+                onViewChange?.('customerList');
+                onToggleFavoriteFilter?.();
+                onClose?.();
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+                currentView === 'customerList' && showFavoritesOnly
                   ? 'bg-yellow-50 text-yellow-700 ring-2 ring-yellow-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
               <i className={`fas fa-star w-5 ${
-                showFavoritesOnly ? 'text-yellow-500' : 'text-gray-500'
+                currentView === 'customerList' && showFavoritesOnly ? 'text-yellow-500' : 'text-gray-500'
               }`}></i>
               <span className="font-medium text-sm">집중중인고객</span>
-              {showFavoritesOnly && (
+              {currentView === 'customerList' && showFavoritesOnly && (
                 <i className="fas fa-check ml-auto text-yellow-600 text-xs"></i>
               )}
             </button>
