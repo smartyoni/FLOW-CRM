@@ -3,10 +3,18 @@ import React from 'react';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
+  showFavoritesOnly?: boolean;
+  onToggleFavoriteFilter?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen = false,
+  onClose,
+  showFavoritesOnly = false,
+  onToggleFavoriteFilter
+}) => {
   const handleMenuClick = () => {
+    onToggleFavoriteFilter?.();
     onClose?.();
   };
 
@@ -49,39 +57,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
           <li>
-            <a href="#" onClick={handleMenuClick} className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors">
-              <i className="fas fa-home text-gray-600 w-5"></i>
-              <span className="text-gray-700 text-sm">대시보드</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" onClick={handleMenuClick} className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-blue-50 text-blue-600 transition-colors">
-              <i className="fas fa-users w-5"></i>
-              <span className="font-medium text-sm">고객 관리</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" onClick={handleMenuClick} className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors">
-              <i className="fas fa-calendar-alt text-gray-600 w-5"></i>
-              <span className="text-gray-700 text-sm">미팅 일정</span>
-            </a>
-          </li>
-          <li>
-            <a href="#" onClick={handleMenuClick} className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-100 transition-colors">
-              <i className="fas fa-chart-bar text-gray-600 w-5"></i>
-              <span className="text-gray-700 text-sm">통계</span>
-            </a>
+            <button
+              onClick={handleMenuClick}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+                showFavoritesOnly
+                  ? 'bg-yellow-50 text-yellow-700 ring-2 ring-yellow-200'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <i className={`fas fa-star w-5 ${
+                showFavoritesOnly ? 'text-yellow-500' : 'text-gray-500'
+              }`}></i>
+              <span className="font-medium text-sm">집중중인고객</span>
+              {showFavoritesOnly && (
+                <i className="fas fa-check ml-auto text-yellow-600 text-xs"></i>
+              )}
+            </button>
           </li>
         </ul>
       </nav>
 
-      {/* 하단 - 설정 */}
-      <div className="p-4 border-t border-gray-200">
-        <button onClick={handleMenuClick} className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-gray-100 w-full transition-colors">
-          <i className="fas fa-cog text-gray-600 w-5"></i>
-          <span className="text-gray-700 text-sm">설정</span>
-        </button>
-      </div>
     </div>
   );
 };

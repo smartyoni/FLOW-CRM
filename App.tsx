@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Real-time listener for customers
   useEffect(() => {
@@ -163,6 +164,10 @@ const App: React.FC = () => {
     }));
   };
 
+  const handleToggleFavoriteFilter = () => {
+    setShowFavoritesOnly(prev => !prev);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -216,12 +221,14 @@ const App: React.FC = () => {
       <Sidebar
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
+        showFavoritesOnly={showFavoritesOnly}
+        onToggleFavoriteFilter={handleToggleFavoriteFilter}
       />
 
       {/* Main Content - Kanban Board */}
       <div className="flex-1 overflow-hidden">
         <CustomerList
-          customers={customers}
+          customers={showFavoritesOnly ? customers.filter(c => c.isFavorite) : customers}
           onSelect={handleSelectCustomer}
           onAddClick={() => setIsFormOpen(true)}
           onDelete={handleDeleteCustomer}
