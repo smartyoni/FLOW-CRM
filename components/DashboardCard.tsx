@@ -91,7 +91,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
               className={`bg-white border border-gray-200 rounded-lg p-2 cursor-pointer ${theme.hover} transition-all shadow-sm hover:shadow-md active:scale-95`}
             >
               <div className="flex items-center gap-2">
-                {customer.isFavorite && title === '집중고객' && (
+                {customer.isFavorite && title === '관리중인 고객' && (
                   <i className="fas fa-star text-yellow-400 text-sm"></i>
                 )}
                 <span className="font-medium text-gray-800 text-sm">{customer.name}</span>

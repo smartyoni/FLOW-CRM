@@ -89,9 +89,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
       {/* Dashboard Content */}
       <div className="p-4 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl mx-auto">
-        {/* 카드 1: 집중고객 */}
+        {/* 카드 1: 관리중인 고객 */}
         <DashboardCard
-          title="집중고객"
+          title="관리중인 고객"
           icon="fa-star"
           customers={favoriteCustomers}
           onSelectCustomer={onSelectCustomer}
