@@ -25,10 +25,10 @@ const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: 
     icon: 'fa-phone-alt',
     bg: 'bg-orange-100'
   },
-  '약속확정': { 
-    label: '약속확정', 
-    desc: '만날 약속을 잡은 고객들', 
-    color: 'text-purple-600', 
+  '약속확정': {
+    label: '약속확정(첫미팅)',
+    desc: '만날 약속을 잡은 고객들',
+    color: 'text-purple-600',
     icon: 'fa-calendar-check',
     bg: 'bg-purple-100'
   },
@@ -64,7 +64,7 @@ const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: strin
     bg: 'bg-amber-100'
   },
   '약속확정': {
-    label: '약속확정',
+    label: '약속확정(재미팅)',
     desc: '재미팅 약속 확정',
     color: 'text-purple-600',
     icon: 'fa-calendar-check',

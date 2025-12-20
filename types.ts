@@ -42,9 +42,10 @@ export interface Customer {
   price: string; // 매매가 or 보증금
   rentPrice?: string; // 월세 (optional)
   memo: string;
+  registrationDate?: string; // 접수일 (optional)
   stage?: CustomerStage; // New field for customer journey stage
   checkpoint?: CustomerCheckpoint; // New field for detailed status checkpoint
-  
+
   // Favorites
   isFavorite?: boolean;
   favoritedAt?: number; // Timestamp for sorting

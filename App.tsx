@@ -5,9 +5,11 @@ import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
+import { PreMeetingView } from './components/PreMeetingView';
+import { ReMeetingView } from './components/ReMeetingView';
 import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays } from './services/firestore';
 
-type ViewMode = 'dashboard' | 'customerList';
+type ViewMode = 'dashboard' | 'customerList' | 'preMeeting' | 'reMeeting';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -260,6 +262,18 @@ const App: React.FC = () => {
       <div className="flex-1 overflow-hidden">
         {currentView === 'dashboard' ? (
           <Dashboard
+            customers={customers}
+            onSelectCustomer={handleSelectCustomer}
+            onMenuClick={() => setIsMobileSidebarOpen(true)}
+          />
+        ) : currentView === 'preMeeting' ? (
+          <PreMeetingView
+            customers={customers}
+            onSelectCustomer={handleSelectCustomer}
+            onMenuClick={() => setIsMobileSidebarOpen(true)}
+          />
+        ) : currentView === 'reMeeting' ? (
+          <ReMeetingView
             customers={customers}
             onSelectCustomer={handleSelectCustomer}
             onMenuClick={() => setIsMobileSidebarOpen(true)}

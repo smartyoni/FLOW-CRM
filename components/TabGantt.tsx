@@ -9,11 +9,11 @@ interface Props {
 // Unified interface for rendering
 interface TimelineEvent {
   id: string;
-  type: 'CHECKLIST' | 'MEETING';
+  type: 'CHECKLIST' | 'MEETING' | 'REGISTRATION';
   date: Date;
   title: string;
   subText?: string;
-  originalItem: ChecklistItem | Meeting;
+  originalItem: ChecklistItem | Meeting | null;
 }
 
 export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
@@ -28,6 +28,17 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 1. Merge Checklists and Meetings
   const events: TimelineEvent[] = [];
+
+  // Add Registration Date
+  if (customer.registrationDate) {
+    events.push({
+      id: `registration-${customer.id}`,
+      type: 'REGISTRATION',
+      date: new Date(customer.registrationDate),
+      title: '고객 접수',
+      originalItem: null
+    });
+  }
 
   // Add Checklists
   customer.checklists.forEach(item => {
@@ -147,18 +158,19 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                     <div className="space-y-3 pl-10">
                         {items.map(event => {
                           const isMeeting = event.type === 'MEETING';
-                          const checklistItem = !isMeeting ? (event.originalItem as ChecklistItem) : null;
-                          
+                          const isRegistration = event.type === 'REGISTRATION';
+                          const checklistItem = event.type === 'CHECKLIST' ? (event.originalItem as ChecklistItem) : null;
+
                           return (
-                            <div key={event.id} className={`border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow relative group ${isMeeting ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                            <div key={event.id} className={`border rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow relative group ${isMeeting ? 'bg-blue-50 border-blue-200' : isRegistration ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}>
                                 {/* Connector Line (Horizontal) */}
-                                <div className={`absolute -left-6 top-5 w-4 h-px ${isMeeting ? 'bg-blue-300' : 'bg-gray-200'}`}></div>
+                                <div className={`absolute -left-6 top-5 w-4 h-px ${isMeeting ? 'bg-blue-300' : isRegistration ? 'bg-green-300' : 'bg-gray-200'}`}></div>
                                 {/* Connector Dot on Timeline */}
-                                <div className={`absolute -left-[23px] top-[18px] w-1.5 h-1.5 rounded-full ${isMeeting ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                                <div className={`absolute -left-[23px] top-[18px] w-1.5 h-1.5 rounded-full ${isMeeting ? 'bg-blue-500' : isRegistration ? 'bg-green-500' : 'bg-gray-300'}`}></div>
 
                                 <div className="flex justify-between items-start gap-2">
-                                    <div className="flex-1" onDoubleClick={() => !isMeeting && startEditing(checklistItem!)}>
-                                      {!isMeeting && editingItemId === event.id ? (
+                                    <div className="flex-1" onDoubleClick={() => event.type === 'CHECKLIST' && startEditing(checklistItem!)}>
+                                      {event.type === 'CHECKLIST' && editingItemId === event.id ? (
                                         <input
                                           autoFocus
                                           className="w-full border-b-2 border-primary outline-none text-sm font-bold text-gray-800"
@@ -168,8 +180,9 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                           onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
                                         />
                                       ) : (
-                                        <h4 className={`font-bold text-sm leading-snug break-all cursor-pointer ${isMeeting ? 'text-blue-800' : 'text-gray-800'}`} title={!isMeeting ? "더블클릭하여 수정" : undefined}>
+                                        <h4 className={`font-bold text-sm leading-snug break-all cursor-pointer ${isMeeting ? 'text-blue-800' : isRegistration ? 'text-green-800' : 'text-gray-800'}`} title={event.type === 'CHECKLIST' ? "더블클릭하여 수정" : undefined}>
                                             {isMeeting && <i className="fas fa-handshake mr-1.5"></i>}
+                                            {isRegistration && <i className="fas fa-user-check mr-1.5"></i>}
                                             {event.title}
                                         </h4>
                                       )}
@@ -181,7 +194,7 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                       <span className="text-[10px] text-gray-400 shrink-0 bg-white bg-opacity-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                                           {event.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                       </span>
-                                      {!isMeeting && (
+                                      {event.type === 'CHECKLIST' && (
                                         <button
                                           onClick={() => openMemo(checklistItem!)}
                                           className="text-gray-300 hover:text-blue-500 transition-colors p-1"
@@ -194,7 +207,7 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
                                 </div>
 
                                 {/* Show Memo for Checklist Items */}
-                                {!isMeeting && checklistItem?.memo && (
+                                {event.type === 'CHECKLIST' && checklistItem?.memo && (
                                     <div
                                       className="mt-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-100 cursor-pointer hover:bg-yellow-100 transition-colors"
                                       onClick={() => openMemo(checklistItem)}

@@ -47,7 +47,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
       moveInDate: customer.moveInDate,
       price: customer.price,
       rentPrice: customer.rentPrice,
-      memo: customer.memo
+      memo: customer.memo,
+      registrationDate: customer.registrationDate
     });
     setIsEditingInfo(true);
   };
@@ -293,11 +294,20 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                   </div>
                   <div>
                     <span className="text-gray-500 block text-xs">입주일자</span>
-                    <input 
+                    <input
                       type="date"
                       className="w-full border rounded px-2 py-1"
                       value={infoForm.moveInDate || ''}
                       onChange={e => setInfoForm({...infoForm, moveInDate: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block text-xs">접수일</span>
+                    <input
+                      type="date"
+                      className="w-full border rounded px-2 py-1"
+                      value={infoForm.registrationDate || ''}
+                      onChange={e => setInfoForm({...infoForm, registrationDate: e.target.value})}
                     />
                   </div>
                   <div>
@@ -344,6 +354,10 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
                   <div>
                     <span className="text-gray-500 block">입주일자</span>
                     <span className="font-medium">{activeCustomer.moveInDate || '-'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">접수일</span>
+                    <span className="font-medium">{activeCustomer.registrationDate || '-'}</span>
                   </div>
                   <div>
                     <span className="text-gray-500 block">가격조건</span>

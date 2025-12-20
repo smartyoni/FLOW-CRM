@@ -9,6 +9,12 @@ interface Props {
 }
 
 export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
+  // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState<Partial<Customer>>({
     name: '',
     contact: '',
@@ -16,6 +22,7 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
     price: '',
     rentPrice: '',
     memo: '',
+    registrationDate: getTodayDate(),
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -33,6 +40,7 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
       price: formData.price || '',
       rentPrice: formData.rentPrice || '',
       memo: formData.memo || '',
+      registrationDate: formData.registrationDate || getTodayDate(),
       priceType: formData.rentPrice ? 'rent' : 'sale', // simple logic
       stage: '접수고객', // Default stage
       checklists: [],
@@ -77,11 +85,21 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700">입주일자</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-primary focus:ring-primary"
               value={formData.moveInDate}
               onChange={e => setFormData({...formData, moveInDate: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">접수일</label>
+            <input
+              type="date"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2 focus:border-primary focus:ring-primary"
+              value={formData.registrationDate}
+              onChange={e => setFormData({...formData, registrationDate: e.target.value})}
             />
           </div>
 
