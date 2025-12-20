@@ -9,6 +9,17 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustomer, onMenuClick }) => {
+  // 현재 날짜 및 시간 포맷
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayOfWeek = daysOfWeek[now.getDay()];
+  const dateString = `${year}년 ${month}월 ${date}일 (${dayOfWeek}) ${hours}:${minutes}`;
+
   // 집중고객 (즐겨찾기) 필터링
   const favoriteCustomers = useMemo(() => {
     return customers
@@ -88,7 +99,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
 
       {/* Dashboard Content */}
       <div className="p-4 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 max-w-7xl mx-auto">
+        {/* Dashboard Header */}
+        <div className="mb-14 hidden md:block">
+          <div className="flex items-baseline justify-between">
+            <h1 className="text-3xl font-bold text-gray-800">대시보드</h1>
+            <p className="text-red-500 font-semibold text-lg">{dateString}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 max-w-full mx-auto">
         {/* 카드 1: 관리중인 고객 */}
         <DashboardCard
           title="관리중인 고객"
@@ -130,7 +149,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ customers, onSelectCustome
           onSelectCustomer={onSelectCustomer}
           emptyMessage="곧 추가될 기능입니다"
           isEmpty={true}
-          color="gray"
+          color="green"
         />
         </div>
       </div>
