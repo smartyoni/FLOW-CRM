@@ -6,14 +6,12 @@ import { formatPhoneNumber } from '../utils/phoneUtils';
 interface Props {
   customer: Customer;
   onUpdate: (customer: Customer) => void;
-  isHeaderExpanded: boolean;
-  toggleHeader: () => void;
 }
 
 const STAGES: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행', '미팅진행함'];
 const CHECKPOINTS: CustomerCheckpoint[] = ['계약진행', '재미팅잡기', '약속확정', '미팅진행'];
 
-export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpanded, toggleHeader }) => {
+export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   const [newChecklistText, setNewChecklistText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -194,82 +192,61 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
     <div className="flex flex-col h-full bg-white">
       {/* Accordion Header - Basic Info */}
       <div className="border-b border-gray-200">
-        <button
-          onClick={toggleHeader}
-          className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
-        >
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 bg-gray-50">
+          <div className="flex items-center gap-3">
             <span className="font-bold text-gray-700">기본 정보</span>
-            {activeCustomer.stage && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                {activeCustomer.stage}
-              </span>
-            )}
-            {activeCustomer.checkpoint && (
-              <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                {activeCustomer.checkpoint}
-              </span>
-            )}
-          </div>
-          <i className={`fas fa-chevron-${isHeaderExpanded ? 'up' : 'down'} text-gray-500`}></i>
-        </button>
-        
-        {isHeaderExpanded && (
-          <div className="p-4 bg-white space-y-3 text-sm">
-            {/* Header Toolbar: Stage and Edit Buttons */}
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex flex-row gap-2 flex-wrap">
-                {/* Stage Dropdown */}
-                <div className="flex items-center bg-gray-50 rounded px-2 py-1 border border-gray-200 w-fit">
-                  <span className="text-gray-500 text-xs mr-2 font-bold">진행단계</span>
-                  <select
-                    value={activeCustomer.stage || '접수고객'}
-                    onChange={handleStageChange}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
-                  >
-                    {STAGES.map(stage => (
-                      <option key={stage} value={stage}>{stage}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Checkpoint Dropdown */}
-                <div className="flex items-center bg-gray-50 rounded px-2 py-1 border border-gray-200 w-fit">
-                  <span className="text-gray-500 text-xs mr-2 font-bold">분기점</span>
-                  <select
-                    value={activeCustomer.checkpoint || ''}
-                    onChange={handleCheckpointChange}
-                    onClick={(e) => e.stopPropagation()}
-                    className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
-                  >
-                    <option value="">선택</option>
-                    {CHECKPOINTS.map(cp => (
-                      <option key={cp} value={cp}>{cp}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Edit Buttons */}
-              <div>
-                {!isEditingInfo ? (
-                  <button onClick={startInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
-                    <i className="fas fa-edit mr-1"></i>수정
-                  </button>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={saveInfoEdit} className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-blue-600">
-                      저장
-                    </button>
-                    <button onClick={cancelInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
-                      취소
-                    </button>
-                  </div>
-                )}
-              </div>
+            {/* Stage Dropdown */}
+            <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
+              <span className="text-gray-500 text-xs mr-2 font-bold">첫미팅</span>
+              <select
+                value={activeCustomer.stage || '접수고객'}
+                onChange={handleStageChange}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
+              >
+                {STAGES.map(stage => (
+                  <option key={stage} value={stage}>{stage}</option>
+                ))}
+              </select>
             </div>
 
+            {/* Checkpoint Dropdown */}
+            <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
+              <span className="text-gray-500 text-xs mr-2 font-bold">재미팅</span>
+              <select
+                value={activeCustomer.checkpoint || ''}
+                onChange={handleCheckpointChange}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
+              >
+                <option value="">선택</option>
+                {CHECKPOINTS.map(cp => (
+                  <option key={cp} value={cp}>{cp}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Edit Buttons */}
+          <div>
+            {!isEditingInfo ? (
+              <button onClick={startInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
+                <i className="fas fa-edit mr-1"></i>수정
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button onClick={saveInfoEdit} className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-blue-600">
+                  저장
+                </button>
+                <button onClick={cancelInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
+                  취소
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 bg-white space-y-3 text-sm">
             {isEditingInfo ? (
               /* Edit Mode */
               <div className="space-y-3">
@@ -341,43 +318,59 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate, isHeaderExpa
               </div>
             ) : (
               /* View Mode */
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-gray-500 block">고객명</span>
-                    <span className="font-medium">{activeCustomer.name}</span>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                {/* 고객명 */}
+                <div className="flex items-center gap-1.5">
+                  <i className="fas fa-user text-gray-400 w-4"></i>
+                  <span className="text-gray-500 font-medium">고객명:</span>
+                  <span className="text-gray-800 font-semibold">{activeCustomer.name}</span>
+                </div>
+
+                {/* 연락처 */}
+                <div className="flex items-center gap-1.5">
+                  <i className="fas fa-phone text-gray-400 w-4"></i>
+                  <span className="text-gray-500 font-medium">연락처:</span>
+                  <span className="text-gray-800 font-semibold">{activeCustomer.contact}</span>
+                </div>
+
+                {/* 입주일자 */}
+                <div className="flex items-center gap-1.5">
+                  <i className="fas fa-calendar-check text-gray-400 w-4"></i>
+                  <span className="text-gray-500 font-medium">입주일:</span>
+                  <span className="text-gray-800 font-semibold">{activeCustomer.moveInDate || '-'}</span>
+                </div>
+
+                {/* 접수일 */}
+                <div className="flex items-center gap-1.5">
+                  <i className="fas fa-calendar-plus text-gray-400 w-4"></i>
+                  <span className="text-gray-500 font-medium">접수일:</span>
+                  <span className="text-gray-800 font-semibold">{activeCustomer.registrationDate || '-'}</span>
+                </div>
+
+                {/* 가격조건 */}
+                <div className="flex items-center gap-1.5 col-span-2">
+                  <i className="fas fa-won-sign text-gray-400 w-4"></i>
+                  <span className="text-gray-500 font-medium">가격:</span>
+                  <span className="text-gray-800 font-semibold">
+                    {activeCustomer.price}
+                    {activeCustomer.rentPrice ? ` / ${activeCustomer.rentPrice}` : ''}
+                  </span>
+                </div>
+
+                {/* 메모 */}
+                <div className="col-span-3 mt-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <i className="fas fa-sticky-note text-gray-400 w-4"></i>
+                    <span className="text-gray-500 font-medium">메모</span>
                   </div>
-                  <div>
-                    <span className="text-gray-500 block">연락처</span>
-                    <span className="font-medium">{activeCustomer.contact}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">입주일자</span>
-                    <span className="font-medium">{activeCustomer.moveInDate || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">접수일</span>
-                    <span className="font-medium">{activeCustomer.registrationDate || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block">가격조건</span>
-                    <span className="font-medium">
-                      {activeCustomer.price}
-                      {activeCustomer.rentPrice ? ` / ${activeCustomer.rentPrice}` : ''}
-                    </span>
+                  <div className="bg-gray-50 p-2 rounded border border-gray-200 text-xs text-gray-700 max-h-20 overflow-y-auto">
+                    {activeCustomer.memo || '-'}
                   </div>
                 </div>
-                <div>
-                  <span className="text-gray-500 block">메모</span>
-                  <p className="whitespace-pre-wrap bg-gray-50 p-2 rounded mt-1 border">
-                    {activeCustomer.memo}
-                  </p>
-                </div>
-              </>
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
 
       {/* Checklist Section */}
       <div className="flex-1 overflow-hidden flex flex-col p-4 bg-gray-50">

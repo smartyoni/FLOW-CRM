@@ -14,7 +14,6 @@ interface Props {
 
 export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<TabState>('BASIC');
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
 
   if (!customer) return null;
 
@@ -82,11 +81,9 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
           {/* Content Area */}
           <div className="flex-1 overflow-hidden relative">
             {activeTab === 'BASIC' && (
-              <TabBasicInfo 
-                customer={customer} 
+              <TabBasicInfo
+                customer={customer}
                 onUpdate={onUpdate}
-                isHeaderExpanded={isHeaderExpanded}
-                toggleHeader={() => setIsHeaderExpanded(!isHeaderExpanded)}
               />
             )}
             {activeTab === 'MEETING' && (

@@ -3,21 +3,21 @@ import React from 'react';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  currentView?: 'dashboard' | 'customerList' | 'preMeeting' | 'reMeeting';
-  onViewChange?: (view: 'dashboard' | 'customerList' | 'preMeeting' | 'reMeeting') => void;
+  currentView?: 'customerList' | 'preMeeting' | 'reMeeting';
+  onViewChange?: (view: 'customerList' | 'preMeeting' | 'reMeeting') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  currentView = 'dashboard',
+  currentView = 'customerList',
   onViewChange
 }) => {
   const handleMenuClick = () => {
     onClose?.();
   };
 
-  const handleViewClick = (view: 'dashboard' | 'customerList' | 'preMeeting' | 'reMeeting') => {
+  const handleViewClick = (view: 'customerList' | 'preMeeting' | 'reMeeting') => {
     onViewChange?.(view);
     onClose?.();
   };
@@ -77,24 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </li>
 
-          {/* 메뉴 항목 2: 대시보드 */}
-          <li>
-            <button
-              onClick={() => handleViewClick('dashboard')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'dashboard'
-                  ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <i className={`fas fa-chart-line w-5 ${
-                currentView === 'dashboard' ? 'text-blue-500' : 'text-gray-500'
-              }`}></i>
-              <span className="font-medium text-sm">대시보드</span>
-            </button>
-          </li>
-
-          {/* 메뉴 항목 3: 첫미팅전 고객현황 */}
+          {/* 메뉴 항목 2: 첫미팅전 고객현황 */}
           <li>
             <button
               onClick={() => handleViewClick('preMeeting')}
@@ -111,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </li>
 
-          {/* 메뉴 항목 4: 재미팅 고객현황 */}
+          {/* 메뉴 항목 3: 재미팅 고객현황 */}
           <li>
             <button
               onClick={() => handleViewClick('reMeeting')}

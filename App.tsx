@@ -4,12 +4,11 @@ import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
 import { PreMeetingView } from './components/PreMeetingView';
 import { ReMeetingView } from './components/ReMeetingView';
 import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays } from './services/firestore';
 
-type ViewMode = 'dashboard' | 'customerList' | 'preMeeting' | 'reMeeting';
+type ViewMode = 'customerList' | 'preMeeting' | 'reMeeting';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -21,7 +20,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewMode>('customerList');
 
   // 마이그레이션: 서브컬렉션 데이터를 배열 필드로 전환 (최초 1회만 실행)
   useEffect(() => {
@@ -260,13 +259,7 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        {currentView === 'dashboard' ? (
-          <Dashboard
-            customers={customers}
-            onSelectCustomer={handleSelectCustomer}
-            onMenuClick={() => setIsMobileSidebarOpen(true)}
-          />
-        ) : currentView === 'preMeeting' ? (
+        {currentView === 'preMeeting' ? (
           <PreMeetingView
             customers={customers}
             onSelectCustomer={handleSelectCustomer}
