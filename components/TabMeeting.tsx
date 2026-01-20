@@ -1135,13 +1135,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               </span>
                             )}
                           </div>
-                          <div>
+                          <div className="flex items-center gap-2">
                             <span className="text-gray-600">연락처:</span>
                             {editingField === `${prop.id}-agencyPhone` ? (
                               <input
                                 autoFocus
                                 type="text"
-                                className="border rounded px-2 py-1 ml-1 focus:ring-1 focus:ring-primary outline-none text-sm"
+                                className="border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm flex-1"
                                 value={editingFieldValue}
                                 onChange={(e) => setEditingFieldValue(e.target.value)}
                                 onBlur={() => savePropertyInlineField(prop.id, 'agencyPhone')}
@@ -1157,36 +1157,32 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               />
                             ) : (
                               <>
-                                {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) ? (
-                                  <a
-                                    href={generateSmsLink(prop.agencyPhone)}
-                                    className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                                    title="클릭하면 SMS로 연결됩니다"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <span
-                                      onDoubleClick={() => {
-                                        setEditingField(`${prop.id}-agencyPhone`);
-                                        setEditingFieldValue(prop.agencyPhone || '');
-                                      }}
-                                      title="더블클릭하여 편집"
-                                      className="hover:bg-blue-100 px-1 rounded inline-block"
+                                <div className="flex-1">
+                                  {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) ? (
+                                    <a
+                                      href={generateSmsLink(prop.agencyPhone)}
+                                      className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                      title="클릭하면 SMS로 연결됩니다"
+                                      onClick={(e) => e.stopPropagation()}
                                     >
                                       {prop.agencyPhone}
+                                    </a>
+                                  ) : (
+                                    <span className="font-semibold text-gray-800">
+                                      {prop.agencyPhone || '미등록'}
                                     </span>
-                                  </a>
-                                ) : (
-                                  <span
-                                    className="font-semibold cursor-pointer hover:bg-blue-100 px-1 rounded inline-block"
-                                    onDoubleClick={() => {
-                                      setEditingField(`${prop.id}-agencyPhone`);
-                                      setEditingFieldValue(prop.agencyPhone || '');
-                                    }}
-                                    title="더블클릭하여 편집"
-                                  >
-                                    {prop.agencyPhone || '미등록'}
-                                  </span>
-                                )}
+                                  )}
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    setEditingField(`${prop.id}-agencyPhone`);
+                                    setEditingFieldValue(prop.agencyPhone || '');
+                                  }}
+                                  className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-600 rounded whitespace-nowrap"
+                                  title="연락처 수정"
+                                >
+                                  <i className="fas fa-edit mr-1"></i>수정
+                                </button>
                               </>
                             )}
                           </div>
