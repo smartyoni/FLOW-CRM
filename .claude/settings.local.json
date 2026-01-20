@@ -18,7 +18,8 @@
       "Bash(cat:*)",
       "Bash(npm run preview:*)",
       "Bash(firebase deploy:*)",
-      "Bash(firebase login:*)"
+      "Bash(firebase login:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

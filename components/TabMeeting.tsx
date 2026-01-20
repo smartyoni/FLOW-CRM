@@ -617,43 +617,36 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Date Picker */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                <i className="far fa-calendar-alt mr-2 text-primary"></i>
-                {activeMeeting.round}차 미팅 일시
-              </label>
-              <input 
-                type="datetime-local"
-                value={activeMeeting.date}
-                onChange={handleDateChange}
-                className="w-full border border-gray-300 rounded p-2 focus:ring-primary focus:border-primary"
-              />
+            {/* Date Picker and Add Property Button Row */}
+            <div className="flex gap-4 items-start">
+              {/* Date Picker */}
+              <div className="w-1/2 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+                  <i className="far fa-calendar-alt mr-2 text-primary"></i>
+                  {activeMeeting.round}차 미팅 일시
+                </label>
+                <input
+                  type="datetime-local"
+                  value={activeMeeting.date}
+                  onChange={handleDateChange}
+                  className="w-full border border-gray-300 rounded p-2 focus:ring-primary focus:border-primary"
+                />
+              </div>
+
+              {/* Add Property Button */}
+              {!isAddingProperty && (
+                <button
+                  onClick={() => setIsAddingProperty(true)}
+                  className="w-1/2 py-4 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-primary hover:text-primary hover:bg-blue-50 transition-colors flex items-center justify-center gap-2 bg-white shadow-sm"
+                >
+                  <i className="fas fa-home"></i> 매물 추가하기
+                </button>
+              )}
             </div>
 
-                        {/* Add Property Section */}
-
-                        <div className="space-y-4">
-
-                          {/* Add Property Button */}
-
-                          {!isAddingProperty ? (
-
-                            <button
-
-                              onClick={() => setIsAddingProperty(true)}
-
-                              className="w-full py-4 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg hover:border-primary hover:text-primary hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-
-                            >
-
-                              <i className="fas fa-home"></i> 매물 추가하기
-
-                            </button>
-
-                          ) : (
-
-                            <div className="bg-white border border-primary rounded-lg p-4 shadow-md">
+            {/* Add Property Form Section */}
+            {isAddingProperty && (
+              <div className="bg-white border border-primary rounded-lg p-4 shadow-md">
 
                               <div className="flex justify-between items-center mb-3">
 
@@ -901,11 +894,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                               </div>
 
-                            </div>
-
-                          )}
-
-                        </div>
+              </div>
+            )}
 
             {/* 등록된 매물 미리보기 목록 */}
             {activeMeeting?.properties && activeMeeting.properties.length > 0 && (
