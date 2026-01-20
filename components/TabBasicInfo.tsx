@@ -381,8 +381,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
       {/* Checklist Section */}
       <div className="flex-1 overflow-hidden flex flex-col p-4 bg-gray-50">
         <h3 className="font-bold text-gray-700 mb-3 flex items-center">
-          <i className="fas fa-tasks mr-2 text-primary"></i>
-          연락/할일 체크리스트
+          <i className="fas fa-history mr-2 text-primary"></i>
+          히스토리
         </h3>
         
         {/* Input */}
