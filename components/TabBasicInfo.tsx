@@ -330,7 +330,13 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                 <div className="flex items-center gap-1.5">
                   <i className="fas fa-phone text-gray-400 w-4"></i>
                   <span className="text-gray-500 font-medium">연락처:</span>
-                  <span className="text-gray-800 font-semibold">{activeCustomer.contact}</span>
+                  <a
+                    href={`sms:${activeCustomer.contact?.replace(/\D/g, '')}`}
+                    className="text-blue-600 font-semibold hover:text-blue-800 hover:underline cursor-pointer"
+                    title="클릭하여 문자메시지 보내기"
+                  >
+                    {activeCustomer.contact}
+                  </a>
                 </div>
 
                 {/* 입주일자 */}
