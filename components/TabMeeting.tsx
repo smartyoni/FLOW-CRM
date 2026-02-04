@@ -538,18 +538,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // --- PDF Generation ---
 
-  // 단일 매물 이미지 재생성
+  // 단일 매물 이미지 재생성 (사진만)
   const regeneratePropertyImage = async (propIndex: number) => {
     if (propIndex < 0 || propIndex >= reportProperties.length) return;
 
     const prop = reportProperties[propIndex];
-    const memo = reportMemos[prop.id];
 
     try {
       // HTML 요소 동적 생성
       const reportContainer = document.createElement('div');
       reportContainer.style.width = '210mm';
-      reportContainer.style.height = '297mm';
       reportContainer.style.padding = '10mm';
       reportContainer.style.backgroundColor = 'white';
       reportContainer.style.fontFamily = 'Arial, sans-serif';
@@ -561,18 +559,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
       let html = '';
 
-      // 매물정보 내용 (헤더 제거, 페이지 상단부터 시작)
-      if (prop.parsedText) {
-        html += `<div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; color: #000; font-weight: 600;">${prop.parsedText}</div>`;
-      }
-
-      // 메모 섹션 (reportMemos에서 가져옴)
-      if (memo) {
-        html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
-        html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
-      }
-
-      // 사진 섹션
+      // 사진 섹션만
       if (prop.photos && prop.photos.length > 0) {
         html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
         html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
@@ -606,19 +593,17 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   };
 
-  // 모든 매물 이미지 생성
+  // 모든 매물 이미지 생성 (사진만)
   const regenerateAllImages = async (properties: Property[], memos: { [propId: string]: string }) => {
     const images: string[] = [];
 
     for (let i = 0; i < properties.length; i++) {
       const prop = properties[i];
-      const memo = memos[prop.id];
 
       try {
         // HTML 요소 동적 생성
         const reportContainer = document.createElement('div');
         reportContainer.style.width = '210mm';
-        reportContainer.style.height = '297mm';
         reportContainer.style.padding = '10mm';
         reportContainer.style.backgroundColor = 'white';
         reportContainer.style.fontFamily = 'Arial, sans-serif';
@@ -630,18 +615,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         let html = '';
 
-        // 매물정보 내용
-        if (prop.parsedText) {
-          html += `<div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; color: #000; font-weight: 600;">${prop.parsedText}</div>`;
-        }
-
-        // 메모 섹션
-        if (memo) {
-          html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
-          html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
-        }
-
-        // 사진 섹션
+        // 사진 섹션만
         if (prop.photos && prop.photos.length > 0) {
           html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
           html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
@@ -819,13 +793,21 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
           </div>
 
-          {/* 미리보기 이미지 */}
-          <div className="p-6 space-y-8">
+          {/* 미리보기 */}
+          <div className="p-6 space-y-6">
             {reportImages.map((img, idx) => (
-              <div key={idx}>
-                {/* 메모 입력 필드 */}
-                <div className="mb-4 border border-gray-200 rounded-lg p-4">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">메모:</label>
+              <div key={idx} className="space-y-4">
+                {/* 1. 매물정보 텍스트 */}
+                {reportProperties[idx]?.parsedText && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-xs font-bold text-gray-600 mb-3">매물정보</p>
+                    <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed">{reportProperties[idx].parsedText}</pre>
+                  </div>
+                )}
+
+                {/* 2. 메모 입력 필드 */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">메모</label>
                   <textarea
                     value={reportMemos[reportProperties[idx]?.id] || ''}
                     onChange={(e) => handleMemoChange(idx, e.target.value)}
@@ -835,8 +817,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   />
                 </div>
 
-                {/* 미리보기 이미지 */}
-                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm border border-gray-200" />
+                {/* 3. 미리보기 이미지 (사진만) */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <p className="text-xs font-bold text-gray-600 mb-3">사진</p>
+                  <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
+                </div>
               </div>
             ))}
           </div>
