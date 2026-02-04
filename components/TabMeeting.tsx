@@ -860,26 +860,22 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 {/* 1. 매물정보 텍스트 */}
                 {reportProperties[idx]?.parsedText && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <p className="text-xs font-bold text-gray-600 mb-3">매물정보</p>
                     <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed">{reportProperties[idx].parsedText}</pre>
                   </div>
                 )}
 
                 {/* 2. 메모 입력 필드 */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">메모</label>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[200px] flex flex-col">
                   <textarea
                     value={reportMemos[reportProperties[idx]?.id] || ''}
                     onChange={(e) => handleMemoChange(idx, e.target.value)}
                     placeholder="메모를 입력하세요..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
                   />
                 </div>
 
                 {/* 3. 미리보기 이미지 (사진만) */}
                 <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <p className="text-xs font-bold text-gray-600 mb-3">사진</p>
                   <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
                 </div>
               </div>
