@@ -952,10 +952,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
                       )}
 
-                      {/* 호실 */}
+                      {/* 호실 및 지번 */}
                       <div className="flex gap-3 mb-4">
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-600 font-bold mb-1">호실</p>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                           {editingUnitId === prop.id ? (
                             <input
                               autoFocus
@@ -964,15 +964,48 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
                               onBlur={() => setEditingUnitId(null)}
                               onKeyDown={(e) => e.key === 'Enter' && setEditingUnitId(null)}
-                              className="w-full px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                              className="flex-1 px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                           ) : (
                             <div
                               onDoubleClick={() => setEditingUnitId(prop.id)}
-                              className="px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                             >
                               {prop.unit || '(호실)'}
                             </div>
+                          )}
+                        </div>
+                        <div className="flex-1 flex items-center gap-2">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
+                          {editingField === `${prop.id}-jibun` ? (
+                            <input
+                              autoFocus
+                              type="text"
+                              className="flex-1 border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                              value={editingFieldValue}
+                              onChange={(e) => setEditingFieldValue(e.target.value)}
+                              onBlur={() => savePropertyInlineField(prop.id, 'jibun')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  savePropertyInlineField(prop.id, 'jibun');
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingField(null);
+                                  setEditingFieldValue('');
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className="flex-1 font-semibold cursor-pointer hover:bg-yellow-100 px-1 rounded inline-block text-xs py-1"
+                              onDoubleClick={() => {
+                                setEditingField(`${prop.id}-jibun`);
+                                setEditingFieldValue(prop.jibun || '');
+                              }}
+                              title="더블클릭하여 편집"
+                            >
+                              {prop.jibun || '미등록'}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -1028,41 +1061,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                       {/* 미리보기 정보 */}
                       <div className="mb-3">
-                        {/* 지번과 지도/삭제 버튼 */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="text-sm">
-                            <span className="text-gray-600">지번:</span>
-                            {editingField === `${prop.id}-jibun` ? (
-                              <input
-                                autoFocus
-                                type="text"
-                                className="border rounded px-2 py-1 ml-1 focus:ring-1 focus:ring-primary outline-none text-sm"
-                                value={editingFieldValue}
-                                onChange={(e) => setEditingFieldValue(e.target.value)}
-                                onBlur={() => savePropertyInlineField(prop.id, 'jibun')}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    savePropertyInlineField(prop.id, 'jibun');
-                                  }
-                                  if (e.key === 'Escape') {
-                                    setEditingField(null);
-                                    setEditingFieldValue('');
-                                  }
-                                }}
-                              />
-                            ) : (
-                              <span
-                                className="font-semibold cursor-pointer hover:bg-yellow-100 px-1 rounded inline-block"
-                                onDoubleClick={() => {
-                                  setEditingField(`${prop.id}-jibun`);
-                                  setEditingFieldValue(prop.jibun || '');
-                                }}
-                                title="더블클릭하여 편집"
-                              >
-                                {prop.jibun || '미등록'}
-                              </span>
-                            )}
-                          </div>
+                        {/* 지도/삭제 버튼 */}
+                        <div className="flex items-center justify-end mb-3">
                           <div className="flex gap-2">
                             {prop.jibun && (
                               <button
