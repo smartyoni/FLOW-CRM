@@ -662,7 +662,41 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
           <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">매물 보고서 미리보기</h2>
+            {/* 제목과 버튼 */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800">매물 보고서 미리보기</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setReportPreviewOpen(false);
+                    setReportImages([]);
+                    setReportFileName('');
+                  }}
+                  className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors font-bold text-sm"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={finalizeReportPDF}
+                  disabled={reportLoading || !reportFileName.trim()}
+                  className="px-3 py-1.5 bg-primary text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm flex items-center gap-1.5"
+                >
+                  {reportLoading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      생성 중...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-download"></i>
+                      PDF 다운로드
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* 파일명 입력 */}
             <div className="flex items-center gap-3">
               <input
                 type="text"
@@ -683,37 +717,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 <img src={img} alt={`페이지 ${idx + 1}`} className="w-full border border-gray-300 rounded" />
               </div>
             ))}
-          </div>
-
-          {/* 버튼 */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
-            <button
-              onClick={() => {
-                setReportPreviewOpen(false);
-                setReportImages([]);
-                setReportFileName('');
-              }}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors font-bold"
-            >
-              취소
-            </button>
-            <button
-              onClick={finalizeReportPDF}
-              disabled={reportLoading || !reportFileName.trim()}
-              className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold flex items-center gap-2"
-            >
-              {reportLoading ? (
-                <>
-                  <i className="fas fa-spinner fa-spin"></i>
-                  생성 중...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-download"></i>
-                  PDF 다운로드
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
