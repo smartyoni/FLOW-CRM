@@ -913,6 +913,56 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 <div className="space-y-3">
                   {activeMeeting.properties.map((prop, idx) => (
                     <div key={prop.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      {/* 시간 선택 및 상태 드롭다운 */}
+                      <div className="flex gap-3 mb-4">
+                        <div className="flex-1 flex gap-2 items-center">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">방문시간:</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="23"
+                            placeholder="시"
+                            value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
+                            onChange={(e) => {
+                              const hour = e.target.value || '00';
+                              const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
+                              updatePropertyField(prop.id, 'visitTime', `${hour.padStart(2, '0')}:${minute}`);
+                            }}
+                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
+                          />
+                          <span className="text-xs text-gray-600">시</span>
+                          <input
+                            type="number"
+                            min="0"
+                            max="59"
+                            placeholder="분"
+                            value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
+                            onChange={(e) => {
+                              const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
+                              const minute = e.target.value || '00';
+                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute.padStart(2, '0')}`);
+                            }}
+                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
+                          />
+                          <span className="text-xs text-gray-600">분</span>
+                        </div>
+
+                        <div className="flex-1">
+                          <select
+                            value={prop.status || '확인전'}
+                            onChange={(e) => {
+                              updatePropertyField(prop.id, 'status', e.target.value as any);
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="확인전">확인전</option>
+                            <option value="확인중">확인중</option>
+                            <option value="볼수있음">볼수있음</option>
+                            <option value="현장방문완료">현장방문완료</option>
+                          </select>
+                        </div>
+                      </div>
+
                       {/* 정리본 텍스트 미리보기 (매물정보) */}
                       {prop.parsedText && (
                         <div className="mb-4">
@@ -1018,56 +1068,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               지도
                             </button>
                           )}
-                        </div>
-                      </div>
-
-                      {/* 시간 선택 및 상태 드롭다운 */}
-                      <div className="flex gap-3 mb-4">
-                        <div className="flex-1 flex gap-2 items-center">
-                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">방문시간:</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="23"
-                            placeholder="시"
-                            value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
-                            onChange={(e) => {
-                              const hour = e.target.value || '00';
-                              const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour.padStart(2, '0')}:${minute}`);
-                            }}
-                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
-                          />
-                          <span className="text-xs text-gray-600">시</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="59"
-                            placeholder="분"
-                            value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
-                            onChange={(e) => {
-                              const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
-                              const minute = e.target.value || '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute.padStart(2, '0')}`);
-                            }}
-                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
-                          />
-                          <span className="text-xs text-gray-600">분</span>
-                        </div>
-
-                        <div className="flex-1">
-                          <select
-                            value={prop.status || '확인전'}
-                            onChange={(e) => {
-                              updatePropertyField(prop.id, 'status', e.target.value as any);
-                            }}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                          >
-                            <option value="확인전">확인전</option>
-                            <option value="확인중">확인중</option>
-                            <option value="볼수있음">볼수있음</option>
-                            <option value="현장방문완료">현장방문완료</option>
-                          </select>
                         </div>
                       </div>
 
