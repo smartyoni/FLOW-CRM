@@ -566,20 +566,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
       }
 
-      // 사진 섹션
-      if (prop.photos && prop.photos.length > 0) {
-        html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
-        html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 12px 0;">';
-        for (const photoData of prop.photos) {
-          html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
-        }
-        html += '</div>';
-      }
-
       // 메모 섹션 (reportMemos에서 가져옴)
       if (memo) {
         html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
         html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
+      }
+
+      // 사진 섹션
+      if (prop.photos && prop.photos.length > 0) {
+        html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
+        html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
+        for (const photoData of prop.photos) {
+          html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
+        }
+        html += '</div>';
       }
 
       reportContainer.innerHTML = html;
@@ -635,20 +635,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
         }
 
-        // 사진 섹션
-        if (prop.photos && prop.photos.length > 0) {
-          html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
-          html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0 0 12px 0;">';
-          for (const photoData of prop.photos) {
-            html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
-          }
-          html += '</div>';
-        }
-
         // 메모 섹션
         if (memo) {
           html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
           html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
+        }
+
+        // 사진 섹션
+        if (prop.photos && prop.photos.length > 0) {
+          html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
+          html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
+          for (const photoData of prop.photos) {
+            html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
+          }
+          html += '</div>';
         }
 
         reportContainer.innerHTML = html;
