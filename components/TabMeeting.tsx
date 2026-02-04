@@ -674,7 +674,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                                       onClick={() => setSelectedPlatform('TEN_COMMERCIAL')}
 
-                                      className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${selectedPlatform === 'TEN_COMMERCIAL' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                      className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${selectedPlatform === 'TEN_COMMERCIAL' ? 'bg-purple-500 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
 
                                     >
 
