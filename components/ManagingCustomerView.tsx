@@ -65,7 +65,17 @@ export const ManagingCustomerView: React.FC<Props> = ({
         c.name.toLowerCase().includes(q) ||
         c.contact.includes(q)
       )
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => {
+        // Sort by Registration Date (Latest first - descending)
+        const dateA = a.registrationDate ? new Date(a.registrationDate).getTime() : 0;
+        const dateB = b.registrationDate ? new Date(b.registrationDate).getTime() : 0;
+        if (dateA !== dateB) {
+          return dateB - dateA; // Descending order (latest first)
+        }
+
+        // Sort by Name (Default)
+        return a.name.localeCompare(b.name);
+      });
   };
 
   const renderMobileColumn = (checkpoint: CustomerCheckpoint, items: Customer[]) => {

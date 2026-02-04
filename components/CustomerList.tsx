@@ -98,8 +98,8 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
   const filterAndSortCustomers = (list: Customer[], query: string) => {
     const q = query.toLowerCase();
     return list
-      .filter(c => 
-        c.name.toLowerCase().includes(q) || 
+      .filter(c =>
+        c.name.toLowerCase().includes(q) ||
         c.contact.includes(q)
       )
       .sort((a, b) => {
@@ -107,9 +107,11 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
         if (a.isFavorite && !b.isFavorite) return -1;
         if (!a.isFavorite && b.isFavorite) return 1;
 
-        // 2. Sort by Favorited Time (Latest first)
-        if (a.isFavorite && b.isFavorite) {
-          return (b.favoritedAt || 0) - (a.favoritedAt || 0);
+        // 2. Sort by Registration Date (Latest first - descending)
+        const dateA = a.registrationDate ? new Date(a.registrationDate).getTime() : 0;
+        const dateB = b.registrationDate ? new Date(b.registrationDate).getTime() : 0;
+        if (dateA !== dateB) {
+          return dateB - dateA; // Descending order (latest first)
         }
 
         // 3. Sort by Name (Default)
