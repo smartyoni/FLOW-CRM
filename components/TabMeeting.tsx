@@ -1192,7 +1192,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                       {/* 메모 섹션 */}
                       <div className="mt-3 pt-3 border-t border-gray-200">
-                        <span className="text-xs font-semibold text-gray-600">메모</span>
                         {editingMemoId === prop.id ? (
                           // 편집 모드
                           <textarea
