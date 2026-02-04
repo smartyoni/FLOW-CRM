@@ -1007,6 +1007,17 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               {prop.jibun || '미등록'}
                             </span>
                           )}
+                          {prop.jibun && (
+                            <button
+                              onClick={() => {
+                                const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(prop.jibun)}`;
+                                window.open(mapUrl, '_blank');
+                              }}
+                              className="px-2 py-1 bg-yellow-400 text-black rounded text-xs hover:bg-yellow-500 font-bold flex-shrink-0"
+                            >
+                              지도
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -1062,48 +1073,35 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                       {/* 미리보기 정보 */}
                       <div className="mb-3">
-                        {/* 지도/삭제 버튼 */}
+                        {/* 삭제 버튼 */}
                         <div className="flex items-center justify-end mb-3">
-                          <div className="flex gap-2">
-                            {prop.jibun && (
-                              <button
-                                onClick={() => {
-                                  const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(prop.jibun)}`;
-                                  window.open(mapUrl, '_blank');
-                                }}
-                                className="px-3 py-1 bg-yellow-400 text-black rounded text-sm hover:bg-yellow-500 font-bold"
-                              >
-                                지도
-                              </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                if (window.confirm('이 매물을 삭제하시겠습니까?')) {
-                                  if (activeMeeting) {
-                                    const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
+                          <button
+                            onClick={() => {
+                              if (window.confirm('이 매물을 삭제하시겠습니까?')) {
+                                if (activeMeeting) {
+                                  const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
 
-                                    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-                                    const updatedLocalMeeting = {
-                                      ...activeMeeting,
-                                      properties: updatedProperties
-                                    };
-                                    setLocalMeeting(updatedLocalMeeting);
+                                  // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+                                  const updatedLocalMeeting = {
+                                    ...activeMeeting,
+                                    properties: updatedProperties
+                                  };
+                                  setLocalMeeting(updatedLocalMeeting);
 
-                                    // ⭐ 2. Firebase에 저장 (백그라운드)
-                                    onUpdate({
-                                      ...customer,
-                                      meetings: customer.meetings.map(m =>
-                                        m.id === activeMeeting.id ? updatedLocalMeeting : m
-                                      )
-                                    });
-                                  }
+                                  // ⭐ 2. Firebase에 저장 (백그라운드)
+                                  onUpdate({
+                                    ...customer,
+                                    meetings: customer.meetings.map(m =>
+                                      m.id === activeMeeting.id ? updatedLocalMeeting : m
+                                    )
+                                  });
                                 }
-                              }}
-                              className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 font-bold"
-                            >
-                              삭제
-                            </button>
-                          </div>
+                              }
+                            }}
+                            className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 font-bold"
+                          >
+                            삭제
+                          </button>
                         </div>
 
                         {/* 부동산과 연락처 */}
