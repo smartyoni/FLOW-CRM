@@ -952,41 +952,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
                       )}
 
-                      {/* 소재지 및 호실 */}
+                      {/* 호실 */}
                       <div className="flex gap-3 mb-4">
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-600 font-bold mb-1">소재지</p>
-                          {editingField === `${prop.id}-roomName` ? (
-                            <input
-                              autoFocus
-                              type="text"
-                              className="w-full border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
-                              value={editingFieldValue}
-                              onChange={(e) => setEditingFieldValue(e.target.value)}
-                              onBlur={() => savePropertyInlineField(prop.id, 'roomName')}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  savePropertyInlineField(prop.id, 'roomName');
-                                }
-                                if (e.key === 'Escape') {
-                                  setEditingField(null);
-                                  setEditingFieldValue('');
-                                }
-                              }}
-                            />
-                          ) : (
-                            <p
-                              className="text-sm font-semibold cursor-pointer hover:bg-blue-100 px-1 rounded inline-block"
-                              onDoubleClick={() => {
-                                setEditingField(`${prop.id}-roomName`);
-                                setEditingFieldValue(prop.roomName || '');
-                              }}
-                              title="더블클릭하여 편집"
-                            >
-                              {prop.roomName || '미등록'}
-                            </p>
-                          )}
-                        </div>
                         <div className="flex-1">
                           <p className="text-xs text-gray-600 font-bold mb-1">호실</p>
                           {editingUnitId === prop.id ? (
