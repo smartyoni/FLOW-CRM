@@ -1377,7 +1377,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       {/* 건물명, 호실, 지번 */}
                       <div className="flex flex-col md:flex-row gap-1 md:gap-2 mb-4 items-start md:items-center">
                         {/* 건물명 */}
-                        <div className="w-full md:flex-1 flex items-center gap-1">
+                        <div className="w-full md:flex-[1.3] flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">건물명:</span>
                           {editingField === `${prop.id}-roomName` ? (
                             <input
