@@ -46,6 +46,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoText, setMemoText] = useState('');
 
+  // 미팅 삭제 확인 모달 상태
+  const [deleteMeetingConfirmation, setDeleteMeetingConfirmation] = useState<string | null>(null);
+
   // 인라인 필드 편집 상태 (형식: "propId-fieldName")
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingFieldValue, setEditingFieldValue] = useState('');
@@ -103,8 +106,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const handleDeleteMeeting = (e: React.MouseEvent, meetingId: string) => {
     e.stopPropagation();
-    if (!window.confirm('해당 미팅 기록을 삭제하시겠습니까?')) return;
+    setDeleteMeetingConfirmation(meetingId);
+  };
 
+  const confirmDeleteMeeting = () => {
+    if (!deleteMeetingConfirmation) return;
+
+    const meetingId = deleteMeetingConfirmation;
     const updatedMeetings = customer.meetings.filter(m => m.id !== meetingId);
     // Re-calculate rounds
     const reorderedMeetings = updatedMeetings.map((m, index) => ({
@@ -124,6 +132,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       ...customer,
       meetings: reorderedMeetings
     });
+
+    setDeleteMeetingConfirmation(null);
+  };
+
+  const cancelDeleteMeeting = () => {
+    setDeleteMeetingConfirmation(null);
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -564,33 +578,25 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       />
       <div className="flex flex-col h-full bg-white overflow-hidden">
       <div className="p-4 bg-white border-b shrink-0">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">미팅 관리</h2>
-          <button 
-            onClick={generatePDF}
-            disabled={!activeMeeting}
-            className={`px-3 py-1.5 rounded text-sm flex items-center ${activeMeeting ? 'bg-secondary text-white hover:bg-slate-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-          >
-            <i className="fas fa-file-pdf mr-2"></i>보고서
-          </button>
-        </div>
-
         {/* Meeting Navigation Tabs */}
         <div className="flex overflow-x-auto space-x-2 pb-1 no-scrollbar items-center">
+          <button
+            onClick={handleAddMeeting}
+            className="flex-shrink-0 px-4 py-2 rounded border-2 border-gray-900 bg-yellow-300 text-gray-900 font-bold text-sm hover:bg-yellow-400 transition-colors"
+          >
+            추가
+          </button>
           {customer.meetings?.map((meeting) => (
-            <div 
+            <div
               key={meeting.id}
               onClick={() => setActiveMeetingId(meeting.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm cursor-pointer whitespace-nowrap flex items-center gap-2 transition-all ${activeMeetingId === meeting.id 
-                  ? 'bg-primary border-primary text-white shadow-md' 
+              className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm cursor-pointer whitespace-nowrap flex items-center gap-2 transition-all ${activeMeetingId === meeting.id
+                  ? 'bg-primary border-primary text-white shadow-md'
                   : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
               }`}
             >
               <span className="font-bold">{meeting.round}차</span>
-              <span className={`text-xs ${activeMeetingId === meeting.id ? 'text-blue-200' : 'text-gray-400'}`}>
-                {meeting.date ? new Date(meeting.date).toLocaleDateString() : '미정'}
-              </span>
-              <button 
+              <button
                 onClick={(e) => handleDeleteMeeting(e, meeting.id)}
                 className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white ${activeMeetingId === meeting.id ? 'text-blue-200' : 'text-gray-300'}`}
               >
@@ -598,12 +604,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               </button>
             </div>
           ))}
-          <button 
-            onClick={handleAddMeeting}
-            className="flex-shrink-0 px-3 py-2 rounded-full border border-dashed border-gray-400 text-gray-500 text-sm hover:border-primary hover:text-primary hover:bg-blue-50 transition-colors"
-          >
-            <i className="fas fa-plus mr-1"></i>추가
-          </button>
         </div>
       </div>
 
@@ -1369,6 +1369,35 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         ))}
       </div>
+
+      {/* Meeting Delete Confirmation Modal */}
+      {deleteMeetingConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">미팅 삭제</h3>
+              <p className="text-gray-600 mb-2">
+                <span className="font-semibold">{customer.meetings?.find(m => m.id === deleteMeetingConfirmation)?.round}차 미팅</span>을 정말 삭제하시겠습니까?
+              </p>
+              <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</p>
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+              <button
+                onClick={cancelDeleteMeeting}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDeleteMeeting}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
