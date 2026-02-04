@@ -913,6 +913,45 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 <div className="space-y-3">
                   {activeMeeting.properties.map((prop, idx) => (
                     <div key={prop.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      {/* 정리본 텍스트 미리보기 (매물정보) */}
+                      {prop.parsedText && (
+                        <div className="mb-4">
+                          {editingField === `${prop.id}-parsedText` ? (
+                            <textarea
+                              autoFocus
+                              className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                              value={editingFieldValue}
+                              onChange={(e) => setEditingFieldValue(e.target.value)}
+                              onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && e.ctrlKey) {
+                                  savePropertyInlineField(prop.id, 'parsedText');
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingField(null);
+                                  setEditingFieldValue('');
+                                }
+                              }}
+                              rows={4}
+                              placeholder="정리본 텍스트를 입력하세요..."
+                            />
+                          ) : (
+                            <div
+                              className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                              onDoubleClick={() => {
+                                setEditingField(`${prop.id}-parsedText`);
+                                setEditingFieldValue(prop.parsedText || '');
+                              }}
+                              title="더블클릭하여 편집"
+                            >
+                              <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">
+                                {prop.parsedText}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                       {/* 소재지 및 호실 */}
                       <div className="flex gap-3 mb-4">
                         <div className="flex-1">
@@ -1186,45 +1225,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             )}
                           </div>
                         </div>
-
-                        {/* 정리본 텍스트 미리보기 */}
-                        {prop.parsedText && (
-                          <div className="mt-2">
-                            {editingField === `${prop.id}-parsedText` ? (
-                              <textarea
-                                autoFocus
-                                className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
-                                value={editingFieldValue}
-                                onChange={(e) => setEditingFieldValue(e.target.value)}
-                                onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && e.ctrlKey) {
-                                    savePropertyInlineField(prop.id, 'parsedText');
-                                  }
-                                  if (e.key === 'Escape') {
-                                    setEditingField(null);
-                                    setEditingFieldValue('');
-                                  }
-                                }}
-                                rows={4}
-                                placeholder="정리본 텍스트를 입력하세요..."
-                              />
-                            ) : (
-                              <div
-                                className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
-                                onDoubleClick={() => {
-                                  setEditingField(`${prop.id}-parsedText`);
-                                  setEditingFieldValue(prop.parsedText || '');
-                                }}
-                                title="더블클릭하여 편집"
-                              >
-                                <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">
-                                  {prop.parsedText}
-                                </pre>
-                              </div>
-                            )}
-                          </div>
-                        )}
                       </div>
 
                       {/* 메모 섹션 */}
