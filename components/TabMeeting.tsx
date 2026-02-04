@@ -649,7 +649,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                               <div className="flex justify-between items-center mb-3">
 
-                                <h3 className="font-bold text-sm text-primary">새 매물 정보 입력</h3>
+                                <h3 className="font-bold text-sm text-primary">매물정보</h3>
             
 
                                 <div className="flex items-center gap-2">
