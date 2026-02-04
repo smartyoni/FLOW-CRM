@@ -953,7 +953,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       )}
 
                       {/* 호실 및 지번 */}
-                      <div className="flex gap-3 mb-4">
+                      <div className="flex flex-col md:flex-row gap-3 mb-4">
                         <div className="flex-1 flex items-center gap-2">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                           {editingUnitId === prop.id ? (
