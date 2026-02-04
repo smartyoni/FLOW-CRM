@@ -914,9 +914,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   {activeMeeting.properties.map((prop, idx) => (
                     <div key={prop.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                       {/* 시간 선택 및 상태 드롭다운 */}
-                      <div className="flex gap-3 mb-4 items-center">
-                        <div className="flex gap-2 items-center">
-                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">방문시간:</span>
+                      <div className="flex gap-1 md:gap-3 mb-4 items-center">
+                        <div className="flex gap-1 md:gap-2 items-center">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
                           <input
                             type="number"
                             min="0"
@@ -928,9 +928,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
                               updatePropertyField(prop.id, 'visitTime', `${hour.padStart(2, '0')}:${minute}`);
                             }}
-                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
+                            className="w-8 sm:w-12 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center"
                           />
-                          <span className="text-xs text-gray-600">시</span>
+                          <span className="text-xs text-gray-600 hidden sm:inline">시</span>
                           <input
                             type="number"
                             min="0"
@@ -942,9 +942,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               const minute = e.target.value || '00';
                               updatePropertyField(prop.id, 'visitTime', `${hour}:${minute.padStart(2, '0')}`);
                             }}
-                            className="w-12 px-2 py-1 border border-gray-300 rounded text-xs text-center"
+                            className="w-8 sm:w-12 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center"
                           />
-                          <span className="text-xs text-gray-600">분</span>
+                          <span className="text-xs text-gray-600 hidden sm:inline">분</span>
                         </div>
 
                         <select
@@ -952,7 +952,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           onChange={(e) => {
                             updatePropertyField(prop.id, 'status', e.target.value as any);
                           }}
-                          className="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                          className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                         >
                           <option value="확인전">확인전</option>
                           <option value="확인중">확인중</option>
