@@ -59,6 +59,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [reportFileName, setReportFileName] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
 
+  // 보고서 미리보기 메모 편집 상태
+  const [reportMemos, setReportMemos] = useState<{ [propId: string]: string }>({});
+  const [reportProperties, setReportProperties] = useState<Property[]>([]);
+
   const reportRef = useRef<HTMLDivElement>(null);
   const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
 
@@ -533,25 +537,84 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   // --- PDF Generation ---
-  // 미리보기 이미지 생성
-  const generateReportPreview = async () => {
-    if (!activeMeeting || activeMeeting.properties.length === 0) {
-      alert('등록된 매물이 없습니다.');
-      return;
-    }
 
-    setReportLoading(true);
+  // 단일 매물 이미지 재생성
+  const regeneratePropertyImage = async (propIndex: number) => {
+    if (propIndex < 0 || propIndex >= reportProperties.length) return;
+
+    const prop = reportProperties[propIndex];
+    const memo = reportMemos[prop.id];
+
     try {
-      const images: string[] = [];
+      // HTML 요소 동적 생성
+      const reportContainer = document.createElement('div');
+      reportContainer.style.width = '210mm';
+      reportContainer.style.height = '297mm';
+      reportContainer.style.padding = '10mm';
+      reportContainer.style.backgroundColor = 'white';
+      reportContainer.style.fontFamily = 'Arial, sans-serif';
+      reportContainer.style.fontSize = '12px';
+      reportContainer.style.color = '#333';
+      reportContainer.style.position = 'absolute';
+      reportContainer.style.left = '-9999px';
+      reportContainer.style.top = '-9999px';
 
-      // 시간순으로 정렬된 매물 처리
-      const sortedProperties = [...activeMeeting.properties].sort((a, b) => {
-        const timeA = a.visitTime || '99:99';
-        const timeB = b.visitTime || '99:99';
-        return timeA.localeCompare(timeB);
+      let html = '';
+
+      // 매물정보 내용 (헤더 제거, 페이지 상단부터 시작)
+      if (prop.parsedText) {
+        html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
+      }
+
+      // 메모 섹션 (reportMemos에서 가져옴)
+      if (memo) {
+        html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
+        html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
+      }
+
+      // 사진 섹션
+      if (prop.photos && prop.photos.length > 0) {
+        html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
+        html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
+        for (const photoData of prop.photos) {
+          html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
+        }
+        html += '</div>';
+      }
+
+      reportContainer.innerHTML = html;
+      document.body.appendChild(reportContainer);
+
+      // html2canvas로 캡처
+      const canvas = await html2canvas(reportContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
       });
 
-      for (const prop of sortedProperties) {
+      document.body.removeChild(reportContainer);
+
+      // reportImages 배열의 해당 인덱스만 업데이트
+      setReportImages(prev => {
+        const newImages = [...prev];
+        newImages[propIndex] = canvas.toDataURL('image/png');
+        return newImages;
+      });
+    } catch (err) {
+      console.error('이미지 재생성 오류:', err);
+    }
+  };
+
+  // 모든 매물 이미지 생성
+  const regenerateAllImages = async (properties: Property[], memos: { [propId: string]: string }) => {
+    const images: string[] = [];
+
+    for (let i = 0; i < properties.length; i++) {
+      const prop = properties[i];
+      const memo = memos[prop.id];
+
+      try {
         // HTML 요소 동적 생성
         const reportContainer = document.createElement('div');
         reportContainer.style.width = '210mm';
@@ -567,15 +630,15 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         let html = '';
 
-        // 매물정보 내용 (헤더 제거, 페이지 상단부터 시작)
+        // 매물정보 내용
         if (prop.parsedText) {
           html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
         }
 
         // 메모 섹션
-        if (prop.memo) {
+        if (memo) {
           html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
-          html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${prop.memo}</div>`;
+          html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${memo}</div>`;
         }
 
         // 사진 섹션
@@ -602,9 +665,43 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         document.body.removeChild(reportContainer);
 
         images.push(canvas.toDataURL('image/png'));
+      } catch (err) {
+        console.error(`매물 ${i} 이미지 생성 오류:`, err);
       }
+    }
 
-      setReportImages(images);
+    setReportImages(images);
+  };
+
+  // 미리보기 이미지 생성
+  const generateReportPreview = async () => {
+    if (!activeMeeting || activeMeeting.properties.length === 0) {
+      alert('등록된 매물이 없습니다.');
+      return;
+    }
+
+    setReportLoading(true);
+    try {
+      // 시간순으로 정렬된 매물 처리
+      const sortedProperties = [...activeMeeting.properties].sort((a, b) => {
+        const timeA = a.visitTime || '99:99';
+        const timeB = b.visitTime || '99:99';
+        return timeA.localeCompare(timeB);
+      });
+
+      // reportProperties에 정렬된 매물 저장
+      setReportProperties(sortedProperties);
+
+      // reportMemos 초기화: 각 매물의 기존 메모를 reportMemos에 저장
+      const initialMemos: { [propId: string]: string } = {};
+      for (const prop of sortedProperties) {
+        initialMemos[prop.id] = prop.memo || '';
+      }
+      setReportMemos(initialMemos);
+
+      // 모든 이미지 생성
+      await regenerateAllImages(sortedProperties, initialMemos);
+
       setReportFileName(`${customer.name}_${activeMeeting.round}차미팅_매물보고서`);
       setReportPreviewOpen(true);
     } catch (err) {
@@ -652,6 +749,17 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   };
 
+  // 미리보기에서 메모 변경 처리
+  const handleMemoChange = async (propIndex: number, newMemo: string) => {
+    const propId = reportProperties[propIndex].id;
+
+    // 메모 상태 업데이트
+    setReportMemos(prev => ({ ...prev, [propId]: newMemo }));
+
+    // 해당 이미지 재생성
+    await regeneratePropertyImage(propIndex);
+  };
+
   const generatePropertyReport = generateReportPreview;
 
   const generatePDF = generatePropertyReport;
@@ -671,6 +779,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                     setReportPreviewOpen(false);
                     setReportImages([]);
                     setReportFileName('');
+                    setReportMemos({});
+                    setReportProperties([]);
                   }}
                   className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors font-bold text-sm"
                 >
@@ -710,10 +820,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
 
           {/* 미리보기 이미지 */}
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8">
             {reportImages.map((img, idx) => (
-              <div key={idx}>
-                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
+              <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm mb-4" />
+                <div className="mt-4">
+                  <label className="block text-sm font-bold text-gray-700 mb-2">메모:</label>
+                  <textarea
+                    value={reportMemos[reportProperties[idx]?.id] || ''}
+                    onChange={(e) => handleMemoChange(idx, e.target.value)}
+                    placeholder="메모를 입력하세요..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                </div>
               </div>
             ))}
           </div>
