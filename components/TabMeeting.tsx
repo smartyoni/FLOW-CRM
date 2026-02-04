@@ -911,7 +911,14 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               <div className="mt-6">
                 <h3 className="font-bold text-sm text-primary mb-3">등록된 매물 ({activeMeeting.properties.length}개)</h3>
                 <div className="space-y-3">
-                  {activeMeeting.properties.map((prop, idx) => (
+                  {activeMeeting.properties
+                    .slice()
+                    .sort((a, b) => {
+                      const timeA = a.visitTime || '99:99';
+                      const timeB = b.visitTime || '99:99';
+                      return timeA.localeCompare(timeB);
+                    })
+                    .map((prop, idx) => (
                     <div key={prop.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                       {/* 시간 선택 및 상태 드롭다운 */}
                       <div className="flex gap-1 md:gap-3 mb-4 items-center">
