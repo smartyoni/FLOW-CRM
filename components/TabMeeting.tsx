@@ -628,7 +628,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 type="datetime-local"
                 value={activeMeeting.date}
                 onChange={handleDateChange}
-                className="flex-1 border border-gray-300 rounded p-2 focus:ring-primary focus:border-primary"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
               />
 
               {/* Add Property Button */}
