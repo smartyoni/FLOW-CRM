@@ -21,6 +21,8 @@ const App: React.FC = () => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentView, setCurrentView] = useState<ViewMode>('customerList');
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ customerId: string; customerName: string } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
 
   // 마이그레이션: 서브컬렉션 데이터를 배열 필드로 전환 (최초 1회만 실행)
   useEffect(() => {
@@ -111,6 +113,25 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Handle mobile back button for detail sidebar
+  useEffect(() => {
+    if (isSidebarOpen) {
+      window.history.pushState({ sidebarOpen: true }, '');
+    }
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (isSidebarOpen && event.state?.sidebarOpen !== true) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isSidebarOpen]);
+
   const handleAddCustomer = async (customer: Customer) => {
     try {
       // Add ID if not present
@@ -175,6 +196,47 @@ const App: React.FC = () => {
   const cancelDelete = () => {
     setDeleteConfirmation(null);
   };
+
+  // Pull to Refresh Handler
+  useEffect(() => {
+    let startY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (window.scrollY === 0 && startY > 0) {
+        const currentY = e.touches[0].clientY;
+        const distance = currentY - startY;
+        if (distance > 0) {
+          setPullDistance(Math.min(distance, 100));
+        }
+      }
+    };
+
+    const handleTouchEnd = async () => {
+      if (pullDistance > 60 && !isRefreshing) {
+        setIsRefreshing(true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        window.location.reload();
+      }
+      setPullDistance(0);
+      startY = 0;
+    };
+
+    document.addEventListener('touchstart', handleTouchStart);
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [pullDistance, isRefreshing]);
 
   const handleUpdateCustomer = async (updatedCustomer: Customer) => {
     try {
@@ -244,6 +306,25 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-row w-full h-full bg-gray-100 relative overflow-hidden">
+      {/* Pull to Refresh Indicator */}
+      {pullDistance > 0 && (
+        <div
+          className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 z-40 transition-all"
+          style={{ transform: `translateY(${pullDistance}px)` }}
+        >
+          <div className="flex items-center justify-center gap-2">
+            <i
+              className="fas fa-arrow-down transition-transform"
+              style={{
+                transform: `rotate(${pullDistance > 60 ? 180 : 0}deg)`,
+                opacity: Math.min(pullDistance / 60, 1),
+              }}
+            ></i>
+            <span>{pullDistance > 60 ? '놓아서 새로고침' : '당겨서 새로고침'}</span>
+          </div>
+        </div>
+      )}
+
       {/* Offline indicator */}
       {!isOnline && (
         <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50">
