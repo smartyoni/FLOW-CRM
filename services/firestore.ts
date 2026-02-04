@@ -119,6 +119,12 @@ export const createCustomer = async (customer: Customer): Promise<void> => {
  */
 export const updateCustomer = async (customerId: string, updates: Partial<Customer>): Promise<void> => {
   try {
+    console.log(`[Firestore] 💾 Updating customer: ${customerId}`, {
+      fields: Object.keys(updates).join(', '),
+      hasMeetings: Array.isArray(updates.meetings),
+      hasChecklists: Array.isArray(updates.checklists),
+    });
+
     const customerRef = doc(db, 'customers', customerId);
 
     await updateDoc(customerRef, {
@@ -126,9 +132,9 @@ export const updateCustomer = async (customerId: string, updates: Partial<Custom
       updatedAt: Timestamp.now(),
     });
 
-    console.log('✓ Customer updated:', customerId);
+    console.log(`[Firestore] ✅ Customer updated successfully: ${customerId}`);
   } catch (error) {
-    console.error('❌ Error updating customer:', error);
+    console.error(`[Firestore] ❌ Error updating customer ${customerId}:`, error);
     throw error;
   }
 };
@@ -157,10 +163,15 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
   const customersRef = collection(db, 'customers');
   const q = query(customersRef, orderBy('createdAt', 'desc'));
 
-  console.log('👂 Setting up real-time listener for customers list');
+  console.log('[Firestore] 🔄 Setting up real-time listener for customers list');
 
   return onSnapshot(q, (snapshot) => {
-    console.log('📡 Customers snapshot received:', snapshot.docs.length, 'documents');
+    console.log(`[Firestore] 📡 Customers snapshot received:`, {
+      docCount: snapshot.docs.length,
+      fromCache: snapshot.metadata.fromCache,
+      hasPendingWrites: snapshot.metadata.hasPendingWrites,
+    });
+
     const customers = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -170,13 +181,25 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
         meetings: data.meetings || [],
       } as Customer;
     });
+
+    console.log(`[Firestore] ✅ Processed ${customers.length} customers:`,
+      customers.map(c => ({
+        id: c.id,
+        name: c.name,
+        meetings: c.meetings?.length || 0,
+        checklists: c.checklists?.length || 0
+      }))
+    );
+
     callback(customers);
   }, (error) => {
-    console.error('❌ Error in customers listener:', error);
+    console.error('[Firestore] ❌ Error in customers listener:', error.code, error.message);
     if (error.code === 'permission-denied') {
-      console.error('🔐 Permission denied - check Firebase rules');
+      console.error('[Firestore] 🔐 Permission denied - check Firebase rules');
     } else if (error.code === 'unavailable') {
-      console.error('📵 Firestore unavailable - offline mode');
+      console.error('[Firestore] 📵 Firestore unavailable - offline mode');
+    } else if (error.code === 'failed-precondition') {
+      console.error('[Firestore] ⚠️ Failed precondition - persistence issue');
     }
     callback([]);
   });
@@ -185,16 +208,20 @@ export const subscribeToCustomers = (callback: (customers: Customer[]) => void):
 export const subscribeToCustomer = (customerId: string, callback: (customer: Customer | null) => void): (() => void) => {
   const customerRef = doc(db, 'customers', customerId);
 
-  console.log('👂 Setting up real-time listener for customer:', customerId);
+  console.log(`[Firestore] 🔄 Setting up real-time listener for customer: ${customerId}`);
 
-  return onSnapshot(customerRef, (snapshot) => {
+  const unsubscribe = onSnapshot(customerRef, (snapshot) => {
     if (!snapshot.exists()) {
-      console.log('⚠️ Customer document does not exist:', customerId);
+      console.warn(`[Firestore] ⚠️ Customer document does not exist: ${customerId}`);
       callback(null);
       return;
     }
 
-    console.log('📡 Customer snapshot received:', customerId);
+    console.log(`[Firestore] 📡 Customer snapshot received:`, {
+      customerId: snapshot.id,
+      fromCache: snapshot.metadata.fromCache,
+      hasPendingWrites: snapshot.metadata.hasPendingWrites,
+    });
 
     // After migration, array fields are directly available in the snapshot
     const data = snapshot.data();
@@ -205,23 +232,31 @@ export const subscribeToCustomer = (customerId: string, callback: (customer: Cus
       meetings: data.meetings || [],
     } as Customer;
 
-    console.log('✅ Customer details loaded:', {
+    console.log(`[Firestore] ✅ Customer details loaded:`, {
       id: customer.id,
       name: customer.name,
       checklistsCount: customer.checklists?.length || 0,
       meetingsCount: customer.meetings?.length || 0,
+      properties: customer.meetings?.reduce((sum, m) => sum + (m.properties?.length || 0), 0) || 0,
     });
 
     callback(customer);
   }, (error) => {
-    console.error('❌ Error in customer listener:', error);
+    console.error(`[Firestore] ❌ Error in customer listener (${customerId}):`, error.code, error.message);
     if (error.code === 'permission-denied') {
-      console.error('🔐 Permission denied - check Firebase rules');
+      console.error('[Firestore] 🔐 Permission denied - check Firebase rules');
     } else if (error.code === 'unavailable') {
-      console.error('📵 Firestore unavailable - offline mode');
+      console.error('[Firestore] 📵 Firestore unavailable - offline mode');
+    } else if (error.code === 'failed-precondition') {
+      console.error('[Firestore] ⚠️ Failed precondition - persistence issue');
     }
     callback(null);
   });
+
+  return () => {
+    console.log(`[Firestore] 🔌 Unsubscribing from customer listener: ${customerId}`);
+    unsubscribe();
+  };
 };
 
 // Utility

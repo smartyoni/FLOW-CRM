@@ -23,6 +23,17 @@ const App: React.FC = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ customerId: string; customerName: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [syncStatus, setSyncStatus] = useState<{
+    isListening: boolean;
+    lastSync: number | null;
+    customerCount: number;
+    detailListening: boolean;
+  }>({
+    isListening: false,
+    lastSync: null,
+    customerCount: 0,
+    detailListening: false,
+  });
 
   // 마이그레이션: 서브컬렉션 데이터를 배열 필드로 전환 (최초 1회만 실행)
   useEffect(() => {
@@ -48,20 +59,31 @@ const App: React.FC = () => {
 
   // Real-time listener for customers
   useEffect(() => {
+    console.log('[App] 🚀 Initializing customers real-time listener');
     setLoading(true);
     setError(null);
 
     try {
       const unsubscribe = subscribeToCustomers((fetchedCustomers) => {
+        console.log(`[App] 📥 Received ${fetchedCustomers.length} customers from subscription`);
         setCustomers(fetchedCustomers);
         setLoading(false);
-        console.log('✓ 데이터 실시간 동기화 완료:', fetchedCustomers.length, '명');
+        setSyncStatus(prev => ({
+          ...prev,
+          isListening: true,
+          lastSync: Date.now(),
+          customerCount: fetchedCustomers.length,
+        }));
       });
 
       // Cleanup on unmount
-      return () => unsubscribe();
+      return () => {
+        console.log('[App] 🛑 Cleaning up customers listener');
+        setSyncStatus(prev => ({ ...prev, isListening: false }));
+        unsubscribe();
+      };
     } catch (err) {
-      console.error('Firebase 연결 오류:', err);
+      console.error('[App] ❌ Firebase 연결 오류:', err);
       setError('데이터를 로드할 수 없습니다. Firebase 연결을 확인해주세요.');
       setLoading(false);
     }
@@ -70,30 +92,46 @@ const App: React.FC = () => {
   // Listen for full customer details when customer is selected
   // After migration, subscribeToCustomer returns complete data with array fields
   useEffect(() => {
-    if (!selectedCustomer) return;
+    if (!selectedCustomer) {
+      console.log('[App] ⏭️ Skipping customer detail listener (no selected customer)');
+      return;
+    }
 
-    console.log('👁️ Loading full customer details:', selectedCustomer.id);
+    console.log(`[App] 🚀 Initializing detail listener for customer: ${selectedCustomer.id}`);
     const unsubscribe = subscribeToCustomer(selectedCustomer.id, (customer) => {
       if (customer) {
-        console.log('✓ Full customer details loaded:', customer);
+        console.log(`[App] 📥 Received updated customer data:`, {
+          id: customer.id,
+          name: customer.name,
+          meetings: customer.meetings?.length || 0,
+          checklists: customer.checklists?.length || 0,
+        });
         setSelectedCustomer(customer);
+        setSyncStatus(prev => ({ ...prev, detailListening: true }));
+      } else {
+        console.warn(`[App] ⚠️ Customer ${selectedCustomer.id} not found in Firestore`);
+        setSyncStatus(prev => ({ ...prev, detailListening: false }));
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      console.log(`[App] 🛑 Cleaning up detail listener for customer: ${selectedCustomer.id}`);
+      setSyncStatus(prev => ({ ...prev, detailListening: false }));
+      unsubscribe();
+    };
   }, [selectedCustomer?.id]);
 
   // Online/Offline detection
   useEffect(() => {
-    console.log('🌐 Initial online status:', navigator.onLine ? 'ONLINE' : 'OFFLINE');
+    console.log(`[App] 🌐 Initial network status: ${navigator.onLine ? 'ONLINE ✅' : 'OFFLINE ❌'}`);
 
     const handleOnline = () => {
-      console.log('📶 Network status: ONLINE (connection restored)');
+      console.log('[App] 📶 Network status: ONLINE ✅ (connection restored)');
       setIsOnline(true);
     };
 
     const handleOffline = () => {
-      console.log('📵 Network status: OFFLINE (no connection)');
+      console.log('[App] 📵 Network status: OFFLINE ❌ (no connection)');
       setIsOnline(false);
     };
 
@@ -103,7 +141,7 @@ const App: React.FC = () => {
     // Check periodically (for mobile network changes)
     const checkInterval = setInterval(() => {
       const current = navigator.onLine;
-      console.log('🔄 Network check:', current ? 'ONLINE' : 'OFFLINE');
+      console.log(`[App] 🔄 Network check: ${current ? 'ONLINE ✅' : 'OFFLINE ❌'}`);
     }, 30000); // Every 30 seconds
 
     return () => {
@@ -139,13 +177,20 @@ const App: React.FC = () => {
         customer.id = generateId();
       }
 
+      console.log(`[App] ➕ Adding new customer:`, {
+        id: customer.id,
+        name: customer.name,
+        meetings: customer.meetings?.length || 0,
+      });
+
       // Optimistic update
       setCustomers(prev => [customer, ...prev]);
 
       // Persist to Firestore
       await createCustomer(customer);
+      console.log(`[App] ✅ Customer added successfully: ${customer.id}`);
     } catch (err) {
-      console.error('고객 추가 실패:', err);
+      console.error('[App] ❌ Error adding customer:', err);
       setError('고객을 추가할 수 없습니다.');
       // Revert optimistic update
       setCustomers(prev => prev.filter(c => c.id !== customer.id));
@@ -240,14 +285,21 @@ const App: React.FC = () => {
 
   const handleUpdateCustomer = async (updatedCustomer: Customer) => {
     try {
+      console.log(`[App] ✏️ Updating customer: ${updatedCustomer.id}`, {
+        name: updatedCustomer.name,
+        meetings: updatedCustomer.meetings?.length || 0,
+        checklists: updatedCustomer.checklists?.length || 0,
+      });
+
       // Optimistic update
       setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
       setSelectedCustomer(updatedCustomer);
 
       // Persist to Firestore
       await updateCustomer(updatedCustomer.id, updatedCustomer);
+      console.log(`[App] ✅ Customer updated successfully: ${updatedCustomer.id}`);
     } catch (err) {
-      console.error('고객 수정 실패:', err);
+      console.error('[App] ❌ Error updating customer:', err);
       setError('고객을 수정할 수 없습니다.');
     }
   };
@@ -412,6 +464,32 @@ const App: React.FC = () => {
                 삭제
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Sync Status Panel (Development Mode) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg p-3 text-xs shadow-lg font-mono max-w-xs z-40">
+          <div className="font-bold mb-2 text-gray-800">🔍 Sync Status</div>
+          <div className="space-y-1 text-gray-700">
+            <div>
+              🔄 List: {syncStatus.isListening ? '✅' : '❌'}
+            </div>
+            <div>
+              📋 Detail: {syncStatus.detailListening ? '✅' : '❌'}
+            </div>
+            <div>
+              🌐 Network: {isOnline ? '✅ Online' : '❌ Offline'}
+            </div>
+            <div>
+              👥 Customers: {syncStatus.customerCount}
+            </div>
+            {syncStatus.lastSync && (
+              <div className="text-gray-600">
+                🕐 {new Date(syncStatus.lastSync).toLocaleTimeString('ko-KR')}
+              </div>
+            )}
           </div>
         </div>
       )}

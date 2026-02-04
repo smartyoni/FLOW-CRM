@@ -12,7 +12,7 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-console.log('🔧 Firebase config:', {
+console.log('[Firebase] 🔧 Configuration loaded:', {
   projectId: firebaseConfig.projectId,
   authDomain: firebaseConfig.authDomain,
   storageBucket: firebaseConfig.storageBucket,
@@ -26,18 +26,18 @@ const db = getFirestore(app);
 
 // Enable offline persistence for PWA (IndexedDB caching)
 if (typeof window !== 'undefined') {
-  console.log('📱 Initializing IndexedDB persistence...');
+  console.log('[Firebase] 📱 Initializing IndexedDB persistence...');
   enableIndexedDbPersistence(db)
     .then(() => {
-      console.log('✅ IndexedDB persistence enabled - offline data will be cached');
+      console.log('[Firebase] ✅ IndexedDB persistence enabled - offline data will be cached');
     })
     .catch((err) => {
       if (err.code === 'failed-precondition') {
-        console.warn('⚠️ Firestore persistence failed: Multiple tabs open');
+        console.warn('[Firebase] ⚠️ Firestore persistence failed: Multiple tabs open or persistence already enabled');
       } else if (err.code === 'unimplemented') {
-        console.warn('⚠️ Firestore persistence not available in this browser');
+        console.warn('[Firebase] ⚠️ Firestore persistence not available in this browser');
       } else {
-        console.error('❌ Unexpected persistence error:', err);
+        console.error('[Firebase] ❌ Unexpected persistence error:', err.code, err.message);
       }
     });
 }
@@ -45,6 +45,6 @@ if (typeof window !== 'undefined') {
 // Initialize Firebase Storage
 const storage = getStorage(app);
 
-console.log('✓ Firebase initialized successfully');
+console.log('[Firebase] ✅ Firebase initialized successfully');
 
 export { db, storage };
