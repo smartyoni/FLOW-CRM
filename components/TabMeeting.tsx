@@ -1030,6 +1030,43 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
                       )}
 
+                      {/* 건물명 */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">건물명:</span>
+                          {editingField === `${prop.id}-roomName` ? (
+                            <input
+                              autoFocus
+                              type="text"
+                              className="flex-1 border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                              value={editingFieldValue}
+                              onChange={(e) => setEditingFieldValue(e.target.value)}
+                              onBlur={() => savePropertyInlineField(prop.id, 'roomName')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  savePropertyInlineField(prop.id, 'roomName');
+                                }
+                                if (e.key === 'Escape') {
+                                  setEditingField(null);
+                                  setEditingFieldValue('');
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div
+                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              onDoubleClick={() => {
+                                setEditingField(`${prop.id}-roomName`);
+                                setEditingFieldValue(prop.roomName || '');
+                              }}
+                              title="더블클릭하여 편집"
+                            >
+                              {prop.roomName || '(건물명)'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
                       {/* 호실 및 지번 */}
                       <div className="flex flex-col md:flex-row gap-3 mb-4">
                         <div className="flex-1 flex items-center gap-2">
