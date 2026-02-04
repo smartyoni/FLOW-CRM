@@ -823,8 +823,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           <div className="p-6 space-y-8">
             {reportImages.map((img, idx) => (
               <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm mb-4" />
-                <div className="mt-4">
+                <div className="mb-4">
                   <label className="block text-sm font-bold text-gray-700 mb-2">메모:</label>
                   <textarea
                     value={reportMemos[reportProperties[idx]?.id] || ''}
@@ -834,6 +833,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                   />
                 </div>
+                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
               </div>
             ))}
           </div>
