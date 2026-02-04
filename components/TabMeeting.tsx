@@ -32,8 +32,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [parsedAgencyPhone, setParsedAgencyPhone] = useState('');
   const [parsedText, setParsedText] = useState('');
 
-  // 플랫폼 선택 (TEN 또는 NAVER)
-  const [selectedPlatform, setSelectedPlatform] = useState<'TEN' | 'NAVER'>('TEN');
+  // 플랫폼 선택 (TEN 주거, TEN 상업용, 또는 NAVER)
+  const [selectedPlatform, setSelectedPlatform] = useState<'TEN' | 'TEN_COMMERCIAL' | 'NAVER'>('TEN');
 
   // 사진 모달
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -322,7 +322,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       const parsedCount = [fields.roomName, fields.jibun, fields.agency, fields.agencyPhone]
         .filter(f => f).length;
 
-      const platformName = selectedPlatform === 'TEN' ? '텐(주거)' : '네이버부동산';
+      const platformName = selectedPlatform === 'TEN' ? '텐(주거)' : selectedPlatform === 'TEN_COMMERCIAL' ? '텐(상업용)' : '네이버부동산';
 
       if (parsedCount === 0) {
         alert(`${platformName} 형식 파싱에 실패했습니다.\n입력 형식을 확인해주세요.`);
@@ -667,6 +667,18 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                     >
 
                                       텐(주거)
+
+                                    </button>
+
+                                    <button
+
+                                      onClick={() => setSelectedPlatform('TEN_COMMERCIAL')}
+
+                                      className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${selectedPlatform === 'TEN_COMMERCIAL' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+
+                                    >
+
+                                      텐(상업용)
 
                                     </button>
 
