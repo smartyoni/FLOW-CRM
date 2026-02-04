@@ -535,9 +535,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const A4_WIDTH = pdf.internal.pageSize.getWidth();
-      const A4_HEIGHT = pdf.internal.pageSize.getHeight();
-      const MARGIN = 10;
       let isFirstPage = true;
 
       // 시간순으로 정렬된 매물 처리
@@ -548,124 +545,82 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       });
 
       for (const prop of sortedProperties) {
-        if (!isFirstPage) {
-          pdf.addPage();
-        }
-        isFirstPage = false;
+        // HTML 요소 동적 생성
+        const reportContainer = document.createElement('div');
+        reportContainer.style.width = '210mm';
+        reportContainer.style.height = '297mm';
+        reportContainer.style.padding = '10mm';
+        reportContainer.style.backgroundColor = 'white';
+        reportContainer.style.fontFamily = 'Arial, sans-serif';
+        reportContainer.style.fontSize = '12px';
+        reportContainer.style.color = '#333';
+        reportContainer.style.position = 'absolute';
+        reportContainer.style.left = '-9999px';
+        reportContainer.style.top = '-9999px';
 
-        let yPosition = MARGIN;
+        let html = '';
 
         // 제목: 건물명
         if (prop.roomName) {
-          pdf.setFontSize(14);
-          pdf.setFont(undefined, 'bold');
-          pdf.text(`건물명: ${prop.roomName}`, MARGIN, yPosition);
-          yPosition += 8;
+          html += `<h2 style="font-size: 18px; font-weight: bold; margin: 0 0 12px 0; color: #000;">건물명: ${prop.roomName}</h2>`;
         }
 
-        // 부속정보: 호실, 지번
-        pdf.setFontSize(10);
-        pdf.setFont(undefined, 'normal');
-        if (prop.unit) {
-          pdf.text(`호실: ${prop.unit}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
-        if (prop.jibun) {
-          pdf.text(`지번: ${prop.jibun}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
-        if (prop.agency) {
-          pdf.text(`부동산: ${prop.agency}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
-        if (prop.agencyPhone) {
-          pdf.text(`연락처: ${prop.agencyPhone}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
-        if (prop.visitTime) {
-          pdf.text(`방문시간: ${prop.visitTime}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
-        if (prop.status) {
-          pdf.text(`상태: ${prop.status}`, MARGIN, yPosition);
-          yPosition += 6;
-        }
+        // 부속정보
+        html += '<div style="font-size: 11px; line-height: 1.8; margin-bottom: 12px; color: #333;">';
+        if (prop.unit) html += `<div>호실: ${prop.unit}</div>`;
+        if (prop.jibun) html += `<div>지번: ${prop.jibun}</div>`;
+        if (prop.agency) html += `<div>부동산: ${prop.agency}</div>`;
+        if (prop.agencyPhone) html += `<div>연락처: ${prop.agencyPhone}</div>`;
+        if (prop.visitTime) html += `<div>방문시간: ${prop.visitTime}</div>`;
+        if (prop.status) html += `<div>상태: ${prop.status}</div>`;
+        html += '</div>';
 
-        yPosition += 4;
-        pdf.setDrawColor(200);
-        pdf.line(MARGIN, yPosition, A4_WIDTH - MARGIN, yPosition);
-        yPosition += 6;
+        html += '<hr style="border: none; border-top: 1px solid #ccc; margin: 12px 0;" />';
 
         // 매물정보 섹션
         if (prop.parsedText) {
-          pdf.setFont(undefined, 'bold');
-          pdf.setFontSize(11);
-          pdf.text('매물정보:', MARGIN, yPosition);
-          yPosition += 6;
-
-          pdf.setFont(undefined, 'normal');
-          pdf.setFontSize(10);
-          const splitText = pdf.splitTextToSize(prop.parsedText, A4_WIDTH - MARGIN * 2);
-
-          for (let i = 0; i < splitText.length; i++) {
-            if (yPosition + 5 > A4_HEIGHT - MARGIN) {
-              pdf.addPage();
-              yPosition = MARGIN;
-            }
-            pdf.text(splitText[i], MARGIN, yPosition);
-            yPosition += 5;
-          }
+          html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">매물정보:</h3>';
+          html += `<pre style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 12px 0; background: #f5f5f5; padding: 8px; border-radius: 4px;">${prop.parsedText}</pre>`;
         }
-
-        yPosition += 4;
 
         // 메모 섹션
         if (prop.memo) {
-          pdf.setFont(undefined, 'bold');
-          pdf.setFontSize(11);
-          pdf.text('메모:', MARGIN, yPosition);
-          yPosition += 6;
-
-          pdf.setFont(undefined, 'normal');
-          pdf.setFontSize(10);
-          const splitMemo = pdf.splitTextToSize(prop.memo, A4_WIDTH - MARGIN * 2);
-
-          for (let i = 0; i < splitMemo.length; i++) {
-            if (yPosition + 5 > A4_HEIGHT - MARGIN) {
-              pdf.addPage();
-              yPosition = MARGIN;
-            }
-            pdf.text(splitMemo[i], MARGIN, yPosition);
-            yPosition += 5;
-          }
+          html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">메모:</h3>';
+          html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 0 0 12px 0; background: #fff8f0; padding: 8px; border-radius: 4px;">${prop.memo}</div>`;
         }
-
-        yPosition += 4;
 
         // 사진 섹션
         if (prop.photos && prop.photos.length > 0) {
-          pdf.setFont(undefined, 'bold');
-          pdf.setFontSize(11);
-          pdf.text(`사진 (${prop.photos.length}장):`, MARGIN, yPosition);
-          yPosition += 8;
-
-          const imgWidth = A4_WIDTH - MARGIN * 2;
-          const imgHeight = 60;
-
+          html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">사진 (${prop.photos.length}장):</h3>`;
           for (const photoData of prop.photos) {
-            if (yPosition + imgHeight > A4_HEIGHT - MARGIN) {
-              pdf.addPage();
-              yPosition = MARGIN;
-            }
-
-            try {
-              pdf.addImage(photoData, 'JPEG', MARGIN, yPosition, imgWidth, imgHeight);
-              yPosition += imgHeight + 4;
-            } catch (err) {
-              console.error('사진 추가 실패:', err);
-            }
+            html += `<img src="${photoData}" style="width: 100%; max-height: 200px; object-fit: contain; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px;" />`;
           }
         }
+
+        reportContainer.innerHTML = html;
+        document.body.appendChild(reportContainer);
+
+        // html2canvas로 캡처
+        const canvas = await html2canvas(reportContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+
+        document.body.removeChild(reportContainer);
+
+        // PDF에 이미지 추가
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        isFirstPage = false;
       }
 
       // PDF 다운로드
