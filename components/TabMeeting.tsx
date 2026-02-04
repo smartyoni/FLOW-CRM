@@ -1374,15 +1374,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
                       )}
 
-                      {/* 건물명 */}
-                      <div className="mb-4">
-                        <div className="flex items-center gap-2">
+                      {/* 건물명, 호실, 지번 */}
+                      <div className="flex flex-col md:flex-row gap-1 md:gap-2 mb-4 items-start md:items-center">
+                        {/* 건물명 */}
+                        <div className="w-full md:w-auto flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">건물명:</span>
                           {editingField === `${prop.id}-roomName` ? (
                             <input
                               autoFocus
                               type="text"
-                              className="flex-1 border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                              className="w-full md:w-auto border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
                               value={editingFieldValue}
                               onChange={(e) => setEditingFieldValue(e.target.value)}
                               onBlur={() => savePropertyInlineField(prop.id, 'roomName')}
@@ -1398,7 +1399,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             />
                           ) : (
                             <div
-                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              className="w-full md:w-auto px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                               onDoubleClick={() => {
                                 setEditingField(`${prop.id}-roomName`);
                                 setEditingFieldValue(prop.roomName || '');
@@ -1409,11 +1410,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             </div>
                           )}
                         </div>
-                      </div>
 
-                      {/* 호실 및 지번 */}
-                      <div className="flex flex-col md:flex-row gap-3 mb-4">
-                        <div className="flex-1 flex items-center gap-2">
+                        {/* 호실 */}
+                        <div className="w-full md:w-auto flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                           {editingUnitId === prop.id ? (
                             <input
@@ -1423,24 +1422,26 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
                               onBlur={() => setEditingUnitId(null)}
                               onKeyDown={(e) => e.key === 'Enter' && setEditingUnitId(null)}
-                              className="flex-1 px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                              className="w-full md:w-auto px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                           ) : (
                             <div
                               onDoubleClick={() => setEditingUnitId(prop.id)}
-                              className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              className="w-full md:w-auto px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                             >
                               {prop.unit || '(호실)'}
                             </div>
                           )}
                         </div>
-                        <div className="flex-1 flex items-center gap-2">
+
+                        {/* 지번 */}
+                        <div className="w-full md:w-auto flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
                           {editingField === `${prop.id}-jibun` ? (
                             <input
                               autoFocus
                               type="text"
-                              className="flex-1 border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                              className="w-full md:w-auto border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
                               value={editingFieldValue}
                               onChange={(e) => setEditingFieldValue(e.target.value)}
                               onBlur={() => savePropertyInlineField(prop.id, 'jibun')}
@@ -1456,7 +1457,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             />
                           ) : (
                             <span
-                              className="flex-1 font-semibold cursor-pointer hover:bg-yellow-100 px-1 rounded inline-block text-xs py-1"
+                              className="font-semibold cursor-pointer hover:bg-yellow-100 px-1 rounded inline-block text-xs py-1"
                               onDoubleClick={() => {
                                 setEditingField(`${prop.id}-jibun`);
                                 setEditingFieldValue(prop.jibun || '');
