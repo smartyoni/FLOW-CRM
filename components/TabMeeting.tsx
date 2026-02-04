@@ -686,7 +686,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                                       onClick={() => setSelectedPlatform('NAVER')}
 
-                                      className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${selectedPlatform === 'NAVER' ? 'bg-primary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                                      className={`px-3 py-1.5 transition-colors border-l border-gray-300 ${selectedPlatform === 'NAVER' ? 'bg-green-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
 
                                     >
 
