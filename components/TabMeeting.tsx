@@ -823,6 +823,15 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           <div className="p-6 space-y-8">
             {reportImages.map((img, idx) => (
               <div key={idx} className="border border-gray-200 rounded-lg p-4">
+                {/* 매물정보 텍스트 */}
+                {reportProperties[idx]?.parsedText && (
+                  <div className="mb-4 pb-4 border-b border-gray-200">
+                    <p className="text-xs font-bold text-gray-600 mb-2">매물정보</p>
+                    <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold">{reportProperties[idx].parsedText}</pre>
+                  </div>
+                )}
+
+                {/* 메모 입력 필드 */}
                 <div className="mb-4">
                   <label className="block text-sm font-bold text-gray-700 mb-2">메모:</label>
                   <textarea
@@ -833,6 +842,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                   />
                 </div>
+
+                {/* 미리보기 이미지 */}
                 <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
               </div>
             ))}
