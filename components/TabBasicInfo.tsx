@@ -211,7 +211,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
 
         <div className="p-4 bg-white space-y-3 text-sm">
-          <div className="grid grid-cols-3 gap-3 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             {/* 고객명 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
               <span className="text-gray-800 font-bold">고객명:</span>
@@ -327,7 +327,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
 
             {/* 메모 */}
-            <div className="col-span-3 mt-2 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
+            <div className="col-span-1 md:col-span-3 mt-2 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
               {editingField === 'memo' ? (
                 <textarea
                   autoFocus

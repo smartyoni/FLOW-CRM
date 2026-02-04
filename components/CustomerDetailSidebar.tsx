@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Customer, TabState } from '../types';
 import { TabBasicInfo } from './TabBasicInfo';
 import { TabMeeting } from './TabMeeting';
@@ -13,6 +13,23 @@ interface Props {
 
 export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<TabState>('BASIC');
+  const [sidebarWidth, setSidebarWidth] = useState('100vw');
+
+  useEffect(() => {
+    const updateWidth = () => {
+      // 모바일 (md 이하, 768px 미만): 100vw
+      // 데스크톱 (md 이상, 768px 이상): (100vw - 250px) * 0.7
+      if (window.innerWidth < 768) {
+        setSidebarWidth('100vw');
+      } else {
+        setSidebarWidth('calc((100vw - 250px) * 0.7)');
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   if (!customer) return null;
 
@@ -31,7 +48,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
         className={`fixed inset-y-0 right-0 w-full bg-white shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
-        style={{ width: 'calc((100vw - 250px) * 0.7)' }}
+        style={{ width: sidebarWidth }}
       >
         <div className="flex flex-col h-full">
           {/* Top Bar */}
