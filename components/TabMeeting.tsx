@@ -569,7 +569,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         // 매물정보 내용 (헤더 제거, 페이지 상단부터 시작)
         if (prop.parsedText) {
-          html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; background: #f5f5f5; padding: 12px; border-radius: 4px;">${prop.parsedText}</div>`;
+          html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
         }
 
         // 메모 섹션
@@ -712,8 +712,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           {/* 미리보기 이미지 */}
           <div className="p-6 space-y-6">
             {reportImages.map((img, idx) => (
-              <div key={idx} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full border border-gray-300 rounded" />
+              <div key={idx}>
+                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
               </div>
             ))}
           </div>
