@@ -1412,7 +1412,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
 
                         {/* 호실 */}
-                        <div className="w-full md:w-auto flex items-center gap-1">
+                        <div className="w-full md:flex-1 flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                           {editingUnitId === prop.id ? (
                             <input
@@ -1422,12 +1422,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
                               onBlur={() => setEditingUnitId(null)}
                               onKeyDown={(e) => e.key === 'Enter' && setEditingUnitId(null)}
-                              className="w-full md:w-auto px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                              className="w-full px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                           ) : (
                             <div
                               onDoubleClick={() => setEditingUnitId(prop.id)}
-                              className="w-full md:w-auto px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                             >
                               {prop.unit || '(호실)'}
                             </div>
@@ -1435,7 +1435,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
 
                         {/* 지번 */}
-                        <div className="w-full md:w-auto flex items-center gap-1 md:ml-auto">
+                        <div className="w-full md:w-auto flex items-center gap-1 md:ml-4">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
                           {editingField === `${prop.id}-jibun` ? (
                             <input
