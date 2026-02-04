@@ -567,27 +567,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         let html = '';
 
-        // 제목: 건물명
-        if (prop.roomName) {
-          html += `<h2 style="font-size: 18px; font-weight: bold; margin: 0 0 12px 0; color: #000;">건물명: ${prop.roomName}</h2>`;
-        }
-
-        // 부속정보
-        html += '<div style="font-size: 11px; line-height: 1.8; margin-bottom: 12px; color: #333;">';
-        if (prop.unit) html += `<div>호실: ${prop.unit}</div>`;
-        if (prop.jibun) html += `<div>지번: ${prop.jibun}</div>`;
-        if (prop.agency) html += `<div>부동산: ${prop.agency}</div>`;
-        if (prop.agencyPhone) html += `<div>연락처: ${prop.agencyPhone}</div>`;
-        if (prop.visitTime) html += `<div>방문시간: ${prop.visitTime}</div>`;
-        if (prop.status) html += `<div>상태: ${prop.status}</div>`;
-        html += '</div>';
-
-        html += '<hr style="border: none; border-top: 1px solid #ccc; margin: 12px 0;" />';
-
-        // 매물정보 섹션
+        // 매물정보 내용 (헤더 제거)
         if (prop.parsedText) {
-          html += '<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 6px 0;">매물정보:</h3>';
-          html += `<pre style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 12px 0; background: #f5f5f5; padding: 8px; border-radius: 4px;">${prop.parsedText}</pre>`;
+          html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; background: #f5f5f5; padding: 12px; border-radius: 4px;">${prop.parsedText}</div>`;
         }
 
         // 메모 섹션
