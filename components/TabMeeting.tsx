@@ -919,7 +919,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       return timeA.localeCompare(timeB);
                     })
                     .map((prop, idx) => (
-                    <div key={prop.id} className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div key={prop.id} className="p-4 bg-gray-50 border border-black rounded-lg">
                       {/* 시간 선택 및 상태 드롭다운 */}
                       <div className="flex gap-1 md:gap-3 mb-4 items-center">
                         <div className="flex gap-1 md:gap-2 items-center">
