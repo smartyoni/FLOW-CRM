@@ -1435,7 +1435,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
 
                         {/* 지번 */}
-                        <div className="w-full md:w-auto flex items-center gap-1">
+                        <div className="w-full md:w-auto flex items-center gap-1 md:ml-auto">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
                           {editingField === `${prop.id}-jibun` ? (
                             <input
