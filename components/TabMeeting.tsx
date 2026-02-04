@@ -1412,7 +1412,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
 
                         {/* 호실 */}
-                        <div className="w-full md:flex-[0.7] flex items-center gap-1">
+                        <div className="w-full md:flex-1 flex items-center gap-1">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                           {editingUnitId === prop.id ? (
                             <input
