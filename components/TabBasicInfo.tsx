@@ -16,9 +16,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
 
-  // Customer Info Edit State
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
-  const [infoForm, setInfoForm] = useState<Partial<Customer>>({});
+  // Inline Edit State
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState('');
 
   // Memo Modal State
   const [memoModalItem, setMemoModalItem] = useState<ChecklistItem | null>(null);
@@ -36,41 +36,22 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   // ⭐ 렌더링할 때는 로컬 상태 우선 사용
   const activeCustomer = localCustomer || customer;
 
-  // Customer Edit Handlers
-  const startInfoEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setInfoForm({
-      name: customer.name,
-      contact: customer.contact,
-      moveInDate: customer.moveInDate,
-      price: customer.price,
-      rentPrice: customer.rentPrice,
-      memo: customer.memo,
-      registrationDate: customer.registrationDate
-    });
-    setIsEditingInfo(true);
+  // Inline Edit Handlers
+  const startInlineEdit = (field: string, value: string) => {
+    setEditingField(field);
+    setEditingValue(value);
   };
 
-  const saveInfoEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const saveInlineEdit = (field: string) => {
+    const updates: Partial<Customer> = { [field]: editingValue };
+    if (field === 'rentPrice') {
+      updates.priceType = editingValue ? 'rent' : 'sale';
+    }
 
-    const updatedCustomer = {
-      ...activeCustomer,
-      ...infoForm,
-      priceType: infoForm.rentPrice ? 'rent' : 'sale'
-    } as Customer;
-
-    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    const updatedCustomer = { ...activeCustomer, ...updates } as Customer;
     setLocalCustomer(updatedCustomer);
-    // ⭐ 2. Firebase에 저장 (백그라운드)
     onUpdate(updatedCustomer);
-
-    setIsEditingInfo(false);
-  };
-
-  const cancelInfoEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsEditingInfo(false);
+    setEditingField(null);
   };
 
   const handleStageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -227,155 +208,152 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
           </div>
 
-          {/* Edit Buttons */}
-          <div>
-            {!isEditingInfo ? (
-              <button onClick={startInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
-                <i className="fas fa-edit mr-1"></i>수정
-              </button>
-            ) : (
-              <div className="flex gap-2">
-                <button onClick={saveInfoEdit} className="text-xs bg-primary text-white px-2 py-1 rounded hover:bg-blue-600">
-                  저장
-                </button>
-                <button onClick={cancelInfoEdit} className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 hover:bg-gray-200">
-                  취소
-                </button>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="p-4 bg-white space-y-3 text-sm">
-            {isEditingInfo ? (
-              /* Edit Mode */
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-gray-500 block text-xs">고객명</span>
-                    <input 
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.name || ''}
-                      onChange={e => setInfoForm({...infoForm, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">연락처</span>
-                    <input
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.contact || ''}
-                      onChange={e => setInfoForm({...infoForm, contact: formatPhoneNumber(e.target.value)})}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">입주일자</span>
-                    <input
-                      type="date"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.moveInDate || ''}
-                      onChange={e => setInfoForm({...infoForm, moveInDate: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">접수일</span>
-                    <input
-                      type="date"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.registrationDate || ''}
-                      onChange={e => setInfoForm({...infoForm, registrationDate: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <span className="text-gray-500 block text-xs">매매/보증금</span>
-                    <input 
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.price || ''}
-                      onChange={e => setInfoForm({...infoForm, price: e.target.value})}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-500 block text-xs">월세 (선택)</span>
-                    <input 
-                      type="text"
-                      className="w-full border rounded px-2 py-1"
-                      value={infoForm.rentPrice || ''}
-                      onChange={e => setInfoForm({...infoForm, rentPrice: e.target.value})}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <span className="text-gray-500 block text-xs">메모</span>
-                  <textarea 
-                    rows={3}
-                    className="w-full border rounded px-2 py-1"
-                    value={infoForm.memo || ''}
-                    onChange={e => setInfoForm({...infoForm, memo: e.target.value})}
-                  />
-                </div>
+          <div className="grid grid-cols-3 gap-3 text-sm">
+            {/* 고객명 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
+              <i className="fas fa-user text-gray-400 w-4"></i>
+              <span className="text-gray-800 font-bold">고객명:</span>
+              {editingField === 'name' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('name')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('name')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{activeCustomer.name}</span>
+              )}
+            </div>
+
+            {/* 연락처 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('contact', activeCustomer.contact)}>
+              <i className="fas fa-phone text-gray-400 w-4"></i>
+              <span className="text-gray-800 font-bold">연락처:</span>
+              {editingField === 'contact' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={e => setEditingValue(formatPhoneNumber(e.target.value))}
+                  onBlur={() => saveInlineEdit('contact')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('contact')}
+                />
+              ) : (
+                <a
+                  href={`sms:${activeCustomer.contact?.replace(/\D/g, '')}`}
+                  className="text-blue-600 font-semibold hover:text-blue-800 hover:underline group-hover:bg-yellow-100"
+                  title="클릭하여 문자메시지 보내기"
+                >
+                  {activeCustomer.contact}
+                </a>
+              )}
+            </div>
+
+            {/* 입주일자 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('moveInDate', activeCustomer.moveInDate)}>
+              <i className="fas fa-calendar-check text-gray-400 w-4"></i>
+              <span className="text-gray-800 font-bold">입주일:</span>
+              {editingField === 'moveInDate' ? (
+                <input
+                  autoFocus
+                  type="date"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none text-xs"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('moveInDate')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('moveInDate')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{activeCustomer.moveInDate || '-'}</span>
+              )}
+            </div>
+
+            {/* 매매/보증금 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('price', activeCustomer.price)}>
+              <i className="fas fa-won-sign text-gray-400 w-4"></i>
+              <span className="text-gray-800 font-bold">매매/보증금:</span>
+              {editingField === 'price' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('price')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('price')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{activeCustomer.price || '-'}</span>
+              )}
+            </div>
+
+            {/* 월세 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('rentPrice', activeCustomer.rentPrice)}>
+              <span className="text-gray-800 font-bold">월세:</span>
+              {editingField === 'rentPrice' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('rentPrice')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('rentPrice')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{activeCustomer.rentPrice || '-'}</span>
+              )}
+            </div>
+
+            {/* 접수일 */}
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('registrationDate', activeCustomer.registrationDate)}>
+              <i className="fas fa-calendar-plus text-gray-400 w-4"></i>
+              <span className="text-gray-800 font-bold">접수일:</span>
+              {editingField === 'registrationDate' ? (
+                <input
+                  autoFocus
+                  type="date"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none text-xs"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('registrationDate')}
+                  onKeyDown={e => e.key === 'Enter' && saveInlineEdit('registrationDate')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{activeCustomer.registrationDate || '-'}</span>
+              )}
+            </div>
+
+            {/* 메모 */}
+            <div className="col-span-3 mt-2 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <i className="fas fa-sticky-note text-gray-400 w-4"></i>
+                <span className="text-gray-800 font-bold">메모</span>
               </div>
-            ) : (
-              /* View Mode */
-              <div className="grid grid-cols-3 gap-3 text-xs">
-                {/* 고객명 */}
-                <div className="flex items-center gap-1.5">
-                  <i className="fas fa-user text-gray-400 w-4"></i>
-                  <span className="text-gray-500 font-medium">고객명:</span>
-                  <span className="text-gray-800 font-semibold">{activeCustomer.name}</span>
+              {editingField === 'memo' ? (
+                <textarea
+                  autoFocus
+                  rows={9}
+                  className="w-full border border-primary rounded px-2 py-1 outline-none resize-none"
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  onBlur={() => saveInlineEdit('memo')}
+                />
+              ) : (
+                <div className="bg-gray-50 p-2 rounded border border-gray-200 text-xs text-gray-700 h-42 overflow-y-auto group-hover:bg-yellow-50 whitespace-pre-wrap">
+                  {activeCustomer.memo || '-'}
                 </div>
-
-                {/* 연락처 */}
-                <div className="flex items-center gap-1.5">
-                  <i className="fas fa-phone text-gray-400 w-4"></i>
-                  <span className="text-gray-500 font-medium">연락처:</span>
-                  <a
-                    href={`sms:${activeCustomer.contact?.replace(/\D/g, '')}`}
-                    className="text-blue-600 font-semibold hover:text-blue-800 hover:underline cursor-pointer"
-                    title="클릭하여 문자메시지 보내기"
-                  >
-                    {activeCustomer.contact}
-                  </a>
-                </div>
-
-                {/* 입주일자 */}
-                <div className="flex items-center gap-1.5">
-                  <i className="fas fa-calendar-check text-gray-400 w-4"></i>
-                  <span className="text-gray-500 font-medium">입주일:</span>
-                  <span className="text-gray-800 font-semibold">{activeCustomer.moveInDate || '-'}</span>
-                </div>
-
-                {/* 접수일 */}
-                <div className="flex items-center gap-1.5">
-                  <i className="fas fa-calendar-plus text-gray-400 w-4"></i>
-                  <span className="text-gray-500 font-medium">접수일:</span>
-                  <span className="text-gray-800 font-semibold">{activeCustomer.registrationDate || '-'}</span>
-                </div>
-
-                {/* 가격조건 */}
-                <div className="flex items-center gap-1.5 col-span-2">
-                  <i className="fas fa-won-sign text-gray-400 w-4"></i>
-                  <span className="text-gray-500 font-medium">가격:</span>
-                  <span className="text-gray-800 font-semibold">
-                    {activeCustomer.price}
-                    {activeCustomer.rentPrice ? ` / ${activeCustomer.rentPrice}` : ''}
-                  </span>
-                </div>
-
-                {/* 메모 */}
-                <div className="col-span-3 mt-2">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <i className="fas fa-sticky-note text-gray-400 w-4"></i>
-                    <span className="text-gray-500 font-medium">메모</span>
-                  </div>
-                  <div className="bg-gray-50 p-2 rounded border border-gray-200 text-xs text-gray-700 max-h-20 overflow-y-auto">
-                    {activeCustomer.memo || '-'}
-                  </div>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+        </div>
         </div>
 
       {/* Checklist Section */}
@@ -434,7 +412,14 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
               </div>
               <div className="flex justify-between items-center text-xs text-gray-400">
                 <span>{new Date(item.createdAt).toLocaleString()}</span>
-                {item.memo && <span className="text-blue-500"><i className="fas fa-check mr-1"></i>메모있음</span>}
+                {item.memo && (
+                  <span
+                    onClick={() => openMemo(item)}
+                    className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                  >
+                    {item.memo.split('\n')[0]}
+                  </span>
+                )}
               </div>
             </div>
           ))}

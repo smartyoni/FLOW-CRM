@@ -3,8 +3,8 @@ import React from 'react';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  currentView?: 'customerList' | 'preMeeting' | 'reMeeting';
-  onViewChange?: (view: 'customerList' | 'preMeeting' | 'reMeeting') => void;
+  currentView?: 'customerList' | 'managingCustomer';
+  onViewChange?: (view: 'customerList' | 'managingCustomer') => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -17,7 +17,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onClose?.();
   };
 
-  const handleViewClick = (view: 'customerList' | 'preMeeting' | 'reMeeting') => {
+  const handleViewClick = (view: 'customerList' | 'managingCustomer') => {
     onViewChange?.(view);
     onClose?.();
   };
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 메뉴 */}
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
-          {/* 메뉴 항목 1: 전체 고객 (CustomerList) */}
+          {/* 메뉴 항목 1: 접수~첫미팅 (CustomerList) */}
           <li>
             <button
               onClick={() => handleViewClick('customerList')}
@@ -70,44 +70,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <i className={`fas fa-list w-5 ${
-                currentView === 'customerList' ? 'text-blue-500' : 'text-gray-500'
-              }`}></i>
-              <span className="font-medium text-sm">전체 고객</span>
+              <span className="text-2xl leading-none text-red-500">•</span>
+              <span className="font-medium text-sm">접수~첫미팅</span>
             </button>
           </li>
 
-          {/* 메뉴 항목 2: 첫미팅전 고객현황 */}
+          {/* 메뉴 항목 2: 재미팅~계약 */}
           <li>
             <button
-              onClick={() => handleViewClick('preMeeting')}
+              onClick={() => handleViewClick('managingCustomer')}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'preMeeting'
+                currentView === 'managingCustomer'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <i className={`fas fa-user-clock w-5 ${
-                currentView === 'preMeeting' ? 'text-blue-500' : 'text-gray-500'
-              }`}></i>
-              <span className="font-medium text-sm">첫미팅전 고객현황</span>
-            </button>
-          </li>
-
-          {/* 메뉴 항목 3: 재미팅 고객현황 */}
-          <li>
-            <button
-              onClick={() => handleViewClick('reMeeting')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'reMeeting'
-                  ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <i className={`fas fa-redo w-5 ${
-                currentView === 'reMeeting' ? 'text-blue-500' : 'text-gray-500'
-              }`}></i>
-              <span className="font-medium text-sm">재미팅 고객현황</span>
+              <span className="text-2xl leading-none text-red-500">•</span>
+              <span className="font-medium text-sm">재미팅~계약</span>
             </button>
           </li>
         </ul>

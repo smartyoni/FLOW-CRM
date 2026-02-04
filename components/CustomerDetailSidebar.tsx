@@ -3,7 +3,6 @@ import { Customer, TabState } from '../types';
 import { TabBasicInfo } from './TabBasicInfo';
 import { TabMeeting } from './TabMeeting';
 import { TabGantt } from './TabGantt';
-import { TabReport } from './TabReport';
 
 interface Props {
   customer: Customer | null;
@@ -29,9 +28,10 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
 
       {/* Sidebar Panel */}
       <div
-        className={`fixed inset-y-0 right-0 w-full md:w-[780px] bg-white shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 right-0 w-full bg-white shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
+        style={{ width: 'calc((100vw - 250px) * 0.7)' }}
       >
         <div className="flex flex-col h-full">
           {/* Top Bar */}
@@ -68,14 +68,6 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
             >
               여정관리
             </button>
-            <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'REPORT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('REPORT')}
-            >
-              보고서
-            </button>
           </div>
 
           {/* Content Area */}
@@ -93,14 +85,9 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               />
             )}
             {activeTab === 'GANTT' && (
-              <TabGantt 
-                customer={customer} 
+              <TabGantt
+                customer={customer}
                 onUpdate={onUpdate}
-              />
-            )}
-            {activeTab === 'REPORT' && (
-              <TabReport 
-                customer={customer} 
               />
             )}
           </div>
