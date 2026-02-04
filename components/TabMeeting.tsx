@@ -707,8 +707,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                                   >
 
-                                    <i className="fas fa-bolt"></i>
-
                                     생성
 
                                   </button>
