@@ -563,7 +563,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
       // 매물정보 내용 (헤더 제거, 페이지 상단부터 시작)
       if (prop.parsedText) {
-        html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
+        html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; color: #000; font-weight: 600;">${prop.parsedText}</div>`;
       }
 
       // 메모 섹션 (reportMemos에서 가져옴)
@@ -632,7 +632,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         // 매물정보 내용
         if (prop.parsedText) {
-          html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0;">${prop.parsedText}</div>`;
+          html += `<div style="font-size: 12px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; color: #000; font-weight: 600;">${prop.parsedText}</div>`;
         }
 
         // 메모 섹션
