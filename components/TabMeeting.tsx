@@ -688,7 +688,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 최종 PDF 생성 및 다운로드
   const finalizeReportPDF = async () => {
-    if (reportImages.length === 0 || !reportFileName) {
+    if (reportProperties.length === 0 || !reportFileName) {
       alert('파일명을 입력해주세요.');
       return;
     }
@@ -697,7 +697,65 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       const pdf = new jsPDF('p', 'mm', 'a4');
       let isFirstPage = true;
 
-      for (const imgData of reportImages) {
+      // 각 매물마다 PDF 페이지 생성
+      for (let i = 0; i < reportProperties.length; i++) {
+        const prop = reportProperties[i];
+        const memo = reportMemos[prop.id];
+
+        // 매물정보, 메모, 사진을 모두 포함한 페이지 생성
+        const pageContainer = document.createElement('div');
+        pageContainer.style.width = '210mm';
+        pageContainer.style.minHeight = '297mm';
+        pageContainer.style.padding = '10mm';
+        pageContainer.style.backgroundColor = 'white';
+        pageContainer.style.fontFamily = 'Arial, sans-serif';
+        pageContainer.style.fontSize = '12px';
+        pageContainer.style.color = '#333';
+        pageContainer.style.position = 'absolute';
+        pageContainer.style.left = '-9999px';
+        pageContainer.style.top = '-9999px';
+        pageContainer.style.boxSizing = 'border-box';
+
+        let html = '';
+
+        // 1. 매물정보
+        if (prop.parsedText) {
+          html += `<div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; font-family: Arial, sans-serif; margin: 0 0 16px 0; color: #000; font-weight: 600;">${prop.parsedText}</div>`;
+        }
+
+        // 2. 메모 (메모가 없어도 필드 표시)
+        html += '<div style="margin: 0 0 16px 0;">';
+        html += '<h3 style="font-size: 12px; font-weight: bold; margin: 0 0 6px 0;">메모</h3>';
+        if (memo) {
+          html += `<div style="font-size: 11px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; background: #fff8f0; padding: 8px; border-radius: 4px; border: 1px solid #ffe0cc;">${memo}</div>`;
+        } else {
+          html += '<div style="font-size: 11px; line-height: 1.6; background: #f9f9f9; padding: 8px; border-radius: 4px; border: 1px solid #e0e0e0; color: #999;">(메모 없음)</div>';
+        }
+        html += '</div>';
+
+        // 3. 사진
+        if (prop.photos && prop.photos.length > 0) {
+          html += `<h3 style="font-size: 12px; font-weight: bold; margin: 0 0 8px 0;">사진 (${prop.photos.length}장)</h3>`;
+          html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">';
+          for (const photoData of prop.photos) {
+            html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
+          }
+          html += '</div>';
+        }
+
+        pageContainer.innerHTML = html;
+        document.body.appendChild(pageContainer);
+
+        // html2canvas로 캡처
+        const canvas = await html2canvas(pageContainer, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff'
+        });
+
+        document.body.removeChild(pageContainer);
+
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -705,7 +763,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           pdf.addPage();
         }
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
         isFirstPage = false;
       }
 
@@ -717,6 +775,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       setReportPreviewOpen(false);
       setReportImages([]);
       setReportFileName('');
+      setReportMemos({});
+      setReportProperties([]);
     } catch (err) {
       console.error('PDF 저장 오류:', err);
       alert('PDF 저장 중 오류가 발생했습니다.');
