@@ -527,44 +527,157 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   // --- PDF Generation ---
-  const generatePDF = async () => {
-    if (!activeMeeting || activeMeeting.properties.length === 0) return;
+  const generatePropertyReport = async () => {
+    if (!activeMeeting || activeMeeting.properties.length === 0) {
+      alert('등록된 매물이 없습니다.');
+      return;
+    }
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
+      const A4_WIDTH = pdf.internal.pageSize.getWidth();
+      const A4_HEIGHT = pdf.internal.pageSize.getHeight();
+      const MARGIN = 10;
       let isFirstPage = true;
 
-      for (let i = 0; i < activeMeeting.properties.length; i++) {
-        const propRef = propertyRefsMap.current[activeMeeting.properties[i].id];
-        if (!propRef) continue;
+      // 시간순으로 정렬된 매물 처리
+      const sortedProperties = [...activeMeeting.properties].sort((a, b) => {
+        const timeA = a.visitTime || '99:99';
+        const timeB = b.visitTime || '99:99';
+        return timeA.localeCompare(timeB);
+      });
 
-        propRef.style.display = 'block';
+      for (const prop of sortedProperties) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        isFirstPage = false;
 
-        try {
-          const canvas = await html2canvas(propRef, { scale: 2, useCORS: true, allowTaint: true });
-          const imgData = canvas.toDataURL('image/png');
+        let yPosition = MARGIN;
 
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        // 제목: 건물명
+        if (prop.roomName) {
+          pdf.setFontSize(14);
+          pdf.setFont(undefined, 'bold');
+          pdf.text(`건물명: ${prop.roomName}`, MARGIN, yPosition);
+          yPosition += 8;
+        }
 
-          // 첫 페이지가 아니면 새 페이지 추가
-          if (!isFirstPage) {
-            pdf.addPage();
+        // 부속정보: 호실, 지번
+        pdf.setFontSize(10);
+        pdf.setFont(undefined, 'normal');
+        if (prop.unit) {
+          pdf.text(`호실: ${prop.unit}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+        if (prop.jibun) {
+          pdf.text(`지번: ${prop.jibun}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+        if (prop.agency) {
+          pdf.text(`부동산: ${prop.agency}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+        if (prop.agencyPhone) {
+          pdf.text(`연락처: ${prop.agencyPhone}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+        if (prop.visitTime) {
+          pdf.text(`방문시간: ${prop.visitTime}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+        if (prop.status) {
+          pdf.text(`상태: ${prop.status}`, MARGIN, yPosition);
+          yPosition += 6;
+        }
+
+        yPosition += 4;
+        pdf.setDrawColor(200);
+        pdf.line(MARGIN, yPosition, A4_WIDTH - MARGIN, yPosition);
+        yPosition += 6;
+
+        // 매물정보 섹션
+        if (prop.parsedText) {
+          pdf.setFont(undefined, 'bold');
+          pdf.setFontSize(11);
+          pdf.text('매물정보:', MARGIN, yPosition);
+          yPosition += 6;
+
+          pdf.setFont(undefined, 'normal');
+          pdf.setFontSize(10);
+          const splitText = pdf.splitTextToSize(prop.parsedText, A4_WIDTH - MARGIN * 2);
+
+          for (let i = 0; i < splitText.length; i++) {
+            if (yPosition + 5 > A4_HEIGHT - MARGIN) {
+              pdf.addPage();
+              yPosition = MARGIN;
+            }
+            pdf.text(splitText[i], MARGIN, yPosition);
+            yPosition += 5;
           }
+        }
 
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-          isFirstPage = false;
-        } finally {
-          propRef.style.display = 'none';
+        yPosition += 4;
+
+        // 메모 섹션
+        if (prop.memo) {
+          pdf.setFont(undefined, 'bold');
+          pdf.setFontSize(11);
+          pdf.text('메모:', MARGIN, yPosition);
+          yPosition += 6;
+
+          pdf.setFont(undefined, 'normal');
+          pdf.setFontSize(10);
+          const splitMemo = pdf.splitTextToSize(prop.memo, A4_WIDTH - MARGIN * 2);
+
+          for (let i = 0; i < splitMemo.length; i++) {
+            if (yPosition + 5 > A4_HEIGHT - MARGIN) {
+              pdf.addPage();
+              yPosition = MARGIN;
+            }
+            pdf.text(splitMemo[i], MARGIN, yPosition);
+            yPosition += 5;
+          }
+        }
+
+        yPosition += 4;
+
+        // 사진 섹션
+        if (prop.photos && prop.photos.length > 0) {
+          pdf.setFont(undefined, 'bold');
+          pdf.setFontSize(11);
+          pdf.text(`사진 (${prop.photos.length}장):`, MARGIN, yPosition);
+          yPosition += 8;
+
+          const imgWidth = A4_WIDTH - MARGIN * 2;
+          const imgHeight = 60;
+
+          for (const photoData of prop.photos) {
+            if (yPosition + imgHeight > A4_HEIGHT - MARGIN) {
+              pdf.addPage();
+              yPosition = MARGIN;
+            }
+
+            try {
+              pdf.addImage(photoData, 'JPEG', MARGIN, yPosition, imgWidth, imgHeight);
+              yPosition += imgHeight + 4;
+            } catch (err) {
+              console.error('사진 추가 실패:', err);
+            }
+          }
         }
       }
 
-      pdf.save(`${customer.name}_${activeMeeting.round}차미팅_매물보고서.pdf`);
+      // PDF 다운로드
+      const fileName = `${customer.name}_${activeMeeting.round}차미팅_매물보고서.pdf`;
+      pdf.save(fileName);
     } catch (err) {
-      console.error(err);
+      console.error('PDF 생성 오류:', err);
       alert('PDF 생성 중 오류가 발생했습니다.');
     }
   };
+
+  const generatePDF = generatePropertyReport;
 
   return (
     <>
@@ -630,6 +743,19 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 onChange={handleDateChange}
                 className="w-48 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
               />
+
+              <div className="flex-1"></div>
+
+              {/* Report Button */}
+              <button
+                onClick={() => generatePropertyReport()}
+                disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
+                className="flex-shrink-0 px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
+                title="매물 보고서 생성"
+              >
+                <i className="fas fa-file-pdf mr-1"></i>
+                보고서
+              </button>
 
               {/* Add Property Button */}
               {!isAddingProperty && (
