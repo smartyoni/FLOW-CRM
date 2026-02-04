@@ -1102,7 +1102,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       {/* 미리보기 정보 */}
                       <div className="mb-3">
                         {/* 부동산과 연락처 */}
-                        <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                           <div>
                             <span className="text-gray-600">부동산:</span>
                             {editingField === `${prop.id}-agency` ? (
