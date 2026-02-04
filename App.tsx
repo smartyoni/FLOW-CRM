@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [currentView, setCurrentView] = useState<ViewMode>('customerList');
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{ customerId: string; customerName: string } | null>(null);
 
   // 마이그레이션: 서브컬렉션 데이터를 배열 필드로 전환 (최초 1회만 실행)
   useEffect(() => {
@@ -137,9 +138,16 @@ const App: React.FC = () => {
 
   const handleDeleteCustomer = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('정말 삭제하시겠습니까?')) return;
+    const customer = customers.find(c => c.id === id);
+    if (customer) {
+      setDeleteConfirmation({ customerId: id, customerName: customer.name });
+    }
+  };
 
-    // Optimistic update
+  const confirmDelete = async () => {
+    if (!deleteConfirmation) return;
+
+    const id = deleteConfirmation.customerId;
     const deletedCustomer = customers.find(c => c.id === id);
 
     try {
@@ -153,6 +161,7 @@ const App: React.FC = () => {
 
       // Persist to Firestore
       await deleteCustomer(id);
+      setDeleteConfirmation(null);
     } catch (err) {
       console.error('고객 삭제 실패:', err);
       setError('고객을 삭제할 수 없습니다.');
@@ -161,6 +170,10 @@ const App: React.FC = () => {
         setCustomers(prev => [...prev, deletedCustomer]);
       }
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmation(null);
   };
 
   const handleUpdateCustomer = async (updatedCustomer: Customer) => {
@@ -291,6 +304,35 @@ const App: React.FC = () => {
           onClose={() => setIsFormOpen(false)}
           onSubmit={handleAddCustomer}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-2">고객 삭제</h3>
+              <p className="text-gray-600 mb-4">
+                <span className="font-semibold">{deleteConfirmation.customerName}</span> 고객을 정말 삭제하시겠습니까?
+              </p>
+              <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</p>
+            </div>
+            <div className="p-4 border-t border-gray-200 flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

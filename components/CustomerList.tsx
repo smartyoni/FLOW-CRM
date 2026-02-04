@@ -160,12 +160,24 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                   )}
                   <h3 className="font-bold text-base text-gray-800">{customer.name}</h3>
                 </div>
-                <button
-                  onClick={(e) => onDelete(customer.id, e)}
-                  className="text-gray-300 hover:text-red-500 p-2 transition-colors"
-                >
-                  <i className="fas fa-trash-alt text-sm"></i>
-                </button>
+                <div className="flex items-center gap-2">
+                  {customer.contact && (
+                    <a
+                      href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 hover:text-blue-800 p-2 transition-colors font-bold"
+                      title="문자 메시지 보내기"
+                    >
+                      <i className="fas fa-comments text-sm"></i>
+                    </a>
+                  )}
+                  <button
+                    onClick={(e) => onDelete(customer.id, e)}
+                    className="text-red-600 hover:text-red-800 p-2 transition-colors font-bold"
+                  >
+                    <i className="fas fa-trash-alt text-sm"></i>
+                  </button>
+                </div>
               </div>
               {customer.contact && (
                 <p className="text-sm text-gray-600">{customer.contact}</p>
@@ -197,8 +209,8 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
     return (
       <div className="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full mr-4 last:mr-0">
         {/* Column Header */}
-        <div className="p-3 border-b border-gray-100">
-          <div className="flex justify-between items-start mb-2">
+        <div className="p-3 border-b-2 border-gray-300">
+          <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
               <div className={`w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center`}>
                 <i className={`fas ${config.icon} ${config.color} text-sm`}></i>
@@ -208,44 +220,21 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                 <p className="text-gray-400 text-[10px] mt-0.5">{desc}</p>
               </div>
             </div>
-            
-            {showAddButton && (
-              <button 
-                onClick={onAddClick}
-                className="w-6 h-6 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors"
-              >
-                <i className="fas fa-plus text-xs"></i>
-              </button>
-            )}
-          </div>
 
-          {/* Stats */}
-          <div className="flex gap-4 mb-2">
-            <div>
-              <span className="text-lg font-bold text-gray-800">{items.length}</span>
-              <span className="text-[10px] text-gray-400 ml-1">명</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center">
+                <span className="text-lg font-bold text-gray-800">{items.length}</span>
+                <span className="text-[10px] text-gray-400 ml-1">명</span>
+              </div>
+              {showAddButton && (
+                <button
+                  onClick={onAddClick}
+                  className="w-6 h-6 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors"
+                >
+                  <i className="fas fa-plus text-xs"></i>
+                </button>
+              )}
             </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative">
-            <input 
-              type="text"
-              placeholder="검색..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg py-1.5 pl-2 pr-14 text-xs focus:outline-none focus:ring-1 focus:ring-blue-100 transition-all"
-              value={searchQueries[searchKey] || ''}
-              onChange={(e) => handleSearchChange(searchKey, e.target.value)}
-            />
-            {searchQueries[searchKey] && (
-              <button 
-                onClick={() => handleSearchChange(searchKey, '')}
-                className="absolute right-8 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-                title="검색어 삭제"
-              >
-                <i className="fas fa-times-circle text-xs"></i>
-              </button>
-            )}
-            <i className="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
           </div>
         </div>
 
@@ -269,13 +258,25 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                 <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
               </div>
               
-              {/* Delete Button */}
-              <button 
-                onClick={(e) => onDelete(customer.id, e)}
-                className="text-gray-300 hover:text-red-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"
-              >
-                <i className="fas fa-trash-alt text-xs"></i>
-              </button>
+              {/* Buttons */}
+              <div className="flex gap-1 ml-2 shrink-0">
+                {customer.contact && (
+                  <a
+                    href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
+                    title="문자 메시지 보내기"
+                  >
+                    <i className="fas fa-comments text-xs"></i>
+                  </a>
+                )}
+                <button
+                  onClick={(e) => onDelete(customer.id, e)}
+                  className="text-red-600 hover:text-red-800 p-1 transition-colors font-bold"
+                >
+                  <i className="fas fa-trash-alt text-xs"></i>
+                </button>
+              </div>
             </div>
           ))}
 

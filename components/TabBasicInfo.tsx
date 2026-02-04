@@ -214,7 +214,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           <div className="grid grid-cols-3 gap-3 text-sm">
             {/* 고객명 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
-              <i className="fas fa-user text-gray-400 w-4"></i>
               <span className="text-gray-800 font-bold">고객명:</span>
               {editingField === 'name' ? (
                 <input
@@ -233,7 +232,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 연락처 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('contact', activeCustomer.contact)}>
-              <i className="fas fa-phone text-gray-400 w-4"></i>
               <span className="text-gray-800 font-bold">연락처:</span>
               {editingField === 'contact' ? (
                 <input
@@ -258,7 +256,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 입주일자 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('moveInDate', activeCustomer.moveInDate)}>
-              <i className="fas fa-calendar-check text-gray-400 w-4"></i>
               <span className="text-gray-800 font-bold">입주일:</span>
               {editingField === 'moveInDate' ? (
                 <input
@@ -277,7 +274,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 매매/보증금 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('price', activeCustomer.price)}>
-              <i className="fas fa-won-sign text-gray-400 w-4"></i>
               <span className="text-gray-800 font-bold">매매/보증금:</span>
               {editingField === 'price' ? (
                 <input
@@ -314,7 +310,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 접수일 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('registrationDate', activeCustomer.registrationDate)}>
-              <i className="fas fa-calendar-plus text-gray-400 w-4"></i>
               <span className="text-gray-800 font-bold">접수일:</span>
               {editingField === 'registrationDate' ? (
                 <input
@@ -333,10 +328,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 메모 */}
             <div className="col-span-3 mt-2 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <i className="fas fa-sticky-note text-gray-400 w-4"></i>
-                <span className="text-gray-800 font-bold">메모</span>
-              </div>
               {editingField === 'memo' ? (
                 <textarea
                   autoFocus
