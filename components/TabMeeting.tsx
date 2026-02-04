@@ -1012,7 +1012,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                       {/* 시간 선택 및 상태 드롭다운 */}
                       <div className="flex gap-3 mb-4">
-                        <div className="flex-1 flex gap-1 items-center">
+                        <div className="flex-1 flex gap-2 items-center">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap">방문시간:</span>
                           <input
                             type="number"
                             min="0"
