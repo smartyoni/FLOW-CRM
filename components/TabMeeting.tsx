@@ -776,7 +776,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                                 <div>
 
-                                  <label className="block text-xs text-gray-600 mb-1">호실명</label>
+                                  <label className="block text-xs text-gray-600 mb-1">건물명</label>
 
                                   <input
 
