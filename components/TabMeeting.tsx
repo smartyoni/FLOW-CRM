@@ -322,7 +322,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       const parsedCount = [fields.roomName, fields.jibun, fields.agency, fields.agencyPhone]
         .filter(f => f).length;
 
-      const platformName = selectedPlatform === 'TEN' ? 'TEN' : '네이버부동산';
+      const platformName = selectedPlatform === 'TEN' ? '텐(주거)' : '네이버부동산';
 
       if (parsedCount === 0) {
         alert(`${platformName} 형식 파싱에 실패했습니다.\n입력 형식을 확인해주세요.`);
@@ -666,7 +666,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                                     >
 
-                                      TEN
+                                      텐(주거)
 
                                     </button>
 
