@@ -53,6 +53,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingFieldValue, setEditingFieldValue] = useState('');
 
+  // 보고서 프리뷰 모달 상태
+  const [reportPreviewOpen, setReportPreviewOpen] = useState(false);
+  const [reportImages, setReportImages] = useState<string[]>([]);
+  const [reportFileName, setReportFileName] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
   const reportRef = useRef<HTMLDivElement>(null);
   const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
 
@@ -527,15 +533,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   // --- PDF Generation ---
-  const generatePropertyReport = async () => {
+  // 미리보기 이미지 생성
+  const generateReportPreview = async () => {
     if (!activeMeeting || activeMeeting.properties.length === 0) {
       alert('등록된 매물이 없습니다.');
       return;
     }
 
+    setReportLoading(true);
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      let isFirstPage = true;
+      const images: string[] = [];
 
       // 시간순으로 정렬된 매물 처리
       const sortedProperties = [...activeMeeting.properties].sort((a, b) => {
@@ -610,10 +617,34 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         document.body.removeChild(reportContainer);
 
-        // PDF에 이미지 추가
-        const imgData = canvas.toDataURL('image/png');
+        images.push(canvas.toDataURL('image/png'));
+      }
+
+      setReportImages(images);
+      setReportFileName(`${customer.name}_${activeMeeting.round}차미팅_매물보고서`);
+      setReportPreviewOpen(true);
+    } catch (err) {
+      console.error('미리보기 생성 오류:', err);
+      alert('미리보기 생성 중 오류가 발생했습니다.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  // 최종 PDF 생성 및 다운로드
+  const finalizeReportPDF = async () => {
+    if (reportImages.length === 0 || !reportFileName) {
+      alert('파일명을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let isFirstPage = true;
+
+      for (const imgData of reportImages) {
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        const pdfHeight = pdf.internal.pageSize.getHeight();
 
         if (!isFirstPage) {
           pdf.addPage();
@@ -624,15 +655,86 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       }
 
       // PDF 다운로드
-      const fileName = `${customer.name}_${activeMeeting.round}차미팅_매물보고서.pdf`;
+      const fileName = reportFileName.endsWith('.pdf') ? reportFileName : `${reportFileName}.pdf`;
       pdf.save(fileName);
+
+      // 모달 닫기
+      setReportPreviewOpen(false);
+      setReportImages([]);
+      setReportFileName('');
     } catch (err) {
-      console.error('PDF 생성 오류:', err);
-      alert('PDF 생성 중 오류가 발생했습니다.');
+      console.error('PDF 저장 오류:', err);
+      alert('PDF 저장 중 오류가 발생했습니다.');
     }
   };
 
+  const generatePropertyReport = generateReportPreview;
+
   const generatePDF = generatePropertyReport;
+
+  // --- Report Preview Modal ---
+  if (reportPreviewOpen) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">매물 보고서 미리보기</h2>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={reportFileName}
+                onChange={(e) => setReportFileName(e.target.value)}
+                placeholder="파일명을 입력하세요 (예: 매물보고서)"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <span className="text-sm text-gray-500">.pdf</span>
+            </div>
+          </div>
+
+          {/* 미리보기 이미지 */}
+          <div className="p-6 space-y-6">
+            {reportImages.map((img, idx) => (
+              <div key={idx} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm font-semibold text-gray-600 mb-3">매물 {idx + 1}</p>
+                <img src={img} alt={`페이지 ${idx + 1}`} className="w-full border border-gray-300 rounded" />
+              </div>
+            ))}
+          </div>
+
+          {/* 버튼 */}
+          <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setReportPreviewOpen(false);
+                setReportImages([]);
+                setReportFileName('');
+              }}
+              className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors font-bold"
+            >
+              취소
+            </button>
+            <button
+              onClick={finalizeReportPDF}
+              disabled={reportLoading || !reportFileName.trim()}
+              className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold flex items-center gap-2"
+            >
+              {reportLoading ? (
+                <>
+                  <i className="fas fa-spinner fa-spin"></i>
+                  생성 중...
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-download"></i>
+                  PDF 다운로드
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
