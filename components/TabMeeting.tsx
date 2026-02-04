@@ -917,34 +917,38 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       <div className="flex gap-1 md:gap-3 mb-4 items-center">
                         <div className="flex gap-1 md:gap-2 items-center">
                           <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="23"
-                            placeholder="시"
+                          <select
                             value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
                             onChange={(e) => {
                               const hour = e.target.value || '00';
                               const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour.padStart(2, '0')}:${minute}`);
+                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
                             }}
-                            className="w-8 sm:w-12 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center"
-                          />
-                          <span className="text-xs text-gray-600 hidden sm:inline">시</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="59"
-                            placeholder="분"
+                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">시</option>
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <option key={i} value={String(i).padStart(2, '0')}>
+                                {String(i).padStart(2, '0')}
+                              </option>
+                            ))}
+                          </select>
+                          <select
                             value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
                             onChange={(e) => {
                               const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
                               const minute = e.target.value || '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute.padStart(2, '0')}`);
+                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
                             }}
-                            className="w-8 sm:w-12 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center"
-                          />
-                          <span className="text-xs text-gray-600 hidden sm:inline">분</span>
+                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">분</option>
+                            {Array.from({ length: 60 }, (_, i) => (
+                              <option key={i} value={String(i).padStart(2, '0')}>
+                                {String(i).padStart(2, '0')}
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
                         <select
