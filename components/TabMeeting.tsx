@@ -910,18 +910,14 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 )}
 
                 {/* 2. 메모 입력 필드 */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[200px] flex flex-col">
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
                   <textarea
                     value={reportMemos[reportProperties[idx]?.id] || ''}
                     onChange={(e) => handleMemoChange(idx, e.target.value)}
                     placeholder="메모를 입력하세요..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none"
+                    rows={2}
                   />
-                </div>
-
-                {/* 3. 미리보기 이미지 (사진만) */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <img src={img} alt={`페이지 ${idx + 1}`} className="w-full rounded shadow-sm" />
                 </div>
               </div>
             ))}
