@@ -171,50 +171,51 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Accordion Header - Basic Info */}
-      <div className="border-b border-gray-200">
-        <div className="flex items-center justify-between p-4 bg-gray-50">
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-gray-700">기본 정보</span>
-            {/* Stage Dropdown */}
-            <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
-              <span className="text-gray-500 text-xs mr-2 font-bold">첫미팅</span>
-              <select
-                value={activeCustomer.stage || '접수고객'}
-                onChange={handleStageChange}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
-              >
-                {STAGES.map(stage => (
-                  <option key={stage} value={stage}>{stage}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Checkpoint Dropdown */}
-            <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
-              <span className="text-gray-500 text-xs mr-2 font-bold">재미팅</span>
-              <select
-                value={activeCustomer.checkpoint || ''}
-                onChange={handleCheckpointChange}
-                onClick={(e) => e.stopPropagation()}
-                className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
-              >
-                <option value="">선택</option>
-                {CHECKPOINTS.map(cp => (
-                  <option key={cp} value={cp}>{cp}</option>
-                ))}
-              </select>
-            </div>
+      {/* Header */}
+      <div className="border-b-4 border-black bg-gray-50 p-4">
+        <div className="flex items-center gap-3">
+          <span className="font-bold text-gray-700">기본 정보</span>
+          {/* Stage Dropdown */}
+          <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
+            <span className="text-gray-500 text-xs mr-2 font-bold">첫미팅</span>
+            <select
+              value={activeCustomer.stage || '접수고객'}
+              onChange={handleStageChange}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
+            >
+              {STAGES.map(stage => (
+                <option key={stage} value={stage}>{stage}</option>
+              ))}
+            </select>
           </div>
 
+          {/* Checkpoint Dropdown */}
+          <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
+            <span className="text-gray-500 text-xs mr-2 font-bold">재미팅</span>
+            <select
+              value={activeCustomer.checkpoint || ''}
+              onChange={handleCheckpointChange}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
+            >
+              <option value="">선택</option>
+              {CHECKPOINTS.map(cp => (
+                <option key={cp} value={cp}>{cp}</option>
+              ))}
+            </select>
+          </div>
         </div>
+      </div>
 
-        <div className="p-4 bg-white space-y-3 text-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+      {/* Main Content - 2 Column Layout */}
+      <div className="flex-1 overflow-hidden flex gap-4 p-4 bg-white">
+        {/* Left: Basic Info */}
+        <div className="w-1/2 overflow-y-auto pr-2">
+          <div className="space-y-3 text-sm">
             {/* 고객명 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
-              <span className="text-gray-800 font-bold">고객명:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 고객명:</span>
               {editingField === 'name' ? (
                 <input
                   autoFocus
@@ -232,7 +233,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 연락처 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('contact', activeCustomer.contact)}>
-              <span className="text-gray-800 font-bold">연락처:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 연락처:</span>
               {editingField === 'contact' ? (
                 <input
                   autoFocus
@@ -254,9 +255,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
               )}
             </div>
 
-            {/* 입주일자 */}
+            {/* 입주일 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('moveInDate', activeCustomer.moveInDate)}>
-              <span className="text-gray-800 font-bold">입주일:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 입주일:</span>
               {editingField === 'moveInDate' ? (
                 <input
                   autoFocus
@@ -274,7 +275,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 매매/보증금 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('price', activeCustomer.price)}>
-              <span className="text-gray-800 font-bold">매매/보증금:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 매매/보증금:</span>
               {editingField === 'price' ? (
                 <input
                   autoFocus
@@ -292,7 +293,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 월세 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('rentPrice', activeCustomer.rentPrice)}>
-              <span className="text-gray-800 font-bold">월세:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 월세:</span>
               {editingField === 'rentPrice' ? (
                 <input
                   autoFocus
@@ -310,7 +311,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
             {/* 접수일 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('registrationDate', activeCustomer.registrationDate)}>
-              <span className="text-gray-800 font-bold">접수일:</span>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 접수일:</span>
               {editingField === 'registrationDate' ? (
                 <input
                   autoFocus
@@ -327,7 +328,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
 
             {/* 메모 */}
-            <div className="col-span-1 md:col-span-3 mt-2 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
+            <div className="mt-4 group cursor-pointer" onDoubleClick={() => startInlineEdit('memo', activeCustomer.memo)}>
               {editingField === 'memo' ? (
                 <textarea
                   autoFocus
@@ -338,87 +339,92 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                   onBlur={() => saveInlineEdit('memo')}
                 />
               ) : (
-                <div className="bg-gray-50 p-2 rounded border border-gray-200 text-xs text-gray-700 h-42 overflow-y-auto group-hover:bg-yellow-50 whitespace-pre-wrap">
+                <div className="bg-gray-50 p-2 rounded border-2 border-blue-500 text-xs text-gray-700 h-64 overflow-y-auto group-hover:bg-yellow-50 whitespace-pre-wrap">
                   {activeCustomer.memo || '-'}
                 </div>
               )}
             </div>
           </div>
         </div>
-        </div>
 
-      {/* Checklist Section */}
-      <div className="flex-1 overflow-hidden flex flex-col p-4 bg-gray-50">
-        <h3 className="font-bold text-gray-700 mb-3 flex items-center">
-          <i className="fas fa-history mr-2 text-primary"></i>
-          히스토리
-        </h3>
-        
-        {/* Input */}
-        <form onSubmit={handleAddChecklist} className="flex gap-2 mb-4">
-          <input 
-            type="text"
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-            placeholder="체크리스트 입력..."
-            value={newChecklistText}
-            onChange={(e) => setNewChecklistText(e.target.value)}
-          />
-          <button 
-            type="submit"
-            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
-          >
-            추가
-          </button>
-        </form>
+        {/* Right: History */}
+        <div className="w-1/2 overflow-hidden flex flex-col border-l-4 border-black pl-4">
+          <h3 className="font-bold text-gray-700 mb-3 flex items-center">
+            <i className="fas fa-history mr-2 text-primary"></i>
+            히스토리
+          </h3>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-          {activeCustomer.checklists.map(item => (
-            <div key={item.id} className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
-              <div className="flex justify-between items-start mb-2">
-                <div className="flex-1 mr-2" onDoubleClick={() => startEditing(item)}>
-                  {editingItemId === item.id ? (
-                    <input
-                      autoFocus
-                      className="w-full border-b-2 border-primary outline-none"
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
-                      onBlur={saveEditing}
-                      onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
-                    />
-                  ) : (
-                    <span className="text-gray-800 font-medium cursor-pointer" title="더블클릭하여 수정">
-                      {item.text}
+          {/* Input */}
+          <form onSubmit={handleAddChecklist} className="flex gap-2 mb-4">
+            <input
+              type="text"
+              className="flex-1 border-2 border-blue-500 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              placeholder="체크리스트 입력..."
+              value={newChecklistText}
+              onChange={(e) => setNewChecklistText(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+            >
+              추가
+            </button>
+          </form>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+            {activeCustomer.checklists.map((item, index) => (
+              <div key={item.id}>
+                <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1 mr-2" onDoubleClick={() => startEditing(item)}>
+                    {editingItemId === item.id ? (
+                      <input
+                        autoFocus
+                        className="w-full border-b-2 border-primary outline-none"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onBlur={saveEditing}
+                        onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
+                      />
+                    ) : (
+                      <span className="text-gray-800 font-medium cursor-pointer" title="더블클릭하여 수정">
+                        {item.text}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openMemo(item)} className="text-gray-400 hover:text-blue-500">
+                      <i className="fas fa-sticky-note"></i>
+                    </button>
+                    <button onClick={() => handleDeleteChecklist(item.id)} className="text-gray-400 hover:text-red-500">
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-xs text-gray-400">
+                  <span>{new Date(item.createdAt).toLocaleString()}</span>
+                  {item.memo && (
+                    <span
+                      onClick={() => openMemo(item)}
+                      className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                    >
+                      {item.memo.split('\n')[0]}
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openMemo(item)} className="text-gray-400 hover:text-blue-500">
-                    <i className="fas fa-sticky-note"></i>
-                  </button>
-                  <button onClick={() => handleDeleteChecklist(item.id)} className="text-gray-400 hover:text-red-500">
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
                 </div>
-              </div>
-              <div className="flex justify-between items-center text-xs text-gray-400">
-                <span>{new Date(item.createdAt).toLocaleString()}</span>
-                {item.memo && (
-                  <span
-                    onClick={() => openMemo(item)}
-                    className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
-                  >
-                    {item.memo.split('\n')[0]}
-                  </span>
+                {index < activeCustomer.checklists.length - 1 && (
+                  <div className="h-0.5 bg-red-500 my-3"></div>
                 )}
               </div>
-            </div>
-          ))}
-          {activeCustomer.checklists.length === 0 && (
-            <div className="text-center text-gray-400 py-10">
-              등록된 체크리스트가 없습니다.
-            </div>
-          )}
+            ))}
+            {activeCustomer.checklists.length === 0 && (
+              <div className="text-center text-gray-400 py-10">
+                등록된 체크리스트가 없습니다.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
