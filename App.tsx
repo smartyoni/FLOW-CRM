@@ -165,7 +165,7 @@ const App: React.FC = () => {
       if (customerName.trim()) {
         console.log('[App] 🔗 Shared content detected:', { customerName });
         setInitialCustomerData({
-          name: customerName.trim(),
+          contact: customerName.trim(),
           memo: sharedUrl ? `URL: ${sharedUrl}` : ''
         });
         setIsFormOpen(true);
