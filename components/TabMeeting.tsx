@@ -697,17 +697,24 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      let isFirstPage = true;
 
-      // 각 매물마다 PDF 페이지 생성
+      // 상수 정의
+      const PAGE_HEIGHT = 297;    // A4 세로 (mm)
+      const PAGE_WIDTH = 210;     // A4 가로 (mm)
+      const PADDING = 10;         // 페이지 패딩 (mm)
+      const MARGIN_BETWEEN = 5;   // 매물 간 여백 (mm)
+      const USABLE_HEIGHT = PAGE_HEIGHT - (PADDING * 2); // 277mm
+
+      let currentY = PADDING; // 현재 페이지 내 Y 좌표
+
+      // 각 매물을 연속으로 배치
       for (let i = 0; i < reportProperties.length; i++) {
         const prop = reportProperties[i];
         const memo = reportMemos[prop.id];
 
-        // 매물정보, 메모, 사진을 모두 포함한 페이지 생성
+        // 매물정보 컨테이너 생성 (minHeight 제거하여 실제 내용 높이만 사용)
         const pageContainer = document.createElement('div');
         pageContainer.style.width = '210mm';
-        pageContainer.style.minHeight = '297mm';
         pageContainer.style.padding = '10mm';
         pageContainer.style.backgroundColor = 'white';
         pageContainer.style.fontFamily = 'Arial, sans-serif';
@@ -748,15 +755,50 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
         document.body.removeChild(pageContainer);
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        // 캔버스 픽셀 → mm 단위로 이미지 크기 계산
+        const canvasHeightPx = canvas.height;
+        const canvasWidthPx = canvas.width;
+        const imgWidth = PAGE_WIDTH - (PADDING * 2);
+        let imgHeight = (canvasHeightPx / canvasWidthPx) * imgWidth;
 
-        if (!isFirstPage) {
-          pdf.addPage();
+        // 엣지 케이스: 매물이 페이지 높이보다 긴 경우
+        if (imgHeight > USABLE_HEIGHT) {
+          // 페이지에 맞도록 축소
+          imgHeight = USABLE_HEIGHT;
+
+          // 현재 페이지에 충분한 공간이 없으면 새 페이지 추가
+          if (currentY > PADDING) {
+            pdf.addPage();
+            currentY = PADDING;
+          }
+
+          pdf.addImage(
+            canvas.toDataURL('image/png'),
+            'PNG',
+            PADDING,
+            PADDING,
+            imgWidth,
+            imgHeight
+          );
+          currentY = PADDING + imgHeight + MARGIN_BETWEEN;
+        } else {
+          // 정상 케이스: 남은 공간이 부족할 때만 새 페이지 추가
+          if (currentY + imgHeight > PAGE_HEIGHT - PADDING) {
+            pdf.addPage();
+            currentY = PADDING;
+          }
+
+          pdf.addImage(
+            canvas.toDataURL('image/png'),
+            'PNG',
+            PADDING,
+            currentY,
+            imgWidth,
+            imgHeight
+          );
+
+          currentY += imgHeight + MARGIN_BETWEEN;
         }
-
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
-        isFirstPage = false;
       }
 
       // PDF 다운로드
