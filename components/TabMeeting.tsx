@@ -1427,7 +1427,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           {editingField === `${prop.id}-parsedText` ? (
                             <textarea
                               autoFocus
-                              className="w-full border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                              className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
                               value={editingFieldValue}
                               onChange={(e) => setEditingFieldValue(e.target.value)}
                               onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
