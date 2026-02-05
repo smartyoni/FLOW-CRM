@@ -953,16 +953,26 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 />
               </div>
 
-              {/* Report Button and Add Property Button */}
+              {/* Report Buttons and Add Property Button */}
               <div className="flex gap-2 ml-auto">
                 <button
                   onClick={() => generatePropertyReport()}
                   disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
                   className="px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
-                  title="매물 보고서 생성"
+                  title="매물제안서 생성"
                 >
                   <i className="fas fa-file-pdf mr-1"></i>
-                  보고서
+                  매물제안서
+                </button>
+
+                <button
+                  onClick={() => {/* 미팅리포트 생성 함수 추후 구현 */}}
+                  disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
+                  className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
+                  title="미팅리포트 생성"
+                >
+                  <i className="fas fa-file-pdf mr-1"></i>
+                  미팅리포트
                 </button>
 
                 {/* Add Property Button */}
