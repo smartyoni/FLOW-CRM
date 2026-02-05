@@ -172,7 +172,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="border-b-4 border-black bg-gray-50 p-4">
+      <div className="border-b-2 border-black bg-gray-50 p-4">
         <div className="flex items-center gap-3">
           <span className="font-bold text-gray-700">기본 정보</span>
           {/* Stage Dropdown */}
@@ -348,7 +348,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
 
         {/* Right: History */}
-        <div className="w-1/2 overflow-hidden flex flex-col border-l-4 border-black pl-4">
+        <div className="w-1/2 overflow-hidden flex flex-col border-l-2 border-black pl-4">
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
             <i className="fas fa-history mr-2 text-primary"></i>
             히스토리
@@ -415,7 +415,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                 </div>
                 </div>
                 {index < activeCustomer.checklists.length - 1 && (
-                  <div className="h-0.5 bg-red-500 my-3"></div>
+                  <div className="h-px bg-red-500 my-3"></div>
                 )}
               </div>
             ))}
