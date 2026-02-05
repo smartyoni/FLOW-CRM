@@ -1661,21 +1661,40 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       {/* 메모 섹션 */}
                       <div className="mt-3 pt-3 border-t border-gray-200">
                         {editingMemoId === prop.id ? (
-                          // 편집 모드
-                          <textarea
-                            autoFocus
-                            className="w-full border rounded px-2 py-1 mt-1 focus:ring-1 focus:ring-primary outline-none text-sm resize-none overflow-auto"
-                            value={memoText}
-                            onChange={(e) => setMemoText(e.target.value)}
-                            onBlur={() => saveMemo(prop.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.ctrlKey) {
-                                saveMemo(prop.id);
-                              }
-                            }}
-                            style={{ height: '70vh' }}
-                            placeholder="메모를 입력하세요..."
-                          />
+                          <>
+                            {/* 배경 오버레이 */}
+                            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => saveMemo(prop.id)} />
+
+                            {/* 편집 모드 모달 */}
+                            <div className="fixed inset-0 z-50 flex flex-col p-4 pointer-events-none">
+                              <div className="flex-1 flex flex-col pointer-events-auto">
+                                <div className="flex justify-between items-center mb-3">
+                                  <h3 className="text-lg font-bold">메모 편집</h3>
+                                  <button
+                                    onClick={() => saveMemo(prop.id)}
+                                    className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 font-semibold"
+                                  >
+                                    저장
+                                  </button>
+                                </div>
+                                <textarea
+                                  autoFocus
+                                  className="flex-1 border rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none text-sm resize-none overflow-auto bg-white"
+                                  value={memoText}
+                                  onChange={(e) => setMemoText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && e.ctrlKey) {
+                                      saveMemo(prop.id);
+                                    }
+                                    if (e.key === 'Escape') {
+                                      saveMemo(prop.id);
+                                    }
+                                  }}
+                                  placeholder="메모를 입력하세요... (Ctrl+Enter로 저장, Esc로 종료)"
+                                />
+                              </div>
+                            </div>
+                          </>
                         ) : (
                           // 조회 모드
                           <div
