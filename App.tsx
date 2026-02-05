@@ -498,32 +498,6 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Debug Sync Status Panel (Development Mode) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-white border border-gray-300 rounded-lg p-3 text-xs shadow-lg font-mono max-w-xs z-40">
-          <div className="font-bold mb-2 text-gray-800">🔍 Sync Status</div>
-          <div className="space-y-1 text-gray-700">
-            <div>
-              🔄 List: {syncStatus.isListening ? '✅' : '❌'}
-            </div>
-            <div>
-              📋 Detail: {syncStatus.detailListening ? '✅' : '❌'}
-            </div>
-            <div>
-              🌐 Network: {isOnline ? '✅ Online' : '❌ Offline'}
-            </div>
-            <div>
-              👥 Customers: {syncStatus.customerCount}
-            </div>
-            {syncStatus.lastSync && (
-              <div className="text-gray-600">
-                🕐 {new Date(syncStatus.lastSync).toLocaleTimeString('ko-KR')}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
