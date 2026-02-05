@@ -1,18 +1,26 @@
 import React from 'react';
+import { Customer } from '../types';
 
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
   currentView?: 'customerList' | 'managingCustomer';
   onViewChange?: (view: 'customerList' | 'managingCustomer') => void;
+  customers?: Customer[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
   currentView = 'customerList',
-  onViewChange
+  onViewChange,
+  customers = []
 }) => {
+  // 접수~첫미팅: checkpoint가 없는 고객
+  const customerListCount = customers.filter(c => !c.checkpoint).length;
+
+  // 재미팅~계약: checkpoint가 있는 고객
+  const managingCustomerCount = customers.filter(c => c.checkpoint).length;
   const handleMenuClick = () => {
     onClose?.();
   };
@@ -64,14 +72,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('customerList')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
                 currentView === 'customerList'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <span className="text-2xl leading-none text-red-500">•</span>
-              <span className="font-medium text-sm">접수~첫미팅</span>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl leading-none text-red-500">•</span>
+                <span className="font-medium text-sm">접수~첫미팅</span>
+              </div>
+              <span className="text-sm font-bold bg-gray-200 px-2 py-0.5 rounded-full">{customerListCount}</span>
             </button>
           </li>
 
@@ -79,14 +90,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('managingCustomer')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
                 currentView === 'managingCustomer'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <span className="text-2xl leading-none text-red-500">•</span>
-              <span className="font-medium text-sm">재미팅~계약</span>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl leading-none text-red-500">•</span>
+                <span className="font-medium text-sm">재미팅~계약</span>
+              </div>
+              <span className="text-sm font-bold bg-gray-200 px-2 py-0.5 rounded-full">{managingCustomerCount}</span>
             </button>
           </li>
         </ul>

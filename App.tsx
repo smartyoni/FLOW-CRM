@@ -15,6 +15,7 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [initialCustomerData, setInitialCustomerData] = useState<Partial<Customer> | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -149,6 +150,31 @@ const App: React.FC = () => {
       window.removeEventListener('offline', handleOffline);
       clearInterval(checkInterval);
     };
+  }, []);
+
+  // Detect shared content from Web Share Target API
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedText = urlParams.get('text');
+    const sharedTitle = urlParams.get('title');
+    const sharedUrl = urlParams.get('url');
+
+    if (sharedText || sharedTitle || sharedUrl) {
+      const customerName = sharedText || sharedTitle || '';
+
+      if (customerName.trim()) {
+        console.log('[App] 🔗 Shared content detected:', { customerName });
+        setInitialCustomerData({
+          name: customerName.trim(),
+          memo: sharedUrl ? `URL: ${sharedUrl}` : ''
+        });
+        setIsFormOpen(true);
+      }
+
+      // Remove URL parameters to prevent re-triggering on refresh
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
   }, []);
 
   // Handle mobile back button for detail sidebar
@@ -400,6 +426,7 @@ const App: React.FC = () => {
         onClose={() => setIsMobileSidebarOpen(false)}
         currentView={currentView}
         onViewChange={handleViewChange}
+        customers={customers}
       />
 
       {/* Main Content */}
@@ -434,8 +461,12 @@ const App: React.FC = () => {
       {/* Customer Form Modal */}
       {isFormOpen && (
         <CustomerForm
-          onClose={() => setIsFormOpen(false)}
+          onClose={() => {
+            setIsFormOpen(false);
+            setInitialCustomerData(undefined);
+          }}
           onSubmit={handleAddCustomer}
+          initialData={initialCustomerData}
         />
       )}
 

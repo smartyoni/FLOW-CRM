@@ -6,23 +6,27 @@ import { formatPhoneNumber } from '../utils/phoneUtils';
 interface Props {
   onClose: () => void;
   onSubmit: (customer: Customer) => void;
+  initialData?: Partial<Customer>;
 }
 
-export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit }) => {
+export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit, initialData }) => {
   // 오늘 날짜를 YYYY-MM-DD 형식으로 가져오기
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
-  const [formData, setFormData] = useState<Partial<Customer>>({
-    name: '',
-    contact: '',
-    moveInDate: '',
-    price: '',
-    rentPrice: '',
-    memo: '',
-    registrationDate: getTodayDate(),
+  const [formData, setFormData] = useState<Partial<Customer>>(() => {
+    const todayDate = getTodayDate();
+    return {
+      name: initialData?.name || '',
+      contact: initialData?.contact || '',
+      moveInDate: initialData?.moveInDate || '',
+      price: initialData?.price || '',
+      rentPrice: initialData?.rentPrice || '',
+      memo: initialData?.memo || '',
+      registrationDate: initialData?.registrationDate || todayDate,
+    };
   });
 
   const handleSubmit = (e: React.FormEvent) => {

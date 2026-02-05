@@ -58,7 +58,17 @@ export default defineConfig(({ mode }) => {
             ],
             categories: ['business', 'productivity'],
             lang: 'ko-KR',
-            dir: 'ltr'
+            dir: 'ltr',
+            share_target: {
+              action: './',
+              method: 'GET',
+              enctype: 'application/x-www-form-urlencoded',
+              params: {
+                title: 'title',
+                text: 'text',
+                url: 'url'
+              }
+            }
           },
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],

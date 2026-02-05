@@ -938,42 +938,45 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         ) : (
           <div className="space-y-6">
             {/* Date Picker and Add Property Button Row */}
-            <div className="flex gap-2 items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               {/* Date Picker */}
-              <label className="text-sm font-bold text-gray-700 whitespace-nowrap">
-                <i className="far fa-calendar-alt mr-2 text-primary"></i>
-                미팅일시
-              </label>
-              <input
-                type="datetime-local"
-                value={activeMeeting.date}
-                onChange={handleDateChange}
-                className="w-48 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
-              />
+              <div className="flex gap-2 items-center w-full md:w-auto">
+                <label className="text-sm font-bold text-gray-700 whitespace-nowrap">
+                  <i className="far fa-calendar-alt mr-2 text-primary"></i>
+                  미팅일시
+                </label>
+                <input
+                  type="datetime-local"
+                  value={activeMeeting.date}
+                  onChange={handleDateChange}
+                  className="flex-1 md:w-48 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
+                />
+              </div>
 
-              <div className="flex-1"></div>
-
-              {/* Report Button */}
-              <button
-                onClick={() => generatePropertyReport()}
-                disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
-                className="flex-shrink-0 px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
-                title="매물 보고서 생성"
-              >
-                <i className="fas fa-file-pdf mr-1"></i>
-                보고서
-              </button>
-
-              {/* Add Property Button */}
-              {!isAddingProperty && (
+              {/* Report Button and Add Property Button */}
+              <div className="flex gap-2 ml-auto">
                 <button
-                  onClick={() => setIsAddingProperty(true)}
-                  className="flex-shrink-0 px-3 py-2 bg-primary text-white rounded hover:bg-blue-600 transition-colors font-bold text-sm"
-                  title="매물 추가"
+                  onClick={() => generatePropertyReport()}
+                  disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
+                  className="px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
+                  title="매물 보고서 생성"
                 >
-                  <i className="fas fa-plus"></i>
+                  <i className="fas fa-file-pdf mr-1"></i>
+                  보고서
                 </button>
-              )}
+
+                {/* Add Property Button */}
+                {!isAddingProperty && (
+                  <button
+                    onClick={() => setIsAddingProperty(true)}
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 transition-colors font-bold text-sm flex items-center gap-1"
+                    title="매물 추가"
+                  >
+                    <i className="fas fa-plus"></i>
+                    매물추가
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Add Property Form Section */}
