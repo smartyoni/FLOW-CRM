@@ -208,10 +208,10 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
-      {/* Main Content - 2 Column Layout */}
-      <div className="flex-1 overflow-hidden flex gap-4 p-4 bg-white">
-        {/* Left: Basic Info */}
-        <div className="w-1/2 overflow-y-auto pr-2">
+      {/* Main Content - Responsive Layout (Stack on mobile, 2-col on desktop) */}
+      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 p-4 bg-white">
+        {/* Top/Left: Basic Info */}
+        <div className="w-full md:w-1/2 overflow-y-auto md:pr-2">
           <div className="space-y-3 text-sm">
             {/* 고객명 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
@@ -347,8 +347,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         </div>
 
-        {/* Right: History */}
-        <div className="w-1/2 overflow-hidden flex flex-col border-l-2 border-black pl-4">
+        {/* Bottom/Right: History */}
+        <div className="w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4">
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
             <i className="fas fa-history mr-2 text-primary"></i>
             히스토리
