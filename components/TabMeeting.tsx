@@ -837,7 +837,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   ) : (
                     <>
                       <i className="fas fa-download"></i>
-                      PDF 다운로드
+                      PDF
                     </>
                   )}
                 </button>
