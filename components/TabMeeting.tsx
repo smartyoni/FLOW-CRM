@@ -1664,7 +1664,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           // 편집 모드
                           <textarea
                             autoFocus
-                            className="w-full border rounded px-2 py-1 mt-1 focus:ring-1 focus:ring-primary outline-none text-sm"
+                            className="w-full border rounded px-2 py-1 mt-1 focus:ring-1 focus:ring-primary outline-none text-sm resize-none overflow-auto"
                             value={memoText}
                             onChange={(e) => setMemoText(e.target.value)}
                             onBlur={() => saveMemo(prop.id)}
@@ -1673,7 +1673,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 saveMemo(prop.id);
                               }
                             }}
-                            rows={3}
+                            style={{ height: '70vh' }}
                             placeholder="메모를 입력하세요..."
                           />
                         ) : (
