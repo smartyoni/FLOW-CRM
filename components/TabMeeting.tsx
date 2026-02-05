@@ -1440,7 +1440,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                   setEditingFieldValue('');
                                 }
                               }}
-                              rows={4}
+                              rows={10}
                               placeholder="정리본 텍스트를 입력하세요..."
                             />
                           ) : (
