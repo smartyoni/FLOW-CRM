@@ -1663,23 +1663,86 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         {editingMemoId === prop.id ? (
                           <>
                             {/* 배경 오버레이 */}
-                            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={() => saveMemo(prop.id)} />
+                            <div
+                              style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                zIndex: 9990,
+                                cursor: 'pointer'
+                              }}
+                              onClick={() => saveMemo(prop.id)}
+                            />
 
                             {/* 편집 모드 모달 */}
-                            <div className="fixed inset-0 z-50 flex flex-col p-4 pointer-events-none">
-                              <div className="flex-1 flex flex-col pointer-events-auto">
-                                <div className="flex justify-between items-center mb-3">
-                                  <h3 className="text-lg font-bold">메모 편집</h3>
+                            <div
+                              style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                zIndex: 9999,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                padding: '2rem',
+                                pointerEvents: 'none'
+                              }}
+                            >
+                              <div
+                                style={{
+                                  flex: 1,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  pointerEvents: 'auto',
+                                  backgroundColor: 'white',
+                                  borderRadius: '8px',
+                                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+                                }}
+                              >
+                                <div style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '1rem',
+                                  padding: '1rem 1.5rem',
+                                  borderBottom: '1px solid #e5e7eb'
+                                }}>
+                                  <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>메모 편집</h3>
                                   <button
                                     onClick={() => saveMemo(prop.id)}
-                                    className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 font-semibold"
+                                    style={{
+                                      padding: '0.5rem 1rem',
+                                      backgroundColor: '#3b82f6',
+                                      color: 'white',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      fontWeight: 'bold',
+                                      cursor: 'pointer'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
                                   >
                                     저장
                                   </button>
                                 </div>
                                 <textarea
                                   autoFocus
-                                  className="flex-1 border rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none text-sm resize-none overflow-auto bg-white"
+                                  style={{
+                                    flex: 1,
+                                    border: '1px solid #d1d5db',
+                                    borderRadius: '4px',
+                                    padding: '1rem',
+                                    fontSize: '0.875rem',
+                                    resize: 'none',
+                                    overflow: 'auto',
+                                    backgroundColor: 'white',
+                                    outline: 'none',
+                                    fontFamily: 'inherit'
+                                  }}
                                   value={memoText}
                                   onChange={(e) => setMemoText(e.target.value)}
                                   onKeyDown={(e) => {
@@ -1690,6 +1753,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                       saveMemo(prop.id);
                                     }
                                   }}
+                                  onFocus={(e) => e.currentTarget.style.outline = '2px solid #3b82f6'}
+                                  onBlur={(e) => e.currentTarget.style.outline = 'none'}
                                   placeholder="메모를 입력하세요... (Ctrl+Enter로 저장, Esc로 종료)"
                                 />
                               </div>
