@@ -62,6 +62,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   // 보고서 미리보기 메모 편집 상태
   const [reportMemos, setReportMemos] = useState<{ [propId: string]: string }>({});
   const [reportProperties, setReportProperties] = useState<Property[]>([]);
+  const [editingPropertyIdx, setEditingPropertyIdx] = useState<number | null>(null);
+  const [editingPropertyText, setEditingPropertyText] = useState('');
 
   const reportRef = useRef<HTMLDivElement>(null);
   const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
@@ -815,6 +817,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                     setReportFileName('');
                     setReportMemos({});
                     setReportProperties([]);
+                    setEditingPropertyIdx(null);
+                    setEditingPropertyText('');
                   }}
                   className="px-3 py-1.5 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors font-bold text-sm"
                 >
@@ -859,8 +863,49 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               <div key={idx} className="space-y-4">
                 {/* 1. 매물정보 텍스트 */}
                 {reportProperties[idx]?.parsedText && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed">{reportProperties[idx].parsedText}</pre>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 group cursor-pointer" onDoubleClick={() => {
+                    setEditingPropertyIdx(idx);
+                    setEditingPropertyText(reportProperties[idx].parsedText);
+                  }}>
+                    {editingPropertyIdx === idx ? (
+                      <div className="space-y-2">
+                        <textarea
+                          autoFocus
+                          value={editingPropertyText}
+                          onChange={(e) => setEditingPropertyText(e.target.value)}
+                          className="w-full px-3 py-2 border border-primary rounded focus:outline-none focus:ring-2 focus:ring-primary text-xs font-semibold resize-none"
+                          rows={8}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              const updatedProperties = [...reportProperties];
+                              updatedProperties[idx] = {
+                                ...updatedProperties[idx],
+                                parsedText: editingPropertyText
+                              };
+                              setReportProperties(updatedProperties);
+                              setEditingPropertyIdx(null);
+                              setEditingPropertyText('');
+                            }}
+                            className="px-3 py-1 bg-primary text-white rounded text-xs hover:bg-blue-600"
+                          >
+                            저장
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingPropertyIdx(null);
+                              setEditingPropertyText('');
+                            }}
+                            className="px-3 py-1 bg-gray-400 text-white rounded text-xs hover:bg-gray-500"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed group-hover:bg-gray-100 p-2 rounded transition-colors">{reportProperties[idx].parsedText}</pre>
+                    )}
                   </div>
                 )}
 
