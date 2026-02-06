@@ -430,24 +430,52 @@ const App: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {currentView === 'managingCustomer' ? (
-          <ManagingCustomerView
-            customers={customers}
-            onSelect={handleSelectCustomer}
-            onDelete={handleDeleteCustomer}
-            onMenuClick={() => setIsMobileSidebarOpen(true)}
-          />
-        ) : (
-          <CustomerList
-            customers={customers}
-            onSelect={handleSelectCustomer}
-            onAddClick={() => setIsFormOpen(true)}
-            onDelete={handleDeleteCustomer}
-            onToggleFavorite={handleToggleFavorite}
-            onMenuClick={() => setIsMobileSidebarOpen(true)}
-          />
-        )}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Content Area */}
+        <div className="flex-1 overflow-hidden">
+          {currentView === 'managingCustomer' ? (
+            <ManagingCustomerView
+              customers={customers}
+              onSelect={handleSelectCustomer}
+              onDelete={handleDeleteCustomer}
+              onMenuClick={() => setIsMobileSidebarOpen(true)}
+            />
+          ) : (
+            <CustomerList
+              customers={customers}
+              onSelect={handleSelectCustomer}
+              onAddClick={() => setIsFormOpen(true)}
+              onDelete={handleDeleteCustomer}
+              onToggleFavorite={handleToggleFavorite}
+              onMenuClick={() => setIsMobileSidebarOpen(true)}
+            />
+          )}
+        </div>
+
+        {/* Mobile Bottom Tab Bar */}
+        <div className="md:hidden border-t bg-white flex items-center shrink-0">
+          <button
+            onClick={() => handleViewChange('customerList')}
+            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
+              currentView === 'customerList'
+                ? 'bg-blue-200 border-blue-700 text-blue-700'
+                : 'bg-blue-100 border-transparent text-blue-600'
+            }`}
+          >
+            접수~첫미팅
+          </button>
+          <div className="w-px h-6 bg-gray-200"></div>
+          <button
+            onClick={() => handleViewChange('managingCustomer')}
+            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
+              currentView === 'managingCustomer'
+                ? 'bg-purple-200 border-purple-700 text-purple-700'
+                : 'bg-purple-100 border-transparent text-purple-600'
+            }`}
+          >
+            재미팅~계약
+          </button>
+        </div>
       </div>
 
       {/* Right Detail Sidebar (Overlay) */}

@@ -85,6 +85,8 @@ const CHECKPOINT_ORDER: CustomerCheckpoint[] = ['계약진행', '재미팅잡기
 export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [activeStageTab, setActiveStageTab] = useState<CustomerStage>('접수고객');
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const handleSearchChange = (key: string, value: string) => {
     setSearchQueries(prev => ({ ...prev, [key]: value }));
@@ -93,6 +95,40 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
   const handleRightClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault(); // Prevent default browser context menu
     onToggleFavorite(id);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+
+    setTouchEnd(e.changedTouches[0].clientX);
+
+    const distance = touchStart - e.changedTouches[0].clientX;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) < minSwipeDistance) {
+      return;
+    }
+
+    const currentIndex = STAGE_ORDER.indexOf(activeStageTab);
+
+    if (distance > 0) {
+      // 오른쪽에서 왼쪽으로 스와이프 -> 다음 탭
+      if (currentIndex < STAGE_ORDER.length - 1) {
+        setActiveStageTab(STAGE_ORDER[currentIndex + 1]);
+      }
+    } else {
+      // 왼쪽에서 오른쪽으로 스와이프 -> 이전 탭
+      if (currentIndex > 0) {
+        setActiveStageTab(STAGE_ORDER[currentIndex - 1]);
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   const filterAndSortCustomers = (list: Customer[], query: string) => {
@@ -357,7 +393,11 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       </div>
 
       {/* Mobile Single Column View */}
-      <div className="flex-1 overflow-hidden md:hidden">
+      <div
+        className="flex-1 overflow-hidden md:hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {renderMobileColumn(
           activeStageTab,
           customers.filter(c => (c.stage || '접수고객') === activeStageTab)

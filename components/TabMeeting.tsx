@@ -68,6 +68,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
 
+  // 터치 기반 더블탭 감지
+  const lastTouchRef = useRef<{ time: number; target: string }>({ time: 0, target: '' });
+
   // Initialize active meeting
   useEffect(() => {
     // Legacy support: if meetings is undefined (old data), init as empty
@@ -92,6 +95,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // ⭐ 렌더링할 때는 로컬 상태를 사용 (Firebase 저장 대기 없이 즉시 표시)
   const activeMeeting = localMeeting || propsActiveMeeting;
+
+  // 터치 기반 더블탭 감지 함수
+  const handleTouchDoubleTap = (targetId: string, callback: () => void) => {
+    const now = Date.now();
+    const lastTouch = lastTouchRef.current;
+
+    // 300ms 내에 같은 타겟을 다시 터치하면 더블탭으로 인식
+    if (lastTouch.target === targetId && now - lastTouch.time < 300) {
+      callback();
+      lastTouchRef.current = { time: 0, target: '' }; // 리셋
+    } else {
+      lastTouchRef.current = { time: now, target: targetId };
+    }
+  };
 
   // --- Meeting Management ---
 
@@ -1450,7 +1467,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 setEditingField(`${prop.id}-parsedText`);
                                 setEditingFieldValue(prop.parsedText || '');
                               }}
-                              title="더블클릭하여 편집"
+                              onTouchEnd={() => {
+                                handleTouchDoubleTap(`parsed-${prop.id}`, () => {
+                                  setEditingField(`${prop.id}-parsedText`);
+                                  setEditingFieldValue(prop.parsedText || '');
+                                });
+                              }}
+                              title="더블클릭 또는 두 번 탭하여 편집"
                             >
                               <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">
                                 {prop.parsedText}
@@ -1490,7 +1513,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 setEditingField(`${prop.id}-roomName`);
                                 setEditingFieldValue(prop.roomName || '');
                               }}
-                              title="더블클릭하여 편집"
+                              onTouchEnd={() => {
+                                handleTouchDoubleTap(`room-${prop.id}`, () => {
+                                  setEditingField(`${prop.id}-roomName`);
+                                  setEditingFieldValue(prop.roomName || '');
+                                });
+                              }}
+                              title="더블클릭 또는 두 번 탭하여 편집"
                             >
                               {prop.roomName || '(건물명)'}
                             </div>
@@ -1513,7 +1542,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           ) : (
                             <div
                               onDoubleClick={() => setEditingUnitId(prop.id)}
+                              onTouchEnd={() => {
+                                handleTouchDoubleTap(`unit-${prop.id}`, () => {
+                                  setEditingUnitId(prop.id);
+                                });
+                              }}
                               className="w-full px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                              title="더블클릭 또는 두 번 탭하여 편집"
                             >
                               {prop.unit || '(호실)'}
                             </div>
@@ -1548,7 +1583,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 setEditingField(`${prop.id}-jibun`);
                                 setEditingFieldValue(prop.jibun || '');
                               }}
-                              title="더블클릭하여 편집"
+                              onTouchEnd={() => {
+                                handleTouchDoubleTap(`jibun-${prop.id}`, () => {
+                                  setEditingField(`${prop.id}-jibun`);
+                                  setEditingFieldValue(prop.jibun || '');
+                                });
+                              }}
+                              title="더블클릭 또는 두 번 탭하여 편집"
                             >
                               {prop.jibun || '미등록'}
                             </span>
@@ -1598,7 +1639,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                   setEditingField(`${prop.id}-agency`);
                                   setEditingFieldValue(prop.agency || '');
                                 }}
-                                title="더블클릭하여 편집"
+                                onTouchEnd={() => {
+                                  handleTouchDoubleTap(`agency-${prop.id}`, () => {
+                                    setEditingField(`${prop.id}-agency`);
+                                    setEditingFieldValue(prop.agency || '');
+                                  });
+                                }}
+                                title="더블클릭 또는 두 번 탭하여 편집"
                               >
                                 {prop.agency || '미등록'}
                               </span>
@@ -1766,6 +1813,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                             onDoubleClick={() => {
                               setEditingMemoId(prop.id);
                               setMemoText(prop.memo || '');
+                            }}
+                            onTouchEnd={() => {
+                              handleTouchDoubleTap(`memo-${prop.id}`, () => {
+                                setEditingMemoId(prop.id);
+                                setMemoText(prop.memo || '');
+                              });
                             }}
                             className="w-full border rounded px-2 py-1 mt-1 min-h-[60px] bg-gray-50 whitespace-pre-wrap text-sm cursor-pointer hover:bg-gray-100"
                           >

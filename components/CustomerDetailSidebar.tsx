@@ -14,6 +14,8 @@ interface Props {
 export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<TabState>('BASIC');
   const [sidebarWidth, setSidebarWidth] = useState('100vw');
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -30,6 +32,41 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+
+    setTouchEnd(e.changedTouches[0].clientX);
+
+    const distance = touchStart - e.changedTouches[0].clientX;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) < minSwipeDistance) {
+      return;
+    }
+
+    const tabs: TabState[] = ['BASIC', 'MEETING', 'GANTT'];
+    const currentIndex = tabs.indexOf(activeTab);
+
+    if (distance > 0) {
+      // 오른쪽에서 왼쪽으로 스와이프 -> 다음 탭
+      if (currentIndex < tabs.length - 1) {
+        setActiveTab(tabs[currentIndex + 1]);
+      }
+    } else {
+      // 왼쪽에서 오른쪽으로 스와이프 -> 이전 탭
+      if (currentIndex > 0) {
+        setActiveTab(tabs[currentIndex - 1]);
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
 
   if (!customer) return null;
 
@@ -88,7 +125,11 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-hidden relative">
+          <div
+            className="flex-1 overflow-hidden relative"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             {activeTab === 'BASIC' && (
               <TabBasicInfo
                 customer={customer}
@@ -96,8 +137,8 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               />
             )}
             {activeTab === 'MEETING' && (
-              <TabMeeting 
-                customer={customer} 
+              <TabMeeting
+                customer={customer}
                 onUpdate={onUpdate}
               />
             )}

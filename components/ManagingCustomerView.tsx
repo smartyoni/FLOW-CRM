@@ -49,6 +49,8 @@ export const ManagingCustomerView: React.FC<Props> = ({
 }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('계약진행');
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const handleSearchChange = (key: string, value: string) => {
     setSearchQueries(prev => ({ ...prev, [key]: value }));
@@ -56,6 +58,40 @@ export const ManagingCustomerView: React.FC<Props> = ({
 
   const handleRightClick = (e: React.MouseEvent) => {
     e.preventDefault();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+
+    setTouchEnd(e.changedTouches[0].clientX);
+
+    const distance = touchStart - e.changedTouches[0].clientX;
+    const minSwipeDistance = 50;
+
+    if (Math.abs(distance) < minSwipeDistance) {
+      return;
+    }
+
+    const currentIndex = CHECKPOINT_ORDER.indexOf(activeCheckpointTab);
+
+    if (distance > 0) {
+      // 오른쪽에서 왼쪽으로 스와이프 -> 다음 탭
+      if (currentIndex < CHECKPOINT_ORDER.length - 1) {
+        setActiveCheckpointTab(CHECKPOINT_ORDER[currentIndex + 1]);
+      }
+    } else {
+      // 왼쪽에서 오른쪽으로 스와이프 -> 이전 탭
+      if (currentIndex > 0) {
+        setActiveCheckpointTab(CHECKPOINT_ORDER[currentIndex - 1]);
+      }
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
   };
 
   const filterAndSortCustomers = (list: Customer[], query: string) => {
@@ -288,7 +324,11 @@ export const ManagingCustomerView: React.FC<Props> = ({
       </div>
 
       {/* Mobile Single Column View */}
-      <div className="flex-1 overflow-hidden md:hidden">
+      <div
+        className="flex-1 overflow-hidden md:hidden"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {renderMobileColumn(
           activeCheckpointTab,
           customers.filter(c => c.checkpoint === activeCheckpointTab)
