@@ -31,7 +31,8 @@ export interface Meeting {
 }
 
 export type CustomerStage = '접수고객' | '연락대상' | '약속확정' | '미팅진행' | '미팅진행함';
-export type CustomerCheckpoint = '계약진행' | '재미팅잡기' | '약속확정' | '미팅진행';
+export type CustomerCheckpoint = '은행방문중' | '재미팅잡기' | '약속확정' | '미팅진행';
+export type CustomerContractStatus = '계약서작성예정' | '잔금예정' | '잔금일' | '입주완료';
 
 export interface Customer {
   id: string;
@@ -45,6 +46,7 @@ export interface Customer {
   registrationDate?: string; // 접수일 (optional)
   stage?: CustomerStage; // New field for customer journey stage
   checkpoint?: CustomerCheckpoint; // New field for detailed status checkpoint
+  contractStatus?: CustomerContractStatus; // New field for contract status (계약진행, 잔금대기, 계약완료)
 
   // Favorites
   isFavorite?: boolean;

@@ -5,9 +5,10 @@ import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
 import { ManagingCustomerView } from './components/ManagingCustomerView';
-import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays } from './services/firestore';
+import { ContractCustomerView } from './components/ContractCustomerView';
+import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays, migrateStageFromMeetingComplete, migrateCheckpointFromContractToBank } from './services/firestore';
 
-type ViewMode = 'customerList' | 'managingCustomer';
+type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -40,14 +41,34 @@ const App: React.FC = () => {
   useEffect(() => {
     const runMigration = async () => {
       try {
-        // 최초 1회만 실행 확인
+        // 마이그레이션 v1: 최초 1회만 실행
         if (!localStorage.getItem('migration_completed_v1')) {
-          console.log('🔄 Starting migration...');
+          console.log('🔄 Starting migration v1...');
           await migrateSubcollectionsToArrays();
           localStorage.setItem('migration_completed_v1', 'true');
-          console.log('✓ Migration completed and marked as done');
+          console.log('✓ Migration v1 completed and marked as done');
         } else {
-          console.log('✓ Migration already completed, skipping');
+          console.log('✓ Migration v1 already completed, skipping');
+        }
+
+        // 마이그레이션 v2: 미팅진행함 → 미팅진행
+        if (!localStorage.getItem('migration_completed_v2')) {
+          console.log('🔄 Starting migration v2 (stage update)...');
+          await migrateStageFromMeetingComplete();
+          localStorage.setItem('migration_completed_v2', 'true');
+          console.log('✓ Migration v2 completed and marked as done');
+        } else {
+          console.log('✓ Migration v2 already completed, skipping');
+        }
+
+        // 마이그레이션 v3: 계약진행 → 은행방문중
+        if (!localStorage.getItem('migration_completed_v3')) {
+          console.log('🔄 Starting migration v3 (checkpoint update)...');
+          await migrateCheckpointFromContractToBank();
+          localStorage.setItem('migration_completed_v3', 'true');
+          console.log('✓ Migration v3 completed and marked as done');
+        } else {
+          console.log('✓ Migration v3 already completed, skipping');
         }
       } catch (error) {
         console.error('❌ 마이그레이션 실패:', error);
@@ -440,6 +461,13 @@ const App: React.FC = () => {
               onDelete={handleDeleteCustomer}
               onMenuClick={() => setIsMobileSidebarOpen(true)}
             />
+          ) : currentView === 'contractCustomer' ? (
+            <ContractCustomerView
+              customers={customers.filter(c => c.contractStatus)}
+              onSelect={handleSelectCustomer}
+              onDelete={handleDeleteCustomer}
+              onMenuClick={() => setIsMobileSidebarOpen(true)}
+            />
           ) : (
             <CustomerList
               customers={customers}
@@ -474,6 +502,17 @@ const App: React.FC = () => {
             }`}
           >
             재미팅~계약
+          </button>
+          <div className="w-px h-6 bg-gray-200"></div>
+          <button
+            onClick={() => handleViewChange('contractCustomer')}
+            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
+              currentView === 'contractCustomer'
+                ? 'bg-green-200 border-green-700 text-green-700'
+                : 'bg-green-100 border-transparent text-green-600'
+            }`}
+          >
+            계약~잔금
           </button>
         </div>
       </div>

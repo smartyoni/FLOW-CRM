@@ -12,6 +12,7 @@ import {
   orderBy,
   onSnapshot,
   Timestamp,
+  deleteField,
 } from 'firebase/firestore';
 
 // =====================
@@ -127,8 +128,18 @@ export const updateCustomer = async (customerId: string, updates: Partial<Custom
 
     const customerRef = doc(db, 'customers', customerId);
 
+    // undefined 값을 deleteField()로 변환
+    const processedUpdates: Record<string, any> = {};
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined) {
+        processedUpdates[key] = deleteField();
+      } else {
+        processedUpdates[key] = value;
+      }
+    });
+
     await updateDoc(customerRef, {
-      ...updates,
+      ...processedUpdates,
       updatedAt: Timestamp.now(),
     });
 
@@ -410,6 +421,98 @@ export const rollbackToSubcollections = async (): Promise<void> => {
     console.log(`✓ Rollback complete: ${rolledBackCount}/${customersSnap.docs.length} customers rolled back`);
   } catch (error) {
     console.error('❌ Rollback failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * 마이그레이션: 미팅진행함 고객을 미팅진행으로 변경
+ */
+export const migrateStageFromMeetingComplete = async (): Promise<void> => {
+  try {
+    console.log('🔄 Starting migration: 미팅진행함 → 미팅진행');
+
+    const customersRef = collection(db, 'customers');
+    const customersSnap = await getDocs(customersRef);
+
+    let migratedCount = 0;
+    let skippedCount = 0;
+
+    for (const customerDoc of customersSnap.docs) {
+      const customerId = customerDoc.id;
+      const customerData = customerDoc.data();
+
+      try {
+        // 미팅진행함 고객만 필터링
+        if (customerData.stage === '미팅진행함') {
+          await updateDoc(doc(db, 'customers', customerId), {
+            stage: '미팅진행',
+            updatedAt: Timestamp.now(),
+          });
+
+          console.log(`✓ Migrated customer ${customerId}: 미팅진행함 → 미팅진행`);
+          migratedCount++;
+        } else {
+          skippedCount++;
+        }
+      } catch (error) {
+        console.error(`❌ Error migrating customer ${customerId}:`, error);
+      }
+    }
+
+    console.log(`✓ Migration complete:`, {
+      migrated: migratedCount,
+      skipped: skippedCount,
+      total: customersSnap.docs.length,
+    });
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    throw error;
+  }
+};
+
+/**
+ * 마이그레이션: checkpoint 계약진행을 은행방문중으로 변경
+ */
+export const migrateCheckpointFromContractToBank = async (): Promise<void> => {
+  try {
+    console.log('🔄 Starting migration: 계약진행 → 은행방문중');
+
+    const customersRef = collection(db, 'customers');
+    const customersSnap = await getDocs(customersRef);
+
+    let migratedCount = 0;
+    let skippedCount = 0;
+
+    for (const customerDoc of customersSnap.docs) {
+      const customerId = customerDoc.id;
+      const customerData = customerDoc.data();
+
+      try {
+        // 계약진행 checkpoint인 고객만 필터링
+        if (customerData.checkpoint === '계약진행') {
+          await updateDoc(doc(db, 'customers', customerId), {
+            checkpoint: '은행방문중',
+            updatedAt: Timestamp.now(),
+          });
+
+          console.log(`✓ Migrated customer ${customerId}: 계약진행 → 은행방문중`);
+          migratedCount++;
+        } else {
+          skippedCount++;
+        }
+      } catch (error) {
+        console.error(`❌ Error migrating customer ${customerId}:`, error);
+      }
+    }
+
+    console.log(`✓ Migration complete:`, {
+      migrated: migratedCount,
+      skipped: skippedCount,
+      total: customersSnap.docs.length,
+    });
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
     throw error;
   }
 };

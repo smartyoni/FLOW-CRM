@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Customer, CustomerCheckpoint } from '../types';
+import { Customer, CustomerContractStatus } from '../types';
 
 interface Props {
   customers: Customer[];
@@ -8,47 +8,47 @@ interface Props {
   onMenuClick: () => void;
 }
 
-const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: string; color: string; icon: string; bg: string }> = {
-  '은행방문중': {
-    label: '은행방문중',
-    desc: '은행 방문 중',
+const CONTRACT_STATUS_CONFIG: Record<CustomerContractStatus, { label: string; desc: string; color: string; icon: string; bg: string }> = {
+  '계약서작성예정': {
+    label: '계약서작성예정',
+    desc: '계약서 작성 예정',
     color: 'text-blue-600',
-    icon: 'fa-building',
+    icon: 'fa-file-contract',
     bg: 'bg-blue-100'
   },
-  '재미팅잡기': {
-    label: '재미팅잡기',
-    desc: '추가 미팅 필요',
+  '잔금예정': {
+    label: '잔금예정',
+    desc: '잔금 예정 중',
     color: 'text-amber-600',
-    icon: 'fa-redo',
+    icon: 'fa-clock',
     bg: 'bg-amber-100'
   },
-  '약속확정': {
-    label: '약속확정(재미팅)',
-    desc: '재미팅 약속 확정',
-    color: 'text-purple-600',
-    icon: 'fa-calendar-check',
-    bg: 'bg-purple-100'
+  '잔금일': {
+    label: '잔금일',
+    desc: '잔금 결제',
+    color: 'text-red-600',
+    icon: 'fa-money-bill-wave',
+    bg: 'bg-red-100'
   },
-  '미팅진행': {
-    label: '미팅진행',
-    desc: '재미팅 진행 중',
+  '입주완료': {
+    label: '입주완료',
+    desc: '입주 완료',
     color: 'text-green-600',
-    icon: 'fa-handshake',
+    icon: 'fa-home',
     bg: 'bg-green-100'
   }
 };
 
-const CHECKPOINT_ORDER: CustomerCheckpoint[] = ['은행방문중', '재미팅잡기', '약속확정', '미팅진행'];
+const CONTRACT_STATUS_ORDER: CustomerContractStatus[] = ['계약서작성예정', '잔금예정', '잔금일', '입주완료'];
 
-export const ManagingCustomerView: React.FC<Props> = ({
+export const ContractCustomerView: React.FC<Props> = ({
   customers,
   onSelect,
   onDelete,
   onMenuClick
 }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
-  const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('계약진행');
+  const [activeContractTab, setActiveContractTab] = useState<CustomerContractStatus>('계약서작성예정');
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -76,17 +76,15 @@ export const ManagingCustomerView: React.FC<Props> = ({
       return;
     }
 
-    const currentIndex = CHECKPOINT_ORDER.indexOf(activeCheckpointTab);
+    const currentIndex = CONTRACT_STATUS_ORDER.indexOf(activeContractTab);
 
     if (distance > 0) {
-      // 오른쪽에서 왼쪽으로 스와이프 -> 다음 탭
-      if (currentIndex < CHECKPOINT_ORDER.length - 1) {
-        setActiveCheckpointTab(CHECKPOINT_ORDER[currentIndex + 1]);
+      if (currentIndex < CONTRACT_STATUS_ORDER.length - 1) {
+        setActiveContractTab(CONTRACT_STATUS_ORDER[currentIndex + 1]);
       }
     } else {
-      // 왼쪽에서 오른쪽으로 스와이프 -> 이전 탭
       if (currentIndex > 0) {
-        setActiveCheckpointTab(CHECKPOINT_ORDER[currentIndex - 1]);
+        setActiveContractTab(CONTRACT_STATUS_ORDER[currentIndex - 1]);
       }
     }
 
@@ -102,31 +100,21 @@ export const ManagingCustomerView: React.FC<Props> = ({
         c.contact.includes(q)
       )
       .sort((a, b) => {
-        // Sort by Registration Date (Latest first - descending)
         const dateA = a.registrationDate ? new Date(a.registrationDate).getTime() : 0;
         const dateB = b.registrationDate ? new Date(b.registrationDate).getTime() : 0;
         if (dateA !== dateB) {
-          return dateB - dateA; // Descending order (latest first)
+          return dateB - dateA;
         }
-
-        // Sort by Name (Default)
         return a.name.localeCompare(b.name);
       });
   };
 
-  const renderMobileColumn = (checkpoint: CustomerCheckpoint, items: Customer[]) => {
-    const filtered = filterAndSortCustomers(items, searchQueries[checkpoint] || '');
-    const config = CHECKPOINT_CONFIG[checkpoint] || {
-      label: checkpoint,
-      desc: '처리 중',
-      color: 'text-gray-600',
-      icon: 'fa-circle',
-      bg: 'bg-gray-100'
-    };
+  const renderMobileColumn = (status: CustomerContractStatus, items: Customer[]) => {
+    const filtered = filterAndSortCustomers(items, searchQueries[status] || '');
+    const config = CONTRACT_STATUS_CONFIG[status];
 
     return (
       <div className="h-full flex flex-col bg-white">
-        {/* 헤더 */}
         <div className="p-4 border-b bg-white">
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-10 h-10 rounded-lg ${config.bg} flex items-center justify-center`}>
@@ -143,19 +131,18 @@ export const ManagingCustomerView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 검색바 */}
         <div className="p-3 border-b shrink-0">
           <div className="relative">
             <input
               type="text"
               placeholder="검색..."
               className="w-full bg-gray-50 border border-gray-200 rounded-lg py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              value={searchQueries[checkpoint] || ''}
-              onChange={(e) => handleSearchChange(checkpoint, e.target.value)}
+              value={searchQueries[status] || ''}
+              onChange={(e) => handleSearchChange(status, e.target.value)}
             />
-            {searchQueries[checkpoint] && (
+            {searchQueries[status] && (
               <button
-                onClick={() => handleSearchChange(checkpoint, '')}
+                onClick={() => handleSearchChange(status, '')}
                 className="absolute right-10 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 transition-colors"
               >
                 <i className="fas fa-times-circle text-sm"></i>
@@ -165,7 +152,6 @@ export const ManagingCustomerView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 고객 카드 목록 */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {filtered.map(customer => (
             <div
@@ -216,13 +202,12 @@ export const ManagingCustomerView: React.FC<Props> = ({
     );
   };
 
-  const renderColumn = (checkpoint: CustomerCheckpoint, items: Customer[]) => {
-    const filtered = filterAndSortCustomers(items, searchQueries[checkpoint] || '');
-    const config = CHECKPOINT_CONFIG[checkpoint];
+  const renderColumn = (status: CustomerContractStatus, items: Customer[]) => {
+    const filtered = filterAndSortCustomers(items, searchQueries[status] || '');
+    const config = CONTRACT_STATUS_CONFIG[status];
 
     return (
       <div className="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full mr-4 last:mr-0">
-        {/* Column Header */}
         <div className="p-3 border-b-2 border-gray-300">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
@@ -242,7 +227,6 @@ export const ManagingCustomerView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* List Content */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
           {filtered.map(customer => (
             <div
@@ -255,7 +239,6 @@ export const ManagingCustomerView: React.FC<Props> = ({
                 <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-1 ml-2 shrink-0">
                 {customer.contact && (
                   <a
@@ -292,7 +275,6 @@ export const ManagingCustomerView: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col w-full h-full bg-gray-100 overflow-hidden">
-      {/* Top Bar - Mobile Header */}
       <div className="bg-white border-b p-3 flex items-center gap-3 shadow-sm shrink-0 md:hidden">
         <button
           onClick={onMenuClick}
@@ -301,21 +283,20 @@ export const ManagingCustomerView: React.FC<Props> = ({
         >
           <i className="fas fa-bars text-lg"></i>
         </button>
-        <h1 className="flex-1 text-lg font-bold text-gray-800">관리중인 고객</h1>
+        <h1 className="flex-1 text-lg font-bold text-gray-800">계약~잔금</h1>
       </div>
 
-      {/* Mobile Checkpoint Tabs */}
       <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
         <div className="flex p-2 gap-2 min-w-max">
-          {CHECKPOINT_ORDER.map(checkpoint => {
-            const config = CHECKPOINT_CONFIG[checkpoint];
-            const count = customers.filter(c => c.checkpoint === checkpoint).length;
-            const isActive = activeCheckpointTab === checkpoint;
+          {CONTRACT_STATUS_ORDER.map(status => {
+            const config = CONTRACT_STATUS_CONFIG[status];
+            const count = customers.filter(c => c.contractStatus === status).length;
+            const isActive = activeContractTab === status;
 
             return (
               <button
-                key={checkpoint}
-                onClick={() => setActiveCheckpointTab(checkpoint)}
+                key={status}
+                onClick={() => setActiveContractTab(status)}
                 className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                   isActive
                     ? 'bg-primary text-white shadow-md'
@@ -329,27 +310,25 @@ export const ManagingCustomerView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Mobile Single Column View */}
       <div
         className="flex-1 overflow-hidden md:hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {renderMobileColumn(
-          activeCheckpointTab,
-          customers.filter(c => c.checkpoint === activeCheckpointTab)
+          activeContractTab,
+          customers.filter(c => c.contractStatus === activeContractTab)
         )}
       </div>
 
-      {/* Desktop View */}
       <div className="hidden md:flex md:flex-col w-full h-full">
         <div className="flex-1 overflow-x-auto p-3">
           <div className="flex h-full">
-            {CHECKPOINT_ORDER.map(checkpoint => {
-              const cpCustomers = customers.filter(c => c.checkpoint === checkpoint);
+            {CONTRACT_STATUS_ORDER.map(status => {
+              const statusCustomers = customers.filter(c => c.contractStatus === status);
               return (
-                <React.Fragment key={checkpoint}>
-                  {renderColumn(checkpoint, cpCustomers)}
+                <React.Fragment key={status}>
+                  {renderColumn(status, statusCustomers)}
                 </React.Fragment>
               );
             })}

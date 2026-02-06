@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint } from '../types';
+import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint, CustomerContractStatus } from '../types';
 import { generateId } from '../services/storage';
 import { formatPhoneNumber } from '../utils/phoneUtils';
 
@@ -8,8 +8,9 @@ interface Props {
   onUpdate: (customer: Customer) => void;
 }
 
-const STAGES: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행', '미팅진행함'];
-const CHECKPOINTS: CustomerCheckpoint[] = ['계약진행', '재미팅잡기', '약속확정', '미팅진행'];
+const STAGES: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행'];
+const CHECKPOINTS: CustomerCheckpoint[] = ['은행방문중', '재미팅잡기', '약속확정', '미팅진행'];
+const CONTRACT_STATUSES: CustomerContractStatus[] = ['계약서작성예정', '잔금예정', '잔금일', '입주완료'];
 
 export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   const [newChecklistText, setNewChecklistText] = useState('');
@@ -55,7 +56,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const handleStageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const updatedCustomer = { ...activeCustomer, stage: e.target.value as CustomerStage };
+    const updatedCustomer = {
+      ...activeCustomer,
+      stage: e.target.value as CustomerStage,
+      checkpoint: undefined, // 다른 드롭다운 초기화
+      contractStatus: undefined // 다른 드롭다운 초기화
+    };
     // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
     setLocalCustomer(updatedCustomer);
     // ⭐ 2. Firebase에 저장 (백그라운드)
@@ -64,12 +70,30 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const handleCheckpointChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCheckpoint = e.target.value as CustomerCheckpoint;
-    const updates: Partial<Customer> = { checkpoint: newCheckpoint };
+    const updates: Partial<Customer> = {
+      checkpoint: newCheckpoint,
+      contractStatus: undefined // 다른 드롭다운 초기화
+    };
 
     // Automatically set stage to '미팅진행함' if a checkpoint is selected
     if (newCheckpoint) {
       updates.stage = '미팅진행함';
     }
+
+    const updatedCustomer = { ...activeCustomer, ...updates };
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalCustomer(updatedCustomer);
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate(updatedCustomer);
+  };
+
+  const handleContractStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newContractStatus = e.target.value as CustomerContractStatus;
+    const updates: Partial<Customer> = {
+      contractStatus: newContractStatus,
+      checkpoint: undefined, // 다른 드롭다운 초기화
+      stage: '미팅진행함' // stage도 함께 설정
+    };
 
     const updatedCustomer = { ...activeCustomer, ...updates };
     // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
@@ -173,17 +197,17 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="border-b-2 border-black bg-gray-50 p-4">
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-gray-700">기본 정보</span>
+        <div className="flex items-center gap-2">
           {/* Stage Dropdown */}
-          <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
-            <span className="text-gray-500 text-xs mr-2 font-bold">첫미팅</span>
+          <div className="flex flex-col md:flex-row md:items-center bg-white rounded px-2 py-1 border border-gray-200 gap-1">
+            <span className="text-gray-500 text-xs font-bold md:mr-2">첫미팅</span>
             <select
-              value={activeCustomer.stage || '접수고객'}
+              value={activeCustomer.stage || ''}
               onChange={handleStageChange}
               onClick={(e) => e.stopPropagation()}
-              className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
+              className="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer w-full md:w-auto"
             >
+              <option value="">선택</option>
               {STAGES.map(stage => (
                 <option key={stage} value={stage}>{stage}</option>
               ))}
@@ -191,17 +215,33 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
 
           {/* Checkpoint Dropdown */}
-          <div className="flex items-center bg-white rounded px-2 py-1 border border-gray-200">
-            <span className="text-gray-500 text-xs mr-2 font-bold">재미팅</span>
+          <div className="flex flex-col md:flex-row md:items-center bg-white rounded px-2 py-1 border border-gray-200 gap-1">
+            <span className="text-gray-500 text-xs font-bold md:mr-2">재미팅</span>
             <select
               value={activeCustomer.checkpoint || ''}
               onChange={handleCheckpointChange}
               onClick={(e) => e.stopPropagation()}
-              className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer"
+              className="bg-transparent text-sm font-bold text-purple-600 outline-none cursor-pointer w-full md:w-auto"
             >
               <option value="">선택</option>
               {CHECKPOINTS.map(cp => (
                 <option key={cp} value={cp}>{cp}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Contract Status Dropdown */}
+          <div className="flex flex-col md:flex-row md:items-center bg-white rounded px-2 py-1 border border-gray-200 gap-1">
+            <span className="text-gray-500 text-xs font-bold md:mr-2">계약~잔금</span>
+            <select
+              value={activeCustomer.contractStatus || ''}
+              onChange={handleContractStatusChange}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-transparent text-sm font-bold text-green-600 outline-none cursor-pointer w-full md:w-auto"
+            >
+              <option value="">선택</option>
+              {CONTRACT_STATUSES.map(status => (
+                <option key={status} value={status}>{status}</option>
               ))}
             </select>
           </div>

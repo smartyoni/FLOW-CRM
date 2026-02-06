@@ -4,8 +4,8 @@ import { Customer } from '../types';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  currentView?: 'customerList' | 'managingCustomer';
-  onViewChange?: (view: 'customerList' | 'managingCustomer') => void;
+  currentView?: 'customerList' | 'managingCustomer' | 'contractCustomer';
+  onViewChange?: (view: 'customerList' | 'managingCustomer' | 'contractCustomer') => void;
   customers?: Customer[];
 }
 
@@ -17,15 +17,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   customers = []
 }) => {
   // 접수~첫미팅: checkpoint가 없는 고객
-  const customerListCount = customers.filter(c => !c.checkpoint).length;
+  const customerListCount = customers.filter(c => !c.checkpoint && !c.contractStatus).length;
 
   // 재미팅~계약: checkpoint가 있는 고객
-  const managingCustomerCount = customers.filter(c => c.checkpoint).length;
+  const managingCustomerCount = customers.filter(c => c.checkpoint && !c.contractStatus).length;
+
+  // 계약~잔금: contractStatus가 있는 고객
+  const contractCustomerCount = customers.filter(c => c.contractStatus).length;
   const handleMenuClick = () => {
     onClose?.();
   };
 
-  const handleViewClick = (view: 'customerList' | 'managingCustomer') => {
+  const handleViewClick = (view: 'customerList' | 'managingCustomer' | 'contractCustomer') => {
     onViewChange?.(view);
     onClose?.();
   };
@@ -101,6 +104,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-medium text-sm">재미팅~계약</span>
               </div>
               <span className="text-sm font-bold bg-gray-200 px-2 py-0.5 rounded-full">{managingCustomerCount}</span>
+            </button>
+          </li>
+
+          {/* 메뉴 항목 3: 계약~잔금 */}
+          <li>
+            <button
+              onClick={() => handleViewClick('contractCustomer')}
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
+                currentView === 'contractCustomer'
+                  ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl leading-none text-red-500">•</span>
+                <span className="font-medium text-sm">계약~잔금</span>
+              </div>
+              <span className="text-sm font-bold bg-gray-200 px-2 py-0.5 rounded-full">{contractCustomerCount}</span>
             </button>
           </li>
         </ul>
