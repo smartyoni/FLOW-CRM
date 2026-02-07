@@ -48,7 +48,15 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit, initialData }
       priceType: formData.rentPrice ? 'rent' : 'sale', // simple logic
       stage: '접수고객', // Default stage
       checklists: [],
-      meetings: [] // Initialize with empty array
+      meetings: [], // Initialize with empty array
+      contractHistory: [
+        {
+          id: generateId(),
+          text: '계약내용',
+          createdAt: Date.now(),
+          memo: ''
+        }
+      ]
     };
 
     onSubmit(newCustomer);
