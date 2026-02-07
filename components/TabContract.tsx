@@ -12,6 +12,10 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const contractAreaRef = useRef<HTMLDivElement>(null);
   const paymentAreaRef = useRef<HTMLDivElement>(null);
 
+  // 인라인 편집 상태
+  const [editingContractField, setEditingContractField] = useState<string | null>(null);
+  const [editingContractValue, setEditingContractValue] = useState('');
+
   // 계약 히스토리 상태
   const [newContractHistoryText, setNewContractHistoryText] = useState('');
   const [editingContractHistoryItemId, setEditingContractHistoryItemId] = useState<string | null>(null);
@@ -81,6 +85,21 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setEditingContractHistoryItemId(null);
   };
 
+  // 인라인 편집 관련 함수
+  const startEditingContract = (field: string, value: string) => {
+    setEditingContractField(field);
+    setEditingContractValue(value);
+  };
+
+  const saveContractEdit = (field: string) => {
+    const updatedCustomer = {
+      ...customer,
+      [field]: editingContractValue
+    };
+    onUpdate(updatedCustomer);
+    setEditingContractField(null);
+  };
+
   // 메모 관련 함수
   const openContractMemo = (item: ChecklistItem) => {
     setContractMemoItem(item);
@@ -147,87 +166,93 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           </h3>
           <div className="space-y-3 text-sm">
             {/* 계약서작성일 */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-blue-500">•</span> 계약서작성일:
-              </span>
-              <input
-                type="date"
-                value={customer.contractDate || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, contractDate: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractDate', customer.contractDate || '')}>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 계약서작성일:</span>
+              {editingContractField === 'contractDate' ? (
+                <input
+                  autoFocus
+                  type="date"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none text-sm"
+                  value={editingContractValue}
+                  onChange={e => setEditingContractValue(e.target.value)}
+                  onBlur={() => saveContractEdit('contractDate')}
+                  onKeyDown={e => e.key === 'Enter' && saveContractEdit('contractDate')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractDate || '-'}</span>
+              )}
             </div>
 
             {/* 계약호실명 */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-blue-500">•</span> 계약호실명:
-              </span>
-              <input
-                type="text"
-                value={customer.contractUnitName || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, contractUnitName: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                placeholder="예: 101호"
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractUnitName', customer.contractUnitName || '')}>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 계약호실명:</span>
+              {editingContractField === 'contractUnitName' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingContractValue}
+                  onChange={e => setEditingContractValue(e.target.value)}
+                  onBlur={() => saveContractEdit('contractUnitName')}
+                  onKeyDown={e => e.key === 'Enter' && saveContractEdit('contractUnitName')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractUnitName || '-'}</span>
+              )}
             </div>
 
             {/* 매매가/보증금 */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-blue-500">•</span> 매매가/보증금:
-              </span>
-              <input
-                type="text"
-                value={customer.contractPrice || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, contractPrice: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                placeholder="예: 5억원"
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractPrice', customer.contractPrice || '')}>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 매매가/보증금:</span>
+              {editingContractField === 'contractPrice' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingContractValue}
+                  onChange={e => setEditingContractValue(e.target.value)}
+                  onBlur={() => saveContractEdit('contractPrice')}
+                  onKeyDown={e => e.key === 'Enter' && saveContractEdit('contractPrice')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractPrice || '-'}</span>
+              )}
             </div>
 
             {/* 월차임 */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-blue-500">•</span> 월차임:
-              </span>
-              <input
-                type="text"
-                value={customer.contractMonthlyRent || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, contractMonthlyRent: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                placeholder="예: 150만원"
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractMonthlyRent', customer.contractMonthlyRent || '')}>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 월차임:</span>
+              {editingContractField === 'contractMonthlyRent' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingContractValue}
+                  onChange={e => setEditingContractValue(e.target.value)}
+                  onBlur={() => saveContractEdit('contractMonthlyRent')}
+                  onKeyDown={e => e.key === 'Enter' && saveContractEdit('contractMonthlyRent')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractMonthlyRent || '-'}</span>
+              )}
             </div>
 
             {/* 계약기간 */}
-            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-blue-500">•</span> 계약기간:
-              </span>
-              <input
-                type="text"
-                value={customer.contractPeriod || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, contractPeriod: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                placeholder="예: 2년"
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
+            <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractPeriod', customer.contractPeriod || '')}>
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 계약기간:</span>
+              {editingContractField === 'contractPeriod' ? (
+                <input
+                  autoFocus
+                  type="text"
+                  className="flex-1 border border-primary px-1 py-0.5 outline-none"
+                  value={editingContractValue}
+                  onChange={e => setEditingContractValue(e.target.value)}
+                  onBlur={() => saveContractEdit('contractPeriod')}
+                  onKeyDown={e => e.key === 'Enter' && saveContractEdit('contractPeriod')}
+                />
+              ) : (
+                <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractPeriod || '-'}</span>
+              )}
             </div>
 
             {/* 계약 히스토리 */}
