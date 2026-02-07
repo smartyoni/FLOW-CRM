@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Customer, Property, Meeting } from '../types';
+import { Customer, Property, Meeting, ChecklistItem } from '../types';
 import { generateId } from '../services/firestore';
 import { fileToBase64, compressAndConvertToBase64 } from '../services/storage-firebase';
 import {
@@ -49,6 +49,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   // 미팅 삭제 확인 모달 상태
   const [deleteMeetingConfirmation, setDeleteMeetingConfirmation] = useState<string | null>(null);
 
+  // 미팅히스토리 상태 관리
+  const [newHistoryText, setNewHistoryText] = useState('');
+  const [historyMemoItem, setHistoryMemoItem] = useState<ChecklistItem | null>(null);
+  const [historyMemoMode, setHistoryMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
+  const [historyMemoText, setHistoryMemoText] = useState('');
+
   // 인라인 필드 편집 상태 (형식: "propId-fieldName")
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingFieldValue, setEditingFieldValue] = useState('');
@@ -64,6 +70,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [reportProperties, setReportProperties] = useState<Property[]>([]);
   const [editingPropertyIdx, setEditingPropertyIdx] = useState<number | null>(null);
   const [editingPropertyText, setEditingPropertyText] = useState('');
+
+  // 모바일 탭 상태
+  const [mobileMeetingTab, setMobileMeetingTab] = useState<'WORK' | 'HISTORY'>('WORK');
+  const workAreaRef = useRef<HTMLDivElement>(null);
+  const historyAreaRef = useRef<HTMLDivElement>(null);
 
   const reportRef = useRef<HTMLDivElement>(null);
   const propertyRefsMap = useRef<{ [key: string]: HTMLDivElement }>({});
@@ -85,6 +96,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   }, [customer.meetings]);
 
+  // 탭 전환 시 스크롤 리셋
+  useEffect(() => {
+    if (workAreaRef.current && mobileMeetingTab === 'WORK') {
+      workAreaRef.current.scrollTop = 0;
+    }
+    if (historyAreaRef.current && mobileMeetingTab === 'HISTORY') {
+      historyAreaRef.current.scrollTop = 0;
+    }
+  }, [mobileMeetingTab]);
+
   // ⭐ Props에서 받은 activeMeeting과 로컬 상태 동기화
   const propsActiveMeeting = customer.meetings?.find(m => m.id === activeMeetingId);
   useEffect(() => {
@@ -94,7 +115,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   }, [propsActiveMeeting?.id]);
 
   // ⭐ 렌더링할 때는 로컬 상태를 사용 (Firebase 저장 대기 없이 즉시 표시)
-  const activeMeeting = localMeeting || propsActiveMeeting;
+  const activeMeeting = (localMeeting || propsActiveMeeting) ? {
+    ...(localMeeting || propsActiveMeeting),
+    meetingHistory: (localMeeting || propsActiveMeeting)?.meetingHistory || []
+  } : null;
 
   // 터치 기반 더블탭 감지 함수
   const handleTouchDoubleTap = (targetId: string, callback: () => void) => {
@@ -119,6 +143,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       round: nextRound,
       date: '',
       properties: [],
+      meetingHistory: [],
       createdAt: Date.now()
     };
 
@@ -197,6 +222,89 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       ...customer,
       meetings: updatedMeetings
     });
+  };
+
+  // --- Meeting History Management ---
+
+  const handleAddMeetingHistory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHistoryText.trim() || !activeMeeting) return;
+
+    const newItem: ChecklistItem = {
+      id: generateId(),
+      text: newHistoryText,
+      createdAt: Date.now(),
+      memo: ''
+    };
+
+    const updatedMeeting = {
+      ...activeMeeting,
+      meetingHistory: [newItem, ...activeMeeting.meetingHistory]
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalMeeting(updatedMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedMeeting : m
+      )
+    });
+
+    setNewHistoryText('');
+  };
+
+  const handleDeleteMeetingHistory = (id: string) => {
+    if (!window.confirm('삭제하시겠습니까?')) return;
+    if (!activeMeeting) return;
+
+    const updatedMeeting = {
+      ...activeMeeting,
+      meetingHistory: activeMeeting.meetingHistory.filter(item => item.id !== id)
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalMeeting(updatedMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedMeeting : m
+      )
+    });
+  };
+
+  const openHistoryMemo = (item: ChecklistItem) => {
+    setHistoryMemoItem(item);
+    setHistoryMemoText(item.memo);
+    setHistoryMemoMode(item.memo ? 'VIEW' : 'EDIT');
+  };
+
+  const saveHistoryMemo = () => {
+    if (!historyMemoItem || !activeMeeting) return;
+
+    const updatedMeeting = {
+      ...activeMeeting,
+      meetingHistory: activeMeeting.meetingHistory.map(item =>
+        item.id === historyMemoItem.id ? { ...item, memo: historyMemoText } : item
+      )
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalMeeting(updatedMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedMeeting : m
+      )
+    });
+
+    setHistoryMemoMode('VIEW');
   };
 
   // --- Property Management (within Active Meeting) ---
@@ -999,7 +1107,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           {customer.meetings?.map((meeting) => (
             <div
               key={meeting.id}
-              onClick={() => setActiveMeetingId(meeting.id)}
+              onClick={() => {
+                setActiveMeetingId(meeting.id);
+                setMobileMeetingTab('WORK');
+              }}
               className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm cursor-pointer whitespace-nowrap flex items-center gap-2 transition-all ${activeMeetingId === meeting.id
                   ? 'bg-primary border-primary text-white shadow-md'
                   : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
@@ -1017,8 +1128,36 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
+      {/* 모바일 탭 네비게이션 */}
+      <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
+        <div className="flex p-2 gap-2">
+          <button
+            onClick={() => setMobileMeetingTab('WORK')}
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
+              mobileMeetingTab === 'WORK'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <i className="fas fa-clipboard-list mr-2"></i>
+            미팅실무
+          </button>
+          <button
+            onClick={() => setMobileMeetingTab('HISTORY')}
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
+              mobileMeetingTab === 'HISTORY'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <i className="fas fa-history mr-2"></i>
+            미팅히스토리
+          </button>
+        </div>
+      </div>
+
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+      <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 p-4 bg-white">
         {!activeMeeting ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <i className="fas fa-handshake text-4xl mb-2 opacity-20"></i>
@@ -1026,7 +1165,15 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
             <p className="text-sm">상단 '+ 추가' 버튼을 눌러 미팅을 생성하세요.</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <>
+            {/* 좌측: 기존 컨텐츠 */}
+            <div
+              ref={workAreaRef}
+              className={`w-full md:w-[60%] overflow-y-auto md:pr-2 ${
+                mobileMeetingTab === 'WORK' ? 'block' : 'hidden md:block'
+              }`}
+            >
+              <div className="space-y-6">
             {/* Date Picker and Add Property Button Row */}
             <div className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
               {/* Date Picker */}
@@ -1049,20 +1196,18 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   onClick={() => generatePropertyReport()}
                   disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
                   className="px-3 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
-                  title="매물제안서 생성"
+                  title="제안 생성"
                 >
-                  <i className="fas fa-file-pdf mr-1"></i>
-                  매물제안서
+                  제안
                 </button>
 
                 <button
                   onClick={() => {/* 미팅리포트 생성 함수 추후 구현 */}}
                   disabled={!activeMeeting?.properties || activeMeeting.properties.length === 0}
                   className="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-bold text-sm"
-                  title="미팅리포트 생성"
+                  title="미팅 생성"
                 >
-                  <i className="fas fa-file-pdf mr-1"></i>
-                  미팅리포트
+                  미팅
                 </button>
 
                 {/* Add Property Button */}
@@ -1072,8 +1217,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600 transition-colors font-bold text-sm flex items-center gap-1"
                     title="매물 추가"
                   >
-                    <i className="fas fa-plus"></i>
-                    매물추가
+                    추가
                   </button>
                 )}
               </div>
@@ -1872,6 +2016,83 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               </div>
             )}
           </div>
+              </div>
+
+            {/* 우측: 미팅히스토리 */}
+            <div
+              ref={historyAreaRef}
+              className={`w-full md:w-[40%] overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
+                mobileMeetingTab === 'HISTORY' ? 'block' : 'hidden md:block'
+              }`}
+            >
+              <h3 className="font-bold text-gray-700 mb-3 flex items-center">
+                <i className="fas fa-history mr-2 text-primary"></i>
+                미팅히스토리
+              </h3>
+
+              {/* 체크리스트 입력 폼 */}
+              <form onSubmit={handleAddMeetingHistory} className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  placeholder="미팅 진행사항 입력..."
+                  value={newHistoryText}
+                  onChange={(e) => setNewHistoryText(e.target.value)}
+                  className="flex-1 border-2 border-blue-500 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                />
+                <button
+                  type="submit"
+                  className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+                >
+                  추가
+                </button>
+              </form>
+
+              {/* 체크리스트 목록 */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {activeMeeting.meetingHistory.map((item, index) => (
+                  <div key={item.id}>
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex-1 mr-2 flex items-start gap-2">
+                          <i className="fas fa-circle text-xs text-purple-500 mt-1 flex-shrink-0"></i>
+                          <span className="text-gray-800 font-medium flex-1">
+                            {item.text}
+                          </span>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => openHistoryMemo(item)} className="text-gray-400 hover:text-blue-500">
+                            <i className="fas fa-sticky-note"></i>
+                          </button>
+                          <button onClick={() => handleDeleteMeetingHistory(item.id)} className="text-gray-400 hover:text-red-500">
+                            <i className="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center text-xs text-gray-400">
+                        <span>{new Date(item.createdAt).toLocaleString()}</span>
+                        {item.memo && (
+                          <span
+                            onClick={() => openHistoryMemo(item)}
+                            className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                          >
+                            {item.memo.split('\n')[0]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {index < activeMeeting.meetingHistory.length - 1 && (
+                      <div className="h-px bg-red-500 my-3"></div>
+                    )}
+                  </div>
+                ))}
+                {activeMeeting.meetingHistory.length === 0 && (
+                  <div className="text-center text-gray-400 py-10">
+                    등록된 미팅히스토리가 없습니다.
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
       </div>
@@ -1945,6 +2166,51 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         ))}
       </div>
+
+      {/* 미팅히스토리 메모 모달 */}
+      {historyMemoItem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h4 className="font-bold">메모 관리</h4>
+              <button onClick={() => setHistoryMemoItem(null)} className="text-gray-400 hover:text-gray-600">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-4">
+              {historyMemoMode === 'VIEW' ? (
+                <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
+                  {historyMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
+                </div>
+              ) : (
+                <textarea
+                  className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
+                  value={historyMemoText}
+                  onChange={(e) => setHistoryMemoText(e.target.value)}
+                  placeholder="메모를 입력하세요..."
+                />
+              )}
+            </div>
+            <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+              {historyMemoMode === 'VIEW' ? (
+                <button
+                  onClick={() => setHistoryMemoMode('EDIT')}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                >
+                  수정
+                </button>
+              ) : (
+                <button
+                  onClick={saveHistoryMemo}
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+                >
+                  저장
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Meeting Delete Confirmation Modal */}
       {deleteMeetingConfirmation && (

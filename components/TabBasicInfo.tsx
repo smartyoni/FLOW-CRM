@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint, CustomerContractStatus } from '../types';
 import { generateId } from '../services/storage';
 import { formatPhoneNumber } from '../utils/phoneUtils';
@@ -26,6 +26,11 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   const [memoModalMode, setMemoModalMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [memoText, setMemoText] = useState('');
 
+  // 모바일 탭 상태
+  const [mobileBasicInfoTab, setMobileBasicInfoTab] = useState<'INFO' | 'HISTORY'>('INFO');
+  const basicInfoAreaRef = useRef<HTMLDivElement>(null);
+  const historyAreaRef = useRef<HTMLDivElement>(null);
+
   // ⭐ 로컬 고객 상태 (즉시 미리보기를 위함)
   const [localCustomer, setLocalCustomer] = useState<Customer | null>(null);
 
@@ -33,6 +38,16 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   useEffect(() => {
     setLocalCustomer(customer);
   }, [customer.id]);
+
+  // 탭 전환 시 스크롤 리셋
+  useEffect(() => {
+    if (basicInfoAreaRef.current && mobileBasicInfoTab === 'INFO') {
+      basicInfoAreaRef.current.scrollTop = 0;
+    }
+    if (historyAreaRef.current && mobileBasicInfoTab === 'HISTORY') {
+      historyAreaRef.current.scrollTop = 0;
+    }
+  }, [mobileBasicInfoTab]);
 
   // ⭐ 렌더링할 때는 로컬 상태 우선 사용
   const activeCustomer = localCustomer || customer;
@@ -248,10 +263,43 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
+      {/* 모바일 탭 네비게이션 */}
+      <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
+        <div className="flex p-2 gap-2">
+          <button
+            onClick={() => setMobileBasicInfoTab('INFO')}
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
+              mobileBasicInfoTab === 'INFO'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <i className="fas fa-user mr-2"></i>
+            고객정보
+          </button>
+          <button
+            onClick={() => setMobileBasicInfoTab('HISTORY')}
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
+              mobileBasicInfoTab === 'HISTORY'
+                ? 'bg-primary text-white shadow-md'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            <i className="fas fa-history mr-2"></i>
+            히스토리
+          </button>
+        </div>
+      </div>
+
       {/* Main Content - Responsive Layout (Stack on mobile, 2-col on desktop) */}
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row gap-4 p-4 bg-white">
         {/* Top/Left: Basic Info */}
-        <div className="w-full md:w-1/2 overflow-y-auto md:pr-2">
+        <div
+          ref={basicInfoAreaRef}
+          className={`w-full md:w-1/2 overflow-y-auto md:pr-2 ${
+            mobileBasicInfoTab === 'INFO' ? 'block' : 'hidden md:block'
+          }`}
+        >
           <div className="space-y-3 text-sm">
             {/* 고객명 */}
             <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startInlineEdit('name', activeCustomer.name)}>
@@ -372,14 +420,14 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
               {editingField === 'memo' ? (
                 <textarea
                   autoFocus
-                  rows={9}
+                  rows={7}
                   className="w-full border border-primary rounded px-2 py-1 outline-none resize-none"
                   value={editingValue}
                   onChange={e => setEditingValue(e.target.value)}
                   onBlur={() => saveInlineEdit('memo')}
                 />
               ) : (
-                <div className="bg-gray-50 p-2 rounded border-2 border-blue-500 text-xs text-gray-700 h-64 overflow-y-auto group-hover:bg-yellow-50 whitespace-pre-wrap">
+                <div className="bg-gray-50 p-2 rounded border-2 border-blue-500 text-xs text-gray-700 h-48 overflow-y-auto group-hover:bg-yellow-50 whitespace-pre-wrap">
                   {activeCustomer.memo || '-'}
                 </div>
               )}
@@ -388,7 +436,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
 
         {/* Bottom/Right: History */}
-        <div className="w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4">
+        <div
+          ref={historyAreaRef}
+          className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
+            mobileBasicInfoTab === 'HISTORY' ? 'block' : 'hidden md:block'
+          }`}
+        >
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
             <i className="fas fa-history mr-2 text-primary"></i>
             히스토리
@@ -417,7 +470,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
               <div key={item.id}>
                 <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
                 <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1 mr-2" onDoubleClick={() => startEditing(item)}>
+                  <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditing(item)}>
                     {editingItemId === item.id ? (
                       <input
                         autoFocus
@@ -428,9 +481,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                         onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
                       />
                     ) : (
-                      <span className="text-gray-800 font-medium cursor-pointer" title="더블클릭하여 수정">
-                        {item.text}
-                      </span>
+                      <>
+                        <i className="fas fa-circle text-xs text-blue-500 mt-1 flex-shrink-0"></i>
+                        <span className="text-gray-800 font-medium cursor-pointer flex-1" title="더블클릭하여 수정">
+                          {item.text}
+                        </span>
+                      </>
                     )}
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -480,12 +536,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
             <div className="p-4">
               {memoModalMode === 'VIEW' ? (
-                <div className="min-h-[120px] whitespace-pre-wrap text-gray-700">
+                <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
                   {memoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
                 </div>
               ) : (
-                <textarea 
-                  className="w-full h-40 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
+                <textarea
+                  className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
                   value={memoText}
                   onChange={(e) => setMemoText(e.target.value)}
                   placeholder="메모를 입력하세요..."

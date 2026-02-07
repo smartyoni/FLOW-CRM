@@ -27,6 +27,7 @@ export interface Meeting {
   round: number; // 1차, 2차...
   date: string; // ISO string for datetime-local
   properties: Property[];
+  meetingHistory: ChecklistItem[]; // 미팅 진행 체크리스트
   createdAt: number;
 }
 
