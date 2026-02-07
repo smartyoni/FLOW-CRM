@@ -50,7 +50,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
       return;
     }
 
-    const tabs: TabState[] = ['BASIC', 'MEETING', 'GANTT', 'CONTRACT'];
+    const tabs: TabState[] = ['BASIC', 'MEETING', 'GANTT', 'CONTRACT', 'PAYMENT'];
     const currentIndex = tabs.indexOf(activeTab);
 
     if (distance > 0) {
@@ -129,7 +129,15 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               }`}
               onClick={() => setActiveTab('CONTRACT')}
             >
-              계약/잔금
+              계약
+            </button>
+            <button
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'PAYMENT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('PAYMENT')}
+            >
+              잔금
             </button>
           </div>
 
@@ -158,6 +166,12 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               />
             )}
             {activeTab === 'CONTRACT' && (
+              <TabContract
+                customer={customer}
+                onUpdate={onUpdate}
+              />
+            )}
+            {activeTab === 'PAYMENT' && (
               <TabContract
                 customer={customer}
                 onUpdate={onUpdate}
