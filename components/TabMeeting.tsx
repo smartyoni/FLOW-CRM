@@ -1172,7 +1172,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
             }`}
           >
             <i className="fas fa-clipboard-list mr-2"></i>
-            미팅실무
+            미팅매물관리
           </button>
           <button
             onClick={() => setMobileMeetingTab('HISTORY')}
