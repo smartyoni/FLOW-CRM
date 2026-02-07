@@ -64,9 +64,21 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
             <i className="fas fa-file-contract mr-2 text-primary"></i>
             계약
           </h3>
-          <div className="space-y-3 text-sm">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-gray-500 text-center py-8">계약 정보가 아직 등록되지 않았습니다.</p>
+          <div className="space-y-4 text-sm">
+            {/* 계약서작성일 */}
+            <div className="flex items-center gap-3 group cursor-pointer p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-blue-500">•</span> 계약서작성일:
+              </span>
+              <input
+                type="date"
+                value={customer.contractDate || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, contractDate: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
             </div>
           </div>
         </div>
@@ -82,9 +94,21 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
             <i className="fas fa-won-sign mr-2 text-primary"></i>
             잔금
           </h3>
-          <div className="space-y-3 text-sm">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-gray-500 text-center py-8">잔금 정보가 아직 등록되지 않았습니다.</p>
+          <div className="space-y-4 text-sm">
+            {/* 잔금일 */}
+            <div className="flex items-center gap-3 group cursor-pointer p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-green-500">•</span> 잔금일:
+              </span>
+              <input
+                type="date"
+                value={customer.paymentDate || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, paymentDate: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
             </div>
           </div>
         </div>

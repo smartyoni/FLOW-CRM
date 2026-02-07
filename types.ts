@@ -48,6 +48,8 @@ export interface Customer {
   stage?: CustomerStage; // New field for customer journey stage
   checkpoint?: CustomerCheckpoint; // New field for detailed status checkpoint
   contractStatus?: CustomerContractStatus; // New field for contract status (계약진행, 잔금대기, 계약완료)
+  contractDate?: string; // 계약서작성일 (optional)
+  paymentDate?: string; // 잔금일 (optional)
 
   // Favorites
   isFavorite?: boolean;
