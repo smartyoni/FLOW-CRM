@@ -59,4 +59,4 @@ export interface Customer {
 }
 
 export type ViewState = 'LIST' | 'DETAIL';
-export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'REPORT';
+export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'REPORT';

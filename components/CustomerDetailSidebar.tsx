@@ -3,6 +3,7 @@ import { Customer, TabState } from '../types';
 import { TabBasicInfo } from './TabBasicInfo';
 import { TabMeeting } from './TabMeeting';
 import { TabGantt } from './TabGantt';
+import { TabContract } from './TabContract';
 
 interface Props {
   customer: Customer | null;
@@ -49,7 +50,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
       return;
     }
 
-    const tabs: TabState[] = ['BASIC', 'MEETING', 'GANTT'];
+    const tabs: TabState[] = ['BASIC', 'MEETING', 'GANTT', 'CONTRACT'];
     const currentIndex = tabs.indexOf(activeTab);
 
     if (distance > 0) {
@@ -122,6 +123,14 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
             >
               여정관리
             </button>
+            <button
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeTab === 'CONTRACT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setActiveTab('CONTRACT')}
+            >
+              계약/잔금
+            </button>
           </div>
 
           {/* Content Area */}
@@ -144,6 +153,12 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
             )}
             {activeTab === 'GANTT' && (
               <TabGantt
+                customer={customer}
+                onUpdate={onUpdate}
+              />
+            )}
+            {activeTab === 'CONTRACT' && (
+              <TabContract
                 customer={customer}
                 onUpdate={onUpdate}
               />
