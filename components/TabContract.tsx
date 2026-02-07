@@ -291,8 +291,16 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                           </button>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(item.createdAt).toLocaleString()}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-400">{new Date(item.createdAt).toLocaleString()}</span>
+                        {item.memo && (
+                          <span
+                            onClick={() => openContractMemo(item)}
+                            className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                          >
+                            {item.memo.split('\n')[0]}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {index < (customer.contractHistory || []).length - 1 && (
