@@ -16,6 +16,9 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [newContractHistoryText, setNewContractHistoryText] = useState('');
   const [editingContractHistoryItemId, setEditingContractHistoryItemId] = useState<string | null>(null);
   const [editingContractHistoryText, setEditingContractHistoryText] = useState('');
+  const [contractMemoItem, setContractMemoItem] = useState<ChecklistItem | null>(null);
+  const [contractMemoMode, setContractMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
+  const [contractMemoText, setContractMemoText] = useState('');
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -76,6 +79,27 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
 
     onUpdate(updatedCustomer);
     setEditingContractHistoryItemId(null);
+  };
+
+  // 메모 관련 함수
+  const openContractMemo = (item: ChecklistItem) => {
+    setContractMemoItem(item);
+    setContractMemoText(item.memo);
+    setContractMemoMode(item.memo ? 'VIEW' : 'EDIT');
+  };
+
+  const saveContractMemo = () => {
+    if (!contractMemoItem) return;
+
+    const updatedCustomer = {
+      ...customer,
+      contractHistory: (customer.contractHistory || []).map(item =>
+        item.id === contractMemoItem.id ? { ...item, memo: contractMemoText } : item
+      )
+    };
+
+    onUpdate(updatedCustomer);
+    setContractMemoMode('VIEW');
   };
 
   return (
@@ -255,12 +279,17 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                             </>
                           )}
                         </div>
-                        <button
-                          onClick={() => handleDeleteContractHistory(item.id)}
-                          className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <i className="fas fa-trash-alt text-sm"></i>
-                        </button>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => openContractMemo(item)} className="text-gray-400 hover:text-blue-500">
+                            <i className="fas fa-sticky-note text-sm"></i>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteContractHistory(item.id)}
+                            className="text-gray-400 hover:text-red-500"
+                          >
+                            <i className="fas fa-trash-alt text-sm"></i>
+                          </button>
+                        </div>
                       </div>
                       <div className="text-xs text-gray-400">
                         {new Date(item.createdAt).toLocaleString()}
@@ -278,6 +307,51 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                 )}
               </div>
             </div>
+
+            {/* 메모 모달 */}
+            {contractMemoItem && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h4 className="font-bold">메모 관리</h4>
+                    <button onClick={() => setContractMemoItem(null)} className="text-gray-400 hover:text-gray-600">
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div className="p-4">
+                    {contractMemoMode === 'VIEW' ? (
+                      <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
+                        {contractMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
+                      </div>
+                    ) : (
+                      <textarea
+                        className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
+                        value={contractMemoText}
+                        onChange={(e) => setContractMemoText(e.target.value)}
+                        placeholder="메모를 입력하세요..."
+                      />
+                    )}
+                  </div>
+                  <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                    {contractMemoMode === 'VIEW' ? (
+                      <button
+                        onClick={() => setContractMemoMode('EDIT')}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                      >
+                        수정
+                      </button>
+                    ) : (
+                      <button
+                        onClick={saveContractMemo}
+                        className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+                      >
+                        저장
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
