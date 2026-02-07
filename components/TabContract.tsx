@@ -388,34 +388,13 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         </div>
 
-        {/* 우측: 잔금 */}
+        {/* 우측: 잔금 (비어있음) */}
         <div
           ref={paymentAreaRef}
           className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
             mobileContractTab === 'PAYMENT' ? 'block' : 'hidden md:block'
           }`}
         >
-          <h3 className="font-bold text-gray-700 mb-3 flex items-center">
-            <i className="fas fa-won-sign mr-2 text-primary"></i>
-            잔금
-          </h3>
-          <div className="space-y-4 text-sm">
-            {/* 잔금일 */}
-            <div className="flex items-center gap-3 group cursor-pointer p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
-              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
-                <span className="text-lg text-green-500">•</span> 잔금일:
-              </span>
-              <input
-                type="date"
-                value={customer.paymentDate || ''}
-                onChange={(e) => {
-                  const updatedCustomer = { ...customer, paymentDate: e.target.value };
-                  onUpdate(updatedCustomer);
-                }}
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-              />
-            </div>
-          </div>
         </div>
       </div>
     </div>
