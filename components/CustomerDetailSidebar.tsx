@@ -104,7 +104,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               }`}
               onClick={() => setActiveTab('BASIC')}
             >
-              고객정보/히스토리
+              고객정보
             </button>
             <button
               className={`flex-1 py-3 text-sm font-medium transition-colors ${
@@ -112,7 +112,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               }`}
               onClick={() => setActiveTab('MEETING')}
             >
-              매물선정/미팅관리
+              미팅실무
             </button>
             <button
               className={`flex-1 py-3 text-sm font-medium transition-colors ${
