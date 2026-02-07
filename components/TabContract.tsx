@@ -64,9 +64,9 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
             <i className="fas fa-file-contract mr-2 text-primary"></i>
             계약
           </h3>
-          <div className="space-y-4 text-sm">
+          <div className="space-y-3 text-sm">
             {/* 계약서작성일 */}
-            <div className="flex items-center gap-3 group cursor-pointer p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
               <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
                 <span className="text-lg text-blue-500">•</span> 계약서작성일:
               </span>
@@ -77,6 +77,74 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                   const updatedCustomer = { ...customer, contractDate: e.target.value };
                   onUpdate(updatedCustomer);
                 }}
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
+            </div>
+
+            {/* 계약호실명 */}
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-blue-500">•</span> 계약호실명:
+              </span>
+              <input
+                type="text"
+                value={customer.contractUnitName || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, contractUnitName: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                placeholder="예: 101호"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
+            </div>
+
+            {/* 매매가/보증금 */}
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-blue-500">•</span> 매매가/보증금:
+              </span>
+              <input
+                type="text"
+                value={customer.contractPrice || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, contractPrice: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                placeholder="예: 5억원"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
+            </div>
+
+            {/* 월차임 */}
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-blue-500">•</span> 월차임:
+              </span>
+              <input
+                type="text"
+                value={customer.contractMonthlyRent || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, contractMonthlyRent: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                placeholder="예: 150만원"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              />
+            </div>
+
+            {/* 계약기간 */}
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 border border-gray-200">
+              <span className="text-gray-700 font-bold whitespace-nowrap min-w-fit">
+                <span className="text-lg text-blue-500">•</span> 계약기간:
+              </span>
+              <input
+                type="text"
+                value={customer.contractPeriod || ''}
+                onChange={(e) => {
+                  const updatedCustomer = { ...customer, contractPeriod: e.target.value };
+                  onUpdate(updatedCustomer);
+                }}
+                placeholder="예: 2년"
                 className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
               />
             </div>

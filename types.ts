@@ -49,6 +49,10 @@ export interface Customer {
   checkpoint?: CustomerCheckpoint; // New field for detailed status checkpoint
   contractStatus?: CustomerContractStatus; // New field for contract status (계약진행, 잔금대기, 계약완료)
   contractDate?: string; // 계약서작성일 (optional)
+  contractUnitName?: string; // 계약호실명 (optional)
+  contractPrice?: string; // 매매가/보증금 (optional)
+  contractMonthlyRent?: string; // 월차임 (optional)
+  contractPeriod?: string; // 계약기간 (optional)
   paymentDate?: string; // 잔금일 (optional)
 
   // Favorites
