@@ -62,6 +62,7 @@ export interface Customer {
   // Relations
   checklists: ChecklistItem[];
   meetings: Meeting[]; // Changed from meeting: MeetingInfo to meetings: Meeting[]
+  contractHistory: ChecklistItem[]; // 계약 진행 히스토리
 }
 
 export type ViewState = 'LIST' | 'DETAIL';
