@@ -4,6 +4,7 @@ import { TabBasicInfo } from './TabBasicInfo';
 import { TabMeeting } from './TabMeeting';
 import { TabGantt } from './TabGantt';
 import { TabContract } from './TabContract';
+import { TabPayment } from './TabPayment';
 
 interface Props {
   customer: Customer | null;
@@ -172,7 +173,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
               />
             )}
             {activeTab === 'PAYMENT' && (
-              <TabContract
+              <TabPayment
                 customer={customer}
                 onUpdate={onUpdate}
               />

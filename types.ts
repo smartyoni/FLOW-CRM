@@ -54,6 +54,10 @@ export interface Customer {
   contractMonthlyRent?: string; // 월차임 (optional)
   contractPeriod?: string; // 계약기간 (optional)
   paymentDate?: string; // 잔금일 (optional)
+  enterExitSchedule?: string; // 입퇴실일정 (optional)
+  depositReturnAccount?: string; // 보증금반환계좌번호 (optional)
+  paymentAccount?: string; // 잔금입금계좌번호 (optional)
+  managementFeeSettlementDate?: string; // 관리비정산 요청일 (optional)
 
   // Favorites
   isFavorite?: boolean;
@@ -63,7 +67,8 @@ export interface Customer {
   checklists: ChecklistItem[];
   meetings: Meeting[]; // Changed from meeting: MeetingInfo to meetings: Meeting[]
   contractHistory: ChecklistItem[]; // 계약 진행 히스토리
+  paymentHistory?: ChecklistItem[]; // 잔금 진행 히스토리
 }
 
 export type ViewState = 'LIST' | 'DETAIL';
-export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'REPORT';
+export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'PAYMENT' | 'REPORT';

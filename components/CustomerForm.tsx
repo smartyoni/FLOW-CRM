@@ -56,6 +56,14 @@ export const CustomerForm: React.FC<Props> = ({ onClose, onSubmit, initialData }
           createdAt: Date.now(),
           memo: ''
         }
+      ],
+      paymentHistory: [
+        {
+          id: generateId(),
+          text: '잔금업무',
+          createdAt: Date.now(),
+          memo: ''
+        }
       ]
     };
 
