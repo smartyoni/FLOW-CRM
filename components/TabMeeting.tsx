@@ -51,6 +51,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 미팅히스토리 상태 관리
   const [newHistoryText, setNewHistoryText] = useState('');
+  const [editingHistoryItemId, setEditingHistoryItemId] = useState<string | null>(null);
+  const [editingHistoryText, setEditingHistoryText] = useState('');
   const [historyMemoItem, setHistoryMemoItem] = useState<ChecklistItem | null>(null);
   const [historyMemoMode, setHistoryMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [historyMemoText, setHistoryMemoText] = useState('');
@@ -305,6 +307,36 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     });
 
     setHistoryMemoMode('VIEW');
+  };
+
+  // 미팅히스토리 인라인 편집
+  const startEditingHistory = (item: ChecklistItem) => {
+    setEditingHistoryItemId(item.id);
+    setEditingHistoryText(item.text);
+  };
+
+  const saveEditingHistory = () => {
+    if (!editingHistoryItemId || !activeMeeting) return;
+
+    const updatedMeeting = {
+      ...activeMeeting,
+      meetingHistory: activeMeeting.meetingHistory.map(item =>
+        item.id === editingHistoryItemId ? { ...item, text: editingHistoryText } : item
+      )
+    };
+
+    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
+    setLocalMeeting(updatedMeeting);
+
+    // ⭐ 2. Firebase에 저장 (백그라운드)
+    onUpdate({
+      ...customer,
+      meetings: customer.meetings.map(m =>
+        m.id === activeMeeting.id ? updatedMeeting : m
+      )
+    });
+
+    setEditingHistoryItemId(null);
   };
 
   // --- Property Management (within Active Meeting) ---
@@ -2053,11 +2085,24 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   <div key={item.id}>
                     <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
                       <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1 mr-2 flex items-start gap-2">
-                          <i className="fas fa-circle text-xs text-purple-500 mt-1 flex-shrink-0"></i>
-                          <span className="text-gray-800 font-medium flex-1">
-                            {item.text}
-                          </span>
+                        <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditingHistory(item)}>
+                          {editingHistoryItemId === item.id ? (
+                            <input
+                              autoFocus
+                              className="w-full border-b-2 border-primary outline-none"
+                              value={editingHistoryText}
+                              onChange={(e) => setEditingHistoryText(e.target.value)}
+                              onBlur={saveEditingHistory}
+                              onKeyDown={(e) => e.key === 'Enter' && saveEditingHistory()}
+                            />
+                          ) : (
+                            <>
+                              <i className="fas fa-circle text-xs text-purple-500 mt-1 flex-shrink-0"></i>
+                              <span className="text-gray-800 font-medium cursor-pointer flex-1" title="더블클릭하여 수정">
+                                {item.text}
+                              </span>
+                            </>
+                          )}
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => openHistoryMemo(item)} className="text-gray-400 hover:text-blue-500">
