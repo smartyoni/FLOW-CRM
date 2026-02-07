@@ -388,13 +388,17 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         </div>
 
-        {/* 우측: 잔금 (비어있음) */}
+        {/* 우측: 잔금 */}
         <div
           ref={paymentAreaRef}
-          className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
+          className={`w-full md:w-1/2 overflow-y-auto flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
             mobileContractTab === 'PAYMENT' ? 'block' : 'hidden md:block'
           }`}
         >
+          <h3 className="font-bold text-gray-700 mb-3 flex items-center">
+            <i className="fas fa-won-sign mr-2 text-primary"></i>
+            잔금정보
+          </h3>
         </div>
       </div>
     </div>
