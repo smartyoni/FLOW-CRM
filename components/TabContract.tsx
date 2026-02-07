@@ -162,7 +162,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         >
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
             <i className="fas fa-file-contract mr-2 text-primary"></i>
-            계약
+            {mobileContractTab === 'PAYMENT' ? '잔금정보' : '계약'}
           </h3>
           <div className="space-y-3 text-sm">
             {/* 계약서작성일 */}
