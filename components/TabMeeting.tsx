@@ -1205,6 +1205,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 mobileMeetingTab === 'WORK' ? 'block' : 'hidden md:block'
               }`}
             >
+              <h3 className="font-bold text-gray-700 mb-3 flex items-center">
+                <i className="fas fa-home mr-2 text-primary"></i>
+                미팅매물관리
+              </h3>
               <div className="space-y-6">
             {/* Date Picker and Add Property Button Row */}
             <div className="flex flex-col md:flex-row gap-2 items-start md:items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200">
