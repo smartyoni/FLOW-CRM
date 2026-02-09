@@ -213,6 +213,10 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         : cat
     );
     await updateClipboard(updated);
+
+    // 자동으로 편집 모드로 전환
+    setEditingItemId(newItem.id);
+    setEditingItemTitle('새 항목');
   };
 
   // 하위 항목 삭제
