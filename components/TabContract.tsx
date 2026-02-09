@@ -389,8 +389,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
       const [draggedItem] = items.splice(dragIndex, 1);
 
       // 새로운 위치에 삽입
-      const insertIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
-      items.splice(insertIndex, 0, draggedItem);
+      items.splice(dropIndex, 0, draggedItem);
 
       return { ...cat, items };
     });
@@ -434,8 +433,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     const [draggedCategory] = updated.splice(dragIndex, 1);
 
     // 새로운 위치에 삽입
-    const insertIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
-    updated.splice(insertIndex, 0, draggedCategory);
+    updated.splice(dropIndex, 0, draggedCategory);
 
     await updateClipboard(updated);
     setDraggingCategory(null);
