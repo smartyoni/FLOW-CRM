@@ -63,6 +63,10 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingModalTitleText, setEditingModalTitleText] = useState('');
   const [contentModalEditMode, setContentModalEditMode] = useState(false);
 
+  // 드래그앤드롭 상태
+  const [draggingItem, setDraggingItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+  const [dragOverItem, setDragOverItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
     if (contractAreaRef.current) {
@@ -334,6 +338,59 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
       );
       await updateClipboard(updated);
     }
+  };
+
+  // 드래그앤드롭 핸들러
+  const handleDragStart = (categoryId: string, itemId: string) => {
+    setDraggingItem({ categoryId, itemId });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (categoryId: string, targetItemId: string) => {
+    if (!draggingItem) return;
+
+    // 같은 아이템이면 무시
+    if (draggingItem.itemId === targetItemId) {
+      setDraggingItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    // 같은 카테고리 내에서만 정렬
+    if (draggingItem.categoryId !== categoryId) {
+      setDraggingItem(null);
+      setDragOverItem(null);
+      return;
+    }
+
+    // 항목 순서 변경
+    const updated = contractClipboard.map(cat => {
+      if (cat.id !== categoryId) return cat;
+
+      const items = [...cat.items];
+      const dragIndex = items.findIndex(item => item.id === draggingItem.itemId);
+      const dropIndex = items.findIndex(item => item.id === targetItemId);
+
+      if (dragIndex === -1 || dropIndex === -1) return cat;
+
+      // 두 항목 교환
+      [items[dragIndex], items[dropIndex]] = [items[dropIndex], items[dragIndex]];
+
+      return { ...cat, items };
+    });
+
+    await updateClipboard(updated);
+    setDraggingItem(null);
+    setDragOverItem(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingItem(null);
+    setDragOverItem(null);
   };
 
   // 내용 자동 저장 (debounce)
@@ -733,7 +790,18 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                     category.items.map((item) => (
                       <div
                         key={item.id}
-                        className="bg-gray-50 p-2.5 rounded border border-gray-200 group hover:bg-gray-100 transition"
+                        draggable
+                        onDragStart={() => handleDragStart(category.id, item.id)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(category.id, item.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragLeave={() => setDragOverItem(null)}
+                        onDragEnter={() => setDragOverItem({ categoryId: category.id, itemId: item.id })}
+                        className={`bg-gray-50 p-2.5 rounded border-2 group hover:bg-gray-100 transition cursor-move ${
+                          draggingItem?.itemId === item.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+                        } ${
+                          dragOverItem?.itemId === item.id ? 'border-primary bg-blue-50' : ''
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           {editingItemId === item.id ? (
