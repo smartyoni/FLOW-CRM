@@ -375,7 +375,7 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
       return;
     }
 
-    // 항목 순서 변경
+    // 항목 순서 변경 (insert 방식)
     const updated = paymentClipboard.map(cat => {
       if (cat.id !== categoryId) return cat;
 
@@ -385,8 +385,12 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
 
       if (dragIndex === -1 || dropIndex === -1) return cat;
 
-      // 두 항목 교환
-      [items[dragIndex], items[dropIndex]] = [items[dropIndex], items[dragIndex]];
+      // 드래그한 항목 제거
+      const [draggedItem] = items.splice(dragIndex, 1);
+
+      // 새로운 위치에 삽입
+      const insertIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+      items.splice(insertIndex, 0, draggedItem);
 
       return { ...cat, items };
     });
@@ -426,7 +430,12 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
     if (dragIndex === -1 || dropIndex === -1) return;
 
     const updated = [...paymentClipboard];
-    [updated[dragIndex], updated[dropIndex]] = [updated[dropIndex], updated[dragIndex]];
+    // 드래그한 항목 제거
+    const [draggedCategory] = updated.splice(dragIndex, 1);
+
+    // 새로운 위치에 삽입
+    const insertIndex = dragIndex < dropIndex ? dropIndex - 1 : dropIndex;
+    updated.splice(insertIndex, 0, draggedCategory);
 
     await updatePaymentClipboard(updated);
     setDraggingCategory(null);
