@@ -146,7 +146,7 @@ export default defineConfig(({ mode }) => {
                 }
               },
             ],
-            navigateFallback: null,
+            navigateFallback: 'index.html',
             cleanupOutdatedCaches: true
           },
           devOptions: {
