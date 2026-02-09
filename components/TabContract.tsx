@@ -789,7 +789,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col" style={{ height: '70vh' }}>
             {/* 헤더 */}
-            <div className="p-4 border-b flex justify-between items-center shrink-0">
+            <div className="p-4 border-b-2 border-black flex justify-between items-center shrink-0">
               {editingModalTitle ? (
                 <input
                   autoFocus
