@@ -743,211 +743,222 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
         )}
       </div>
 
-      {/* 우측: 잔금일클립보드 */}
+      {/* 우측: 잔금일클립보드 아코디언 */}
       <div className={`${mobilePaymentTab === 'CLIPBOARD' ? 'block' : 'hidden md:block'} md:w-1/2 overflow-y-auto flex flex-col p-4`}>
-        <div className="flex items-center justify-between mb-4">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-3">
           <h3 className="font-bold text-gray-700 flex items-center">
             <i className="fas fa-clipboard mr-2 text-pink-500"></i>
             잔금일클립보드
           </h3>
           <button
             onClick={handleAddCategory}
-            className="px-3 py-1 bg-pink-500 text-white rounded text-sm hover:bg-pink-600 font-bold"
+            className="bg-pink-500 text-white px-3 py-1.5 rounded-md hover:bg-pink-600 transition text-sm font-bold"
           >
+            <i className="fas fa-plus mr-1"></i>
             카테고리 추가
           </button>
         </div>
 
         {/* 카테고리 리스트 */}
-        <div className="space-y-2 flex-1">
-          {paymentClipboard.length === 0 ? (
-            <div className="text-center text-gray-400 py-8 text-sm">
-              카테고리가 없습니다. 새 카테고리를 추가해주세요.
-            </div>
-          ) : (
-            paymentClipboard.map((category, catIndex) => (
-              <div key={category.id} draggable onDragStart={() => handleCategoryDragStart(category.id)} onDragOver={handleCategoryDragOver} onDrop={() => handleCategoryDrop(category.id)} onDragEnd={handleCategoryDragEnd} className={`border rounded cursor-grab active:cursor-grabbing ${dragOverCategory === category.id ? 'bg-blue-100' : ''}`}>
-                {/* 카테고리 헤더 */}
-                <div className="bg-gray-100 p-3 flex items-center gap-2 group">
+        <div className="space-y-3">
+          {paymentClipboard.map((category) => (
+            <div
+              key={category.id}
+              draggable
+              onDragStart={() => handleCategoryDragStart(category.id)}
+              onDragOver={handleCategoryDragOver}
+              onDrop={() => handleCategoryDrop(category.id)}
+              onDragEnd={handleCategoryDragEnd}
+              onDragLeave={() => setDragOverCategory(null)}
+              onDragEnter={() => setDragOverCategory(category.id)}
+              className={`border rounded-lg overflow-hidden bg-white shadow-sm cursor-move transition ${
+                draggingCategory === category.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+              } ${
+                dragOverCategory === category.id ? 'border-2 border-pink-500 bg-pink-50' : ''
+              }`}
+            >
+              {/* 카테고리 헤더 */}
+              <div className="bg-gray-100 p-3 flex items-center justify-between group">
+                <div className="flex items-center gap-2 flex-1">
                   <button
                     onClick={() => toggleCategory(category.id)}
-                    className="w-6 h-6 flex items-center justify-center text-gray-600 hover:text-gray-800"
+                    className="text-gray-500 hover:text-gray-700 text-sm"
                   >
-                    <i className={`fas fa-chevron-${category.isExpanded ? 'down' : 'right'}`}></i>
+                    <i className={`fas ${category.isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>
                   </button>
 
-                  <div
-                    className="flex-1 font-bold text-gray-800 cursor-pointer hover:bg-yellow-100 py-1 px-1"
-                    onDoubleClick={() => startEditingCategory(category)}
-                  >
-                    {editingCategoryId === category.id ? (
-                      <input
-                        autoFocus
-                        className="w-full border border-pink-500 px-1 py-0.5 outline-none text-sm"
-                        value={editingCategoryTitle}
-                        onChange={e => setEditingCategoryTitle(e.target.value)}
-                        onBlur={saveEditingCategory}
-                        onKeyDown={e => e.key === 'Enter' && saveEditingCategory()}
-                      />
-                    ) : (
-                      category.title
-                    )}
-                  </div>
+                  {editingCategoryId === category.id ? (
+                    <input
+                      autoFocus
+                      className="flex-1 border-b-2 border-pink-500 outline-none bg-transparent font-bold"
+                      value={editingCategoryTitle}
+                      onChange={(e) => setEditingCategoryTitle(e.target.value)}
+                      onBlur={saveEditingCategory}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEditingCategory()}
+                    />
+                  ) : (
+                    <span
+                      onDoubleClick={() => startEditingCategory(category)}
+                      className="font-bold text-gray-800 cursor-pointer flex-1"
+                      title="더블클릭하여 수정"
+                    >
+                      {category.title}
+                    </span>
+                  )}
+                </div>
 
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleAddItem(category.id)}
-                    className="px-2 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400 opacity-0 group-hover:opacity-100 transition"
+                    className="text-pink-500 hover:text-pink-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    하위추가
+                    <i className="fas fa-plus mr-1"></i>
+                    하위 항목 추가
                   </button>
                   <button
                     onClick={() => handleDeleteCategory(category.id)}
-                    className="px-2 py-1 bg-red-300 text-red-700 rounded text-xs hover:bg-red-400 opacity-0 group-hover:opacity-100 transition"
+                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    삭제
+                    <i className="fas fa-trash-alt"></i>
                   </button>
                 </div>
-
-                {/* 카테고리 내용 */}
-                {category.isExpanded && (
-                  <div className="bg-gray-50 p-3 space-y-2">
-                    {category.items.length === 0 ? (
-                      <div className="text-center text-gray-400 py-4 text-sm">
-                        하위 항목이 없습니다.
-                      </div>
-                    ) : (
-                      category.items.map((item, itemIndex) => (
-                        <div
-                          key={item.id}
-                          draggable
-                          onDragStart={() => handleDragStart(category.id, item.id)}
-                          onDragOver={handleDragOver}
-                          onDrop={() => handleDrop(category.id, item.id)}
-                          onDragEnd={handleDragEnd}
-                          onClick={() => openContentModal(category.id, item)}
-                          className={`p-2 bg-white border rounded cursor-pointer hover:bg-blue-50 group ${dragOverItem?.itemId === item.id ? 'bg-blue-100' : ''}`}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div
-                                className="font-bold text-gray-800 text-sm cursor-pointer hover:bg-yellow-100 py-1 px-1"
-                                onClick={e => e.stopPropagation()}
-                                onDoubleClick={e => {
-                                  e.stopPropagation();
-                                  startEditingItem(item);
-                                }}
-                              >
-                                {editingItemId === item.id ? (
-                                  <input
-                                    autoFocus
-                                    className="w-full border border-pink-500 px-1 py-0.5 outline-none text-sm"
-                                    value={editingItemTitle}
-                                    onChange={e => setEditingItemTitle(e.target.value)}
-                                    onBlur={() => saveEditingItem(category.id)}
-                                    onKeyDown={e => e.key === 'Enter' && saveEditingItem(category.id)}
-                                    onClick={e => e.stopPropagation()}
-                                  />
-                                ) : (
-                                  item.title
-                                )}
-                              </div>
-                              {item.content && (
-                                <div className="text-xs text-gray-600 mt-1 line-clamp-1">{item.content.split('\n')[0]}</div>
-                              )}
-                              <div className="text-xs text-gray-400 mt-1">{new Date(item.createdAt).toLocaleDateString()}</div>
-                            </div>
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                handleDeleteItem(category.id, item.id);
-                              }}
-                              className="px-2 py-1 bg-red-300 text-red-700 rounded text-xs hover:bg-red-400 opacity-0 group-hover:opacity-100 transition"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {catIndex < paymentClipboard.length - 1 && <div className="h-px bg-gray-300"></div>}
               </div>
-            ))
+
+              {/* 하위 항목 리스트 */}
+              {category.isExpanded && (
+                <div className="p-3 space-y-2">
+                  {category.items.length === 0 ? (
+                    <div className="text-center text-gray-400 py-4 text-sm">
+                      하위 항목이 없습니다.
+                    </div>
+                  ) : (
+                    category.items.map((item) => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={() => handleDragStart(category.id, item.id)}
+                        onDragOver={handleDragOver}
+                        onDrop={() => handleDrop(category.id, item.id)}
+                        onDragEnd={handleDragEnd}
+                        onDragLeave={() => setDragOverItem(null)}
+                        onDragEnter={() => setDragOverItem({ categoryId: category.id, itemId: item.id })}
+                        className={`bg-gray-50 p-2.5 rounded border-2 group hover:bg-gray-100 transition cursor-move ${
+                          draggingItem?.itemId === item.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+                        } ${
+                          dragOverItem?.itemId === item.id ? 'border-pink-500 bg-pink-50' : ''
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          {editingItemId === item.id ? (
+                            <input
+                              autoFocus
+                              className="flex-1 border-b-2 border-pink-500 outline-none bg-transparent"
+                              value={editingItemTitle}
+                              onChange={(e) => setEditingItemTitle(e.target.value)}
+                              onBlur={() => saveEditingItem(category.id)}
+                              onKeyDown={(e) => e.key === 'Enter' && saveEditingItem(category.id)}
+                            />
+                          ) : (
+                            <div
+                              onClick={() => openContentModal(category.id, item)}
+                              onDoubleClick={() => startEditingItem(item)}
+                              className="flex-1 cursor-pointer"
+                              title="클릭: 내용 보기/편집, 더블클릭: 제목 수정"
+                            >
+                              <span className="text-gray-800 font-medium">{item.title}</span>
+                              {item.content && (
+                                <div className="text-xs text-green-600 font-medium mt-1 truncate">
+                                  {item.content.split('\n')[0]}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteItem(category.id, item.id)}
+                            className="text-gray-400 hover:text-red-500 ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <i className="fas fa-trash-alt text-sm"></i>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {paymentClipboard.length === 0 && (
+            <div className="text-center text-gray-400 py-6 text-sm">
+              등록된 카테고리가 없습니다.
+            </div>
           )}
         </div>
       </div>
 
-      {/* 70vh 내용 편집 모달 */}
+      {/* 모달 내용 편집 */}
       {contentModalItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl" style={{ height: '70vh' }}>
-            {/* 헤더 */}
-            <div className="p-4 border-b flex justify-between items-center bg-pink-50">
-              <div className="flex-1">
-                <div
-                  className="font-bold text-gray-800 cursor-pointer hover:bg-yellow-100 py-1 px-1"
-                  onDoubleClick={startEditingModalTitle}
-                >
-                  {editingModalTitle ? (
-                    <input
-                      autoFocus
-                      className="w-full border border-pink-500 px-1 py-0.5 outline-none text-sm"
-                      value={editingModalTitleText}
-                      onChange={e => setEditingModalTitleText(e.target.value)}
-                      onBlur={saveModalTitle}
-                      onKeyDown={e => e.key === 'Enter' && saveModalTitle()}
-                    />
-                  ) : (
-                    contentModalItem.item.title
-                  )}
-                </div>
-              </div>
-              <button onClick={closeContentModal} className="text-gray-400 hover:text-gray-600">
-                <i className="fas fa-times text-xl"></i>
-              </button>
-            </div>
-
-            {/* 내용 */}
-            <div className="p-4 flex-1 overflow-y-auto">
-              {contentModalEditMode ? (
-                <textarea
-                  className="w-full h-full border-0 resize-none focus:ring-0 outline-none p-2 font-mono text-sm"
-                  value={contentModalText}
-                  onChange={handleContentChange}
-                  placeholder="내용을 입력하세요..."
-                />
-              ) : (
-                <div className="whitespace-pre-wrap text-gray-700 font-mono text-sm p-2 bg-gray-50 rounded h-full overflow-y-auto">
-                  {contentModalText || <span className="text-gray-400 italic">내용이 없습니다.</span>}
-                </div>
-              )}
-            </div>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col border-2 border-black" style={{ height: '70vh' }}>
+            {/* 텍스트 입력 영역 - 전체를 텍스트에어리어로 */}
+            <textarea
+              autoFocus
+              readOnly={!contentModalEditMode}
+              onDoubleClick={() => setContentModalEditMode(true)}
+              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-pink-500 ${
+                contentModalEditMode
+                  ? 'border-2 border-pink-500 focus:border-transparent'
+                  : 'border-2 border-gray-200 cursor-pointer'
+              }`}
+              value={contentModalText}
+              onChange={handleContentChange}
+              placeholder="내용을 입력하세요... (더블클릭하면 편집 가능, 자동 저장됩니다)"
+              title={contentModalEditMode ? '' : '더블클릭하여 편집'}
+            />
 
             {/* 푸터 */}
-            <div className="p-4 border-t flex justify-between items-center bg-gray-50">
-              <div className="text-xs text-gray-500">
-                {new Date(contentModalItem.item.createdAt).toLocaleString()}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setContentModalEditMode(!contentModalEditMode)}
-                  className="px-3 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm font-bold"
+            <div className="p-4 border-t-2 border-black flex justify-between items-center shrink-0 bg-pink-100">
+              {editingModalTitle ? (
+                <input
+                  autoFocus
+                  className="flex-1 border-b-2 border-pink-500 outline-none font-bold text-lg bg-pink-100"
+                  value={editingModalTitleText}
+                  onChange={(e) => setEditingModalTitleText(e.target.value)}
+                  onBlur={saveModalTitle}
+                  onKeyDown={(e) => e.key === 'Enter' && saveModalTitle()}
+                />
+              ) : (
+                <h4
+                  className="font-bold text-lg cursor-pointer hover:text-pink-600"
+                  onDoubleClick={startEditingModalTitle}
+                  title="더블클릭하여 수정"
                 >
-                  {contentModalEditMode ? '보기' : '수정'}
-                </button>
+                  {contentModalItem.item.title}
+                </h4>
+              )}
+              <div className="flex items-center gap-3">
                 <button
                   onClick={copyToClipboard}
-                  className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-bold"
+                  className="text-gray-400 hover:text-pink-500 transition"
+                  title="복사"
                 >
-                  <i className="fas fa-copy mr-1"></i>복사
+                  <i className="fas fa-copy text-lg"></i>
                 </button>
                 <button
                   onClick={resetContent}
-                  className="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm font-bold"
+                  className="text-gray-400 hover:text-red-500 transition"
+                  title="초기화"
                 >
-                  <i className="fas fa-trash mr-1"></i>초기화
+                  <i className="fas fa-trash-alt text-lg"></i>
+                </button>
+                <button
+                  onClick={closeContentModal}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                  title="닫기"
+                >
+                  <i className="fas fa-times text-lg"></i>
                 </button>
               </div>
             </div>
