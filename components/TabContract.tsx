@@ -59,6 +59,9 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     item: ClipboardItem;
   } | null>(null);
   const [contentModalText, setContentModalText] = useState('');
+  const [editingModalTitle, setEditingModalTitle] = useState(false);
+  const [editingModalTitleText, setEditingModalTitleText] = useState('');
+  const [contentModalEditMode, setContentModalEditMode] = useState(true);
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -258,12 +261,47 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const openContentModal = (categoryId: string, item: ClipboardItem) => {
     setContentModalItem({ categoryId, item });
     setContentModalText(item.content);
+    setEditingModalTitle(false);
+    setEditingModalTitleText('');
+    setContentModalEditMode(true);
   };
 
   // 내용 모달 닫기
   const closeContentModal = () => {
     setContentModalItem(null);
     setContentModalText('');
+    setEditingModalTitle(false);
+    setEditingModalTitleText('');
+    setContentModalEditMode(true);
+  };
+
+  // 모달 제목 편집 시작
+  const startEditingModalTitle = () => {
+    setEditingModalTitle(true);
+    setEditingModalTitleText(contentModalItem?.item.title || '');
+  };
+
+  // 모달 제목 저장
+  const saveModalTitle = async () => {
+    if (!contentModalItem) return;
+    const updated = contractClipboard.map(cat =>
+      cat.id === contentModalItem.categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === contentModalItem.item.id
+                ? { ...item, title: editingModalTitleText }
+                : item
+            )
+          }
+        : cat
+    );
+    await updateClipboard(updated);
+    setContentModalItem({
+      ...contentModalItem,
+      item: { ...contentModalItem.item, title: editingModalTitleText }
+    });
+    setEditingModalTitle(false);
   };
 
   // 내용 자동 저장 (debounce)
@@ -720,7 +758,24 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col" style={{ height: '70vh' }}>
             {/* 헤더 */}
             <div className="p-4 border-b flex justify-between items-center shrink-0">
-              <h4 className="font-bold text-lg">{contentModalItem.item.title}</h4>
+              {editingModalTitle ? (
+                <input
+                  autoFocus
+                  className="flex-1 border-b-2 border-primary outline-none font-bold text-lg"
+                  value={editingModalTitleText}
+                  onChange={(e) => setEditingModalTitleText(e.target.value)}
+                  onBlur={saveModalTitle}
+                  onKeyDown={(e) => e.key === 'Enter' && saveModalTitle()}
+                />
+              ) : (
+                <h4
+                  className="font-bold text-lg cursor-pointer hover:text-blue-600"
+                  onDoubleClick={startEditingModalTitle}
+                  title="더블클릭하여 수정"
+                >
+                  {contentModalItem.item.title}
+                </h4>
+              )}
               <button
                 onClick={closeContentModal}
                 className="text-gray-400 hover:text-gray-600 text-xl"
@@ -730,20 +785,34 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
 
             {/* 텍스트 입력 영역 */}
-            <div className="flex-1 p-4 overflow-hidden">
-              <textarea
-                autoFocus
-                className="w-full h-full border-2 border-blue-500 p-3 rounded resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                value={contentModalText}
-                onChange={handleContentChange}
-                placeholder="내용을 입력하세요... (자동 저장됩니다)"
-              />
+            <div className="flex-1 p-4 overflow-hidden flex flex-col">
+              {contentModalEditMode ? (
+                <textarea
+                  autoFocus
+                  className="w-full h-full border-2 border-blue-500 p-3 rounded resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                  value={contentModalText}
+                  onChange={handleContentChange}
+                  placeholder="내용을 입력하세요... (자동 저장됩니다)"
+                />
+              ) : (
+                <div
+                  onDoubleClick={() => setContentModalEditMode(true)}
+                  className="w-full h-full p-3 border-2 border-gray-200 rounded overflow-y-auto cursor-pointer hover:bg-gray-50 whitespace-pre-wrap text-gray-700"
+                  title="더블클릭하여 편집"
+                >
+                  {contentModalText || <span className="text-gray-400 italic">내용을 입력하세요...</span>}
+                </div>
+              )}
             </div>
 
             {/* 푸터 */}
             <div className="p-4 border-t bg-gray-50 shrink-0 text-sm text-gray-500 text-center">
               <i className="fas fa-info-circle mr-2"></i>
-              입력하신 내용은 자동으로 저장됩니다. ESC 또는 외부 클릭으로 닫을 수 있습니다.
+              {contentModalEditMode ? (
+                <>내용은 자동 저장됩니다. 더블클릭으로 읽기 모드로 전환할 수 있습니다.</>
+              ) : (
+                <>더블클릭하면 편집할 수 있습니다. ESC 또는 외부 클릭으로 닫을 수 있습니다.</>
+              )}
             </div>
           </div>
         </div>
