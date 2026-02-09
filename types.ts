@@ -92,6 +92,7 @@ export interface ClipboardCategory {
 
 export interface AppSettings {
   contractClipboard: ClipboardCategory[];
+  paymentClipboard: ClipboardCategory[];
   updatedAt?: number;
   createdAt?: number;
 }

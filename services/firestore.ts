@@ -592,3 +592,79 @@ export const subscribeToContractClipboard = (
     return () => {};
   }
 };
+
+// =====================
+// PAYMENT CLIPBOARD OPERATIONS
+// =====================
+
+/**
+ * Get payment clipboard from Firestore
+ */
+export const getPaymentClipboard = async (): Promise<ClipboardCategory[]> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'paymentClipboard');
+    const snapshot = await getDoc(settingsRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.data() as AppSettings;
+      return data.paymentClipboard || [];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching payment clipboard:', error);
+    return [];
+  }
+};
+
+/**
+ * Update payment clipboard in Firestore
+ */
+export const updatePaymentClipboard = async (categories: ClipboardCategory[]): Promise<void> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'paymentClipboard');
+    await setDoc(
+      settingsRef,
+      {
+        paymentClipboard: categories,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+    console.log('✓ Payment clipboard updated');
+  } catch (error) {
+    console.error('Error updating payment clipboard:', error);
+    throw error;
+  }
+};
+
+/**
+ * Real-time listener for payment clipboard
+ */
+export const subscribeToPaymentClipboard = (
+  callback: (categories: ClipboardCategory[]) => void
+): (() => void) => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'paymentClipboard');
+
+    const unsubscribe = onSnapshot(
+      settingsRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data() as AppSettings;
+          callback(data.paymentClipboard || []);
+        } else {
+          callback([]);
+        }
+      },
+      (error) => {
+        console.error('Error in payment clipboard listener:', error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error setting up payment clipboard listener:', error);
+    return () => {};
+  }
+};
