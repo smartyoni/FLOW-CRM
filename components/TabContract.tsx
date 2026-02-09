@@ -304,6 +304,38 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setEditingModalTitle(false);
   };
 
+  // 클립보드에 복사
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(contentModalText);
+      alert('복사되었습니다!');
+    } catch (error) {
+      console.error('복사 실패:', error);
+      alert('복사에 실패했습니다.');
+    }
+  };
+
+  // 내용 초기화
+  const resetContent = async () => {
+    if (!window.confirm('모든 텍스트가 삭제됩니다. 계속하시겠습니까?')) return;
+    setContentModalText('');
+    if (contentModalItem) {
+      const updated = contractClipboard.map(cat =>
+        cat.id === contentModalItem.categoryId
+          ? {
+              ...cat,
+              items: cat.items.map(item =>
+                item.id === contentModalItem.item.id
+                  ? { ...item, content: '' }
+                  : item
+              )
+            }
+          : cat
+      );
+      await updateClipboard(updated);
+    }
+  };
+
   // 내용 자동 저장 (debounce)
   const saveContentDebounced = useCallback(
     debounce(async (categoryId: string, itemId: string, newContent: string) => {
@@ -776,44 +808,46 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                   {contentModalItem.item.title}
                 </h4>
               )}
-              <button
-                onClick={closeContentModal}
-                className="text-gray-400 hover:text-gray-600 text-xl"
-              >
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-
-            {/* 텍스트 입력 영역 */}
-            <div className="flex-1 p-4 overflow-hidden flex flex-col">
-              {contentModalEditMode ? (
-                <textarea
-                  autoFocus
-                  className="w-full h-full border-2 border-blue-500 p-3 rounded resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  value={contentModalText}
-                  onChange={handleContentChange}
-                  placeholder="내용을 입력하세요... (자동 저장됩니다)"
-                />
-              ) : (
-                <div
-                  onDoubleClick={() => setContentModalEditMode(true)}
-                  className="w-full h-full p-3 border-2 border-gray-200 rounded overflow-y-auto cursor-pointer hover:bg-gray-50 whitespace-pre-wrap text-gray-700"
-                  title="더블클릭하여 편집"
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={copyToClipboard}
+                  className="text-gray-400 hover:text-blue-500 transition"
+                  title="복사"
                 >
-                  {contentModalText || <span className="text-gray-400 italic">내용을 입력하세요...</span>}
-                </div>
-              )}
+                  <i className="fas fa-copy text-lg"></i>
+                </button>
+                <button
+                  onClick={resetContent}
+                  className="text-gray-400 hover:text-red-500 transition"
+                  title="초기화"
+                >
+                  <i className="fas fa-redo text-lg"></i>
+                </button>
+                <button
+                  onClick={closeContentModal}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                  title="닫기"
+                >
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
             </div>
 
-            {/* 푸터 */}
-            <div className="p-4 border-t bg-gray-50 shrink-0 text-sm text-gray-500 text-center">
-              <i className="fas fa-info-circle mr-2"></i>
-              {contentModalEditMode ? (
-                <>내용은 자동 저장됩니다. 더블클릭으로 읽기 모드로 전환할 수 있습니다.</>
-              ) : (
-                <>더블클릭하면 편집할 수 있습니다. ESC 또는 외부 클릭으로 닫을 수 있습니다.</>
-              )}
-            </div>
+            {/* 텍스트 입력 영역 - 전체를 텍스트에어리어로 */}
+            <textarea
+              autoFocus
+              readOnly={!contentModalEditMode}
+              onDoubleClick={() => setContentModalEditMode(true)}
+              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-primary ${
+                contentModalEditMode
+                  ? 'border-2 border-blue-500 focus:border-transparent'
+                  : 'border-2 border-gray-200 cursor-pointer'
+              }`}
+              value={contentModalText}
+              onChange={handleContentChange}
+              placeholder="내용을 입력하세요... (더블클릭하면 편집 가능, 자동 저장됩니다)"
+              title={contentModalEditMode ? '' : '더블클릭하여 편집'}
+            />
           </div>
         </div>
       )}
