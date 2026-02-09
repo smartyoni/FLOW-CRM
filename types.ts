@@ -73,8 +73,25 @@ export interface Customer {
 export type ViewState = 'LIST' | 'DETAIL';
 export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'PAYMENT' | 'REPORT';
 
+// 클립보드 하위 항목
+export interface ClipboardItem {
+  id: string;
+  title: string;          // 제목 (리스트에 표시)
+  content: string;        // 내용 (70vh 모달에서 편집)
+  createdAt: number;
+}
+
+// 클립보드 카테고리
+export interface ClipboardCategory {
+  id: string;
+  title: string;          // 카테고리명
+  isExpanded: boolean;    // 펼침/접힘 (초기값 false)
+  items: ClipboardItem[]; // 하위 항목 배열
+  createdAt: number;
+}
+
 export interface AppSettings {
-  contractClipboard: ChecklistItem[];
+  contractClipboard: ClipboardCategory[];
   updatedAt?: number;
   createdAt?: number;
 }

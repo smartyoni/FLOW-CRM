@@ -1,4 +1,4 @@
-import { Customer, Meeting, Property, ChecklistItem, AppSettings } from '../types';
+import { Customer, Meeting, Property, ChecklistItem, AppSettings, ClipboardCategory } from '../types';
 import { db } from './firebase';
 import {
   collection,
@@ -524,7 +524,7 @@ export const migrateCheckpointFromContractToBank = async (): Promise<void> => {
 /**
  * Get contract clipboard from Firestore
  */
-export const getContractClipboard = async (): Promise<ChecklistItem[]> => {
+export const getContractClipboard = async (): Promise<ClipboardCategory[]> => {
   try {
     const settingsRef = doc(db, 'appSettings', 'contractClipboard');
     const snapshot = await getDoc(settingsRef);
@@ -544,13 +544,13 @@ export const getContractClipboard = async (): Promise<ChecklistItem[]> => {
 /**
  * Update contract clipboard in Firestore
  */
-export const updateContractClipboard = async (items: ChecklistItem[]): Promise<void> => {
+export const updateContractClipboard = async (categories: ClipboardCategory[]): Promise<void> => {
   try {
     const settingsRef = doc(db, 'appSettings', 'contractClipboard');
     await setDoc(
       settingsRef,
       {
-        contractClipboard: items,
+        contractClipboard: categories,
         updatedAt: Timestamp.now(),
       },
       { merge: true }
@@ -566,7 +566,7 @@ export const updateContractClipboard = async (items: ChecklistItem[]): Promise<v
  * Real-time listener for contract clipboard
  */
 export const subscribeToContractClipboard = (
-  callback: (items: ChecklistItem[]) => void
+  callback: (categories: ClipboardCategory[]) => void
 ): (() => void) => {
   try {
     const settingsRef = doc(db, 'appSettings', 'contractClipboard');

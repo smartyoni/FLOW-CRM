@@ -1,11 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Customer, ChecklistItem } from '../types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Customer, ChecklistItem, ClipboardCategory, ClipboardItem } from '../types';
 import { generateId } from '../services/storage';
 import { useAppContext } from '../contexts/AppContext';
 
 interface Props {
   customer: Customer;
   onUpdate: (customer: Customer) => void;
+}
+
+// Debounce utility
+function debounce<T extends (...args: any[]) => void>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 }
 
 export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
@@ -27,13 +45,20 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [contractMemoMode, setContractMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [contractMemoText, setContractMemoText] = useState('');
 
-  // 클립보드 상태
-  const [newClipboardText, setNewClipboardText] = useState('');
-  const [editingClipboardItemId, setEditingClipboardItemId] = useState<string | null>(null);
-  const [editingClipboardText, setEditingClipboardText] = useState('');
-  const [clipboardMemoItem, setClipboardMemoItem] = useState<ChecklistItem | null>(null);
-  const [clipboardMemoMode, setClipboardMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
-  const [clipboardMemoText, setClipboardMemoText] = useState('');
+  // 클립보드 카테고리 편집 상태
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryTitle, setEditingCategoryTitle] = useState('');
+
+  // 클립보드 하위 항목 제목 편집 상태
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editingItemTitle, setEditingItemTitle] = useState('');
+
+  // 클립보드 하위 항목 내용 편집 모달 상태
+  const [contentModalItem, setContentModalItem] = useState<{
+    categoryId: string;
+    item: ClipboardItem;
+  } | null>(null);
+  const [contentModalText, setContentModalText] = useState('');
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -129,62 +154,170 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setContractMemoMode('VIEW');
   };
 
-  // 클립보드 관련 함수들
-  const handleAddClipboard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newClipboardText.trim()) return;
+  // ============= 클립보드 아코디언 구조 핸들러 =============
 
-    const newItem: ChecklistItem = {
+  // 카테고리 추가
+  const handleAddCategory = async () => {
+    const newCategory: ClipboardCategory = {
       id: generateId(),
-      text: newClipboardText,
-      createdAt: Date.now(),
-      memo: ''
+      title: '새 카테고리',
+      isExpanded: false,
+      items: [],
+      createdAt: Date.now()
+    };
+    await updateClipboard([newCategory, ...contractClipboard]);
+  };
+
+  // 카테고리 삭제
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!window.confirm('카테고리와 모든 하위 항목이 삭제됩니다. 계속하시겠습니까?')) return;
+    const updated = contractClipboard.filter(cat => cat.id !== categoryId);
+    await updateClipboard(updated);
+  };
+
+  // 카테고리 편집
+  const startEditingCategory = (category: ClipboardCategory) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryTitle(category.title);
+  };
+
+  const saveEditingCategory = async () => {
+    if (!editingCategoryId) return;
+    const updated = contractClipboard.map(cat =>
+      cat.id === editingCategoryId ? { ...cat, title: editingCategoryTitle } : cat
+    );
+    await updateClipboard(updated);
+    setEditingCategoryId(null);
+  };
+
+  // 아코디언 토글
+  const toggleCategory = async (categoryId: string) => {
+    const updated = contractClipboard.map(cat =>
+      cat.id === categoryId ? { ...cat, isExpanded: !cat.isExpanded } : cat
+    );
+    await updateClipboard(updated);
+  };
+
+  // 하위 항목 추가
+  const handleAddItem = async (categoryId: string) => {
+    const newItem: ClipboardItem = {
+      id: generateId(),
+      title: '새 항목',
+      content: '',
+      createdAt: Date.now()
     };
 
-    const updatedClipboard = [newItem, ...contractClipboard];
-    await updateClipboard(updatedClipboard);
-    setNewClipboardText('');
+    const updated = contractClipboard.map(cat =>
+      cat.id === categoryId
+        ? { ...cat, items: [newItem, ...cat.items], isExpanded: true }
+        : cat
+    );
+    await updateClipboard(updated);
   };
 
-  const handleDeleteClipboard = async (id: string) => {
+  // 하위 항목 삭제
+  const handleDeleteItem = async (categoryId: string, itemId: string) => {
     if (!window.confirm('삭제하시겠습니까?')) return;
 
-    const updatedClipboard = contractClipboard.filter(item => item.id !== id);
-    await updateClipboard(updatedClipboard);
-  };
-
-  const startEditingClipboard = (item: ChecklistItem) => {
-    setEditingClipboardItemId(item.id);
-    setEditingClipboardText(item.text);
-  };
-
-  const saveEditingClipboard = async () => {
-    if (!editingClipboardItemId) return;
-
-    const updatedClipboard = contractClipboard.map(item =>
-      item.id === editingClipboardItemId ? { ...item, text: editingClipboardText } : item
+    const updated = contractClipboard.map(cat =>
+      cat.id === categoryId
+        ? { ...cat, items: cat.items.filter(item => item.id !== itemId) }
+        : cat
     );
-
-    await updateClipboard(updatedClipboard);
-    setEditingClipboardItemId(null);
+    await updateClipboard(updated);
   };
 
-  const openClipboardMemo = (item: ChecklistItem) => {
-    setClipboardMemoItem(item);
-    setClipboardMemoText(item.memo);
-    setClipboardMemoMode(item.memo ? 'VIEW' : 'EDIT');
+  // 하위 항목 제목 편집
+  const startEditingItem = (item: ClipboardItem) => {
+    setEditingItemId(item.id);
+    setEditingItemTitle(item.title);
   };
 
-  const saveClipboardMemo = async () => {
-    if (!clipboardMemoItem) return;
+  const saveEditingItem = async (categoryId: string) => {
+    if (!editingItemId) return;
 
-    const updatedClipboard = contractClipboard.map(item =>
-      item.id === clipboardMemoItem.id ? { ...item, memo: clipboardMemoText } : item
+    const updated = contractClipboard.map(cat =>
+      cat.id === categoryId
+        ? {
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === editingItemId ? { ...item, title: editingItemTitle } : item
+            )
+          }
+        : cat
     );
-
-    await updateClipboard(updatedClipboard);
-    setClipboardMemoMode('VIEW');
+    await updateClipboard(updated);
+    setEditingItemId(null);
   };
+
+  // 내용 모달 열기
+  const openContentModal = (categoryId: string, item: ClipboardItem) => {
+    setContentModalItem({ categoryId, item });
+    setContentModalText(item.content);
+  };
+
+  // 내용 모달 닫기
+  const closeContentModal = () => {
+    setContentModalItem(null);
+    setContentModalText('');
+  };
+
+  // 내용 자동 저장 (debounce)
+  const saveContentDebounced = useCallback(
+    debounce(async (categoryId: string, itemId: string, newContent: string) => {
+      const updated = contractClipboard.map(cat =>
+        cat.id === categoryId
+          ? {
+              ...cat,
+              items: cat.items.map(item =>
+                item.id === itemId ? { ...item, content: newContent } : item
+              )
+            }
+          : cat
+      );
+      await updateClipboard(updated);
+    }, 1000),
+    [contractClipboard]
+  );
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setContentModalText(newContent);
+
+    if (contentModalItem) {
+      saveContentDebounced(
+        contentModalItem.categoryId,
+        contentModalItem.item.id,
+        newContent
+      );
+    }
+  };
+
+  // 모달 외부 클릭/ESC 닫기
+  useEffect(() => {
+    if (!contentModalItem) return;
+
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeContentModal();
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('bg-black')) {
+        closeContentModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEsc);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
+  }, [contentModalItem]);
 
   return (
     <div className="flex flex-col h-full bg-white md:flex-row">
@@ -447,136 +580,173 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
-      {/* 우측: 계약클립보드 */}
+      {/* 우측: 계약클립보드 아코디언 */}
       <div className={`${mobileContractTab === 'CLIPBOARD' ? 'block' : 'hidden md:block'} md:w-1/2 overflow-y-auto flex flex-col p-4`}>
-        <h3 className="font-bold text-gray-700 mb-3 flex items-center">
-          <i className="fas fa-clipboard mr-2 text-primary"></i>
-          계약클립보드
-        </h3>
-
-        {/* 입력 폼 */}
-        <form onSubmit={handleAddClipboard} className="flex gap-2 mb-3">
-          <input
-            type="text"
-            placeholder="클립보드 항목 입력..."
-            value={newClipboardText}
-            onChange={(e) => setNewClipboardText(e.target.value)}
-            className="flex-1 border-2 border-blue-500 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm"
-          />
+        {/* 헤더 */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-gray-700 flex items-center">
+            <i className="fas fa-clipboard mr-2 text-primary"></i>
+            계약클립보드
+          </h3>
           <button
-            type="submit"
-            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition font-bold text-sm"
+            onClick={handleAddCategory}
+            className="bg-primary text-white px-3 py-1.5 rounded-md hover:bg-blue-600 transition text-sm font-bold"
           >
-            추가
+            <i className="fas fa-plus mr-1"></i>
+            카테고리 추가
           </button>
-        </form>
+        </div>
 
-        {/* 리스트 */}
-        <div className="space-y-2">
-          {contractClipboard.map((item, index) => (
-            <div key={item.id}>
-              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditingClipboard(item)}>
-                    {editingClipboardItemId === item.id ? (
-                      <input
-                        autoFocus
-                        className="w-full border-b-2 border-primary outline-none text-sm"
-                        value={editingClipboardText}
-                        onChange={(e) => setEditingClipboardText(e.target.value)}
-                        onBlur={saveEditingClipboard}
-                        onKeyDown={(e) => e.key === 'Enter' && saveEditingClipboard()}
-                      />
-                    ) : (
-                      <>
-                        <i className="fas fa-circle text-xs text-blue-500 mt-1 flex-shrink-0"></i>
-                        <span className="text-gray-800 font-medium cursor-pointer flex-1 text-sm" title="더블클릭하여 수정">
-                          {item.text}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openClipboardMemo(item)} className="text-gray-400 hover:text-blue-500">
-                      <i className="fas fa-sticky-note text-sm"></i>
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClipboard(item.id)}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <i className="fas fa-trash-alt text-sm"></i>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-gray-400">{new Date(item.createdAt).toLocaleString()}</span>
-                  {item.memo && (
+        {/* 카테고리 리스트 */}
+        <div className="space-y-3">
+          {contractClipboard.map((category) => (
+            <div key={category.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+              {/* 카테고리 헤더 */}
+              <div className="bg-gray-100 p-3 flex items-center justify-between group">
+                <div className="flex items-center gap-2 flex-1">
+                  <button
+                    onClick={() => toggleCategory(category.id)}
+                    className="text-gray-500 hover:text-gray-700 text-sm"
+                  >
+                    <i className={`fas ${category.isExpanded ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>
+                  </button>
+
+                  {editingCategoryId === category.id ? (
+                    <input
+                      autoFocus
+                      className="flex-1 border-b-2 border-primary outline-none bg-transparent font-bold"
+                      value={editingCategoryTitle}
+                      onChange={(e) => setEditingCategoryTitle(e.target.value)}
+                      onBlur={saveEditingCategory}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEditingCategory()}
+                    />
+                  ) : (
                     <span
-                      onClick={() => openClipboardMemo(item)}
-                      className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                      onDoubleClick={() => startEditingCategory(category)}
+                      className="font-bold text-gray-800 cursor-pointer flex-1"
+                      title="더블클릭하여 수정"
                     >
-                      {item.memo.split('\n')[0]}
+                      {category.title}
                     </span>
                   )}
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleAddItem(category.id)}
+                    className="text-primary hover:text-blue-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <i className="fas fa-plus mr-1"></i>
+                    하위 항목 추가
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCategory(category.id)}
+                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <i className="fas fa-trash-alt"></i>
+                  </button>
+                </div>
               </div>
-              {index < contractClipboard.length - 1 && (
-                <div className="h-px bg-gray-300 my-2"></div>
+
+              {/* 하위 항목 리스트 */}
+              {category.isExpanded && (
+                <div className="p-3 space-y-2">
+                  {category.items.length === 0 ? (
+                    <div className="text-center text-gray-400 py-4 text-sm">
+                      하위 항목이 없습니다.
+                    </div>
+                  ) : (
+                    category.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="bg-gray-50 p-2.5 rounded border border-gray-200 group hover:bg-gray-100 transition"
+                      >
+                        <div className="flex items-center justify-between">
+                          {editingItemId === item.id ? (
+                            <input
+                              autoFocus
+                              className="flex-1 border-b-2 border-primary outline-none bg-transparent"
+                              value={editingItemTitle}
+                              onChange={(e) => setEditingItemTitle(e.target.value)}
+                              onBlur={() => saveEditingItem(category.id)}
+                              onKeyDown={(e) => e.key === 'Enter' && saveEditingItem(category.id)}
+                            />
+                          ) : (
+                            <div
+                              onClick={() => openContentModal(category.id, item)}
+                              onDoubleClick={() => startEditingItem(item)}
+                              className="flex-1 cursor-pointer"
+                              title="클릭: 내용 보기/편집, 더블클릭: 제목 수정"
+                            >
+                              <span className="text-gray-800 font-medium">{item.title}</span>
+                              {item.content && (
+                                <div className="text-xs text-gray-500 mt-1 truncate">
+                                  {item.content.split('\n')[0]}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          <button
+                            onClick={() => handleDeleteItem(category.id, item.id)}
+                            className="text-gray-400 hover:text-red-500 ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <i className="fas fa-trash-alt text-sm"></i>
+                          </button>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
             </div>
           ))}
+
           {contractClipboard.length === 0 && (
             <div className="text-center text-gray-400 py-6 text-sm">
-              등록된 클립보드 항목이 없습니다.
+              등록된 카테고리가 없습니다.
             </div>
           )}
         </div>
+      </div>
 
-        {/* 메모 모달 */}
-        {clipboardMemoItem && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h4 className="font-bold">메모 관리</h4>
-                <button onClick={() => setClipboardMemoItem(null)} className="text-gray-400 hover:text-gray-600">
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-              <div className="p-4">
-                {clipboardMemoMode === 'VIEW' ? (
-                  <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
-                    {clipboardMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
-                  </div>
-                ) : (
-                  <textarea
-                    className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
-                    value={clipboardMemoText}
-                    onChange={(e) => setClipboardMemoText(e.target.value)}
-                    placeholder="메모를 입력하세요..."
-                  />
-                )}
-              </div>
-              <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
-                {clipboardMemoMode === 'VIEW' ? (
-                  <button
-                    onClick={() => setClipboardMemoMode('EDIT')}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                  >
-                    수정
-                  </button>
-                ) : (
-                  <button
-                    onClick={saveClipboardMemo}
-                    className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
-                  >
-                    저장
-                  </button>
-                )}
-              </div>
+      {/* 70vh 내용 편집 모달 */}
+      {contentModalItem && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col" style={{ height: '70vh' }}>
+            {/* 헤더 */}
+            <div className="p-4 border-b flex justify-between items-center shrink-0">
+              <h4 className="font-bold text-lg">{contentModalItem.item.title}</h4>
+              <button
+                onClick={closeContentModal}
+                className="text-gray-400 hover:text-gray-600 text-xl"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            {/* 텍스트 입력 영역 */}
+            <div className="flex-1 p-4 overflow-hidden">
+              <textarea
+                autoFocus
+                className="w-full h-full border-2 border-blue-500 p-3 rounded resize-none focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                value={contentModalText}
+                onChange={handleContentChange}
+                placeholder="내용을 입력하세요... (자동 저장됩니다)"
+              />
+            </div>
+
+            {/* 푸터 */}
+            <div className="p-4 border-t bg-gray-50 shrink-0 text-sm text-gray-500 text-center">
+              <i className="fas fa-info-circle mr-2"></i>
+              입력하신 내용은 자동으로 저장됩니다. ESC 또는 외부 클릭으로 닫을 수 있습니다.
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
