@@ -784,16 +784,32 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
-      {/* 70vh 내용 편집 모달 */}
+      {/* 모달 내용 편집 */}
       {contentModalItem && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col border-2 border-black" style={{ height: '70vh' }}>
-            {/* 헤더 */}
-            <div className="p-4 border-b-2 border-black flex justify-between items-center shrink-0 bg-green-100">
+          <div className="bg-white rounded-lg shadow-xl w-full max-h-4xl flex flex-col border-2 border-black" style={{ width: '70vw' }}>
+            {/* 텍스트 입력 영역 - 전체를 텍스트에어리어로 */}
+            <textarea
+              autoFocus
+              readOnly={!contentModalEditMode}
+              onDoubleClick={() => setContentModalEditMode(true)}
+              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-primary ${
+                contentModalEditMode
+                  ? 'border-2 border-blue-500 focus:border-transparent'
+                  : 'border-2 border-gray-200 cursor-pointer'
+              }`}
+              value={contentModalText}
+              onChange={handleContentChange}
+              placeholder="내용을 입력하세요... (더블클릭하면 편집 가능, 자동 저장됩니다)"
+              title={contentModalEditMode ? '' : '더블클릭하여 편집'}
+            />
+
+            {/* 푸터 */}
+            <div className="p-4 border-t-2 border-black flex justify-between items-center shrink-0 bg-green-100">
               {editingModalTitle ? (
                 <input
                   autoFocus
-                  className="flex-1 border-b-2 border-primary outline-none font-bold text-lg"
+                  className="flex-1 border-b-2 border-primary outline-none font-bold text-lg bg-green-100"
                   value={editingModalTitleText}
                   onChange={(e) => setEditingModalTitleText(e.target.value)}
                   onBlur={saveModalTitle}
@@ -832,22 +848,6 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                 </button>
               </div>
             </div>
-
-            {/* 텍스트 입력 영역 - 전체를 텍스트에어리어로 */}
-            <textarea
-              autoFocus
-              readOnly={!contentModalEditMode}
-              onDoubleClick={() => setContentModalEditMode(true)}
-              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-primary ${
-                contentModalEditMode
-                  ? 'border-2 border-blue-500 focus:border-transparent'
-                  : 'border-2 border-gray-200 cursor-pointer'
-              }`}
-              value={contentModalText}
-              onChange={handleContentChange}
-              placeholder="내용을 입력하세요... (더블클릭하면 편집 가능, 자동 저장됩니다)"
-              title={contentModalEditMode ? '' : '더블클릭하여 편집'}
-            />
           </div>
         </div>
       )}
