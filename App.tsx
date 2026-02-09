@@ -6,6 +6,7 @@ import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
 import { ManagingCustomerView } from './components/ManagingCustomerView';
 import { ContractCustomerView } from './components/ContractCustomerView';
+import { AppProvider } from './contexts/AppContext';
 import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays, migrateStageFromMeetingComplete, migrateCheckpointFromContractToBank } from './services/firestore';
 
 type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer';
@@ -404,7 +405,8 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-row w-full h-full bg-gray-100 relative overflow-hidden">
+    <AppProvider>
+      <div className="flex flex-row w-full h-full bg-gray-100 relative overflow-hidden">
       {/* Pull to Refresh Indicator */}
       {pullDistance > 0 && (
         <div
@@ -565,7 +567,8 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppProvider>
   );
 };
 

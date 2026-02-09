@@ -72,3 +72,9 @@ export interface Customer {
 
 export type ViewState = 'LIST' | 'DETAIL';
 export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'PAYMENT' | 'REPORT';
+
+export interface AppSettings {
+  contractClipboard: ChecklistItem[];
+  updatedAt?: number;
+  createdAt?: number;
+}

@@ -1,4 +1,4 @@
-import { Customer, Meeting, Property, ChecklistItem } from '../types';
+import { Customer, Meeting, Property, ChecklistItem, AppSettings } from '../types';
 import { db } from './firebase';
 import {
   collection,
@@ -514,5 +514,81 @@ export const migrateCheckpointFromContractToBank = async (): Promise<void> => {
   } catch (error) {
     console.error('❌ Migration failed:', error);
     throw error;
+  }
+};
+
+// =====================
+// APP SETTINGS OPERATIONS (Global Contract Clipboard)
+// =====================
+
+/**
+ * Get contract clipboard from Firestore
+ */
+export const getContractClipboard = async (): Promise<ChecklistItem[]> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'contractClipboard');
+    const snapshot = await getDoc(settingsRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.data() as AppSettings;
+      return data.contractClipboard || [];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching contract clipboard:', error);
+    return [];
+  }
+};
+
+/**
+ * Update contract clipboard in Firestore
+ */
+export const updateContractClipboard = async (items: ChecklistItem[]): Promise<void> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'contractClipboard');
+    await setDoc(
+      settingsRef,
+      {
+        contractClipboard: items,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+    console.log('✓ Contract clipboard updated');
+  } catch (error) {
+    console.error('Error updating contract clipboard:', error);
+    throw error;
+  }
+};
+
+/**
+ * Real-time listener for contract clipboard
+ */
+export const subscribeToContractClipboard = (
+  callback: (items: ChecklistItem[]) => void
+): (() => void) => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'contractClipboard');
+
+    const unsubscribe = onSnapshot(
+      settingsRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data() as AppSettings;
+          callback(data.contractClipboard || []);
+        } else {
+          callback([]);
+        }
+      },
+      (error) => {
+        console.error('Error in contract clipboard listener:', error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error setting up contract clipboard listener:', error);
+    return () => {};
   }
 };

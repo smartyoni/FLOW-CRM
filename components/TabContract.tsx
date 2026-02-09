@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, ChecklistItem } from '../types';
 import { generateId } from '../services/storage';
+import { useAppContext } from '../contexts/AppContext';
 
 interface Props {
   customer: Customer;
@@ -9,6 +10,10 @@ interface Props {
 
 export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const contractAreaRef = useRef<HTMLDivElement>(null);
+  const { contractClipboard, updateClipboard } = useAppContext();
+
+  // 모바일 탭 상태
+  const [mobileContractTab, setMobileContractTab] = useState<'INFO' | 'CLIPBOARD'>('INFO');
 
   // 인라인 편집 상태
   const [editingContractField, setEditingContractField] = useState<string | null>(null);
@@ -22,12 +27,20 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [contractMemoMode, setContractMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
   const [contractMemoText, setContractMemoText] = useState('');
 
-  // 스크롤 리셋
+  // 클립보드 상태
+  const [newClipboardText, setNewClipboardText] = useState('');
+  const [editingClipboardItemId, setEditingClipboardItemId] = useState<string | null>(null);
+  const [editingClipboardText, setEditingClipboardText] = useState('');
+  const [clipboardMemoItem, setClipboardMemoItem] = useState<ChecklistItem | null>(null);
+  const [clipboardMemoMode, setClipboardMemoMode] = useState<'VIEW' | 'EDIT'>('VIEW');
+  const [clipboardMemoText, setClipboardMemoText] = useState('');
+
+  // 탭 전환 시 스크롤 리셋
   useEffect(() => {
     if (contractAreaRef.current) {
       contractAreaRef.current.scrollTop = 0;
     }
-  }, []);
+  }, [mobileContractTab]);
 
   // 계약 히스토리 관련 함수들
   const handleAddContractHistory = (e: React.FormEvent) => {
@@ -116,12 +129,95 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setContractMemoMode('VIEW');
   };
 
+  // 클립보드 관련 함수들
+  const handleAddClipboard = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClipboardText.trim()) return;
+
+    const newItem: ChecklistItem = {
+      id: generateId(),
+      text: newClipboardText,
+      createdAt: Date.now(),
+      memo: ''
+    };
+
+    const updatedClipboard = [newItem, ...contractClipboard];
+    await updateClipboard(updatedClipboard);
+    setNewClipboardText('');
+  };
+
+  const handleDeleteClipboard = async (id: string) => {
+    if (!window.confirm('삭제하시겠습니까?')) return;
+
+    const updatedClipboard = contractClipboard.filter(item => item.id !== id);
+    await updateClipboard(updatedClipboard);
+  };
+
+  const startEditingClipboard = (item: ChecklistItem) => {
+    setEditingClipboardItemId(item.id);
+    setEditingClipboardText(item.text);
+  };
+
+  const saveEditingClipboard = async () => {
+    if (!editingClipboardItemId) return;
+
+    const updatedClipboard = contractClipboard.map(item =>
+      item.id === editingClipboardItemId ? { ...item, text: editingClipboardText } : item
+    );
+
+    await updateClipboard(updatedClipboard);
+    setEditingClipboardItemId(null);
+  };
+
+  const openClipboardMemo = (item: ChecklistItem) => {
+    setClipboardMemoItem(item);
+    setClipboardMemoText(item.memo);
+    setClipboardMemoMode(item.memo ? 'VIEW' : 'EDIT');
+  };
+
+  const saveClipboardMemo = async () => {
+    if (!clipboardMemoItem) return;
+
+    const updatedClipboard = contractClipboard.map(item =>
+      item.id === clipboardMemoItem.id ? { ...item, memo: clipboardMemoText } : item
+    );
+
+    await updateClipboard(updatedClipboard);
+    setClipboardMemoMode('VIEW');
+  };
+
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex flex-col h-full bg-white md:flex-row">
+      {/* 모바일 탭 네비게이션 */}
+      <div className="md:hidden flex border-b-2 border-gray-200">
+        <button
+          onClick={() => setMobileContractTab('INFO')}
+          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${
+            mobileContractTab === 'INFO'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-400'
+          }`}
+        >
+          <i className="fas fa-file-contract text-lg"></i>
+          <span>계약정보</span>
+        </button>
+        <button
+          onClick={() => setMobileContractTab('CLIPBOARD')}
+          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${
+            mobileContractTab === 'CLIPBOARD'
+              ? 'text-primary border-b-2 border-primary'
+              : 'text-gray-400'
+          }`}
+        >
+          <i className="fas fa-clipboard text-lg"></i>
+          <span>클립보드</span>
+        </button>
+      </div>
+
       {/* 좌측: 계약정보 */}
       <div
         ref={contractAreaRef}
-        className="w-1/2 overflow-y-auto flex flex-col p-4 border-r-2 border-black"
+        className={`${mobileContractTab === 'INFO' ? 'block' : 'hidden md:block'} md:w-1/2 overflow-y-auto flex flex-col p-4 border-r-2 border-black`}
       >
         <h3 className="font-bold text-gray-700 mb-3 flex items-center">
           <i className="fas fa-file-contract mr-2 text-primary"></i>
@@ -351,8 +447,135 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
-      {/* 우측 (비워둠) */}
-      <div className="w-1/2 p-4">
+      {/* 우측: 계약 클립보드 */}
+      <div className={`${mobileContractTab === 'CLIPBOARD' ? 'block' : 'hidden md:block'} md:w-1/2 overflow-y-auto flex flex-col p-4`}>
+        <h3 className="font-bold text-gray-700 mb-3 flex items-center">
+          <i className="fas fa-clipboard mr-2 text-primary"></i>
+          계약 클립보드
+        </h3>
+
+        {/* 입력 폼 */}
+        <form onSubmit={handleAddClipboard} className="flex gap-2 mb-3">
+          <input
+            type="text"
+            placeholder="클립보드 항목 입력..."
+            value={newClipboardText}
+            onChange={(e) => setNewClipboardText(e.target.value)}
+            className="flex-1 border-2 border-blue-500 rounded-md px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-sm"
+          />
+          <button
+            type="submit"
+            className="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-600 transition font-bold text-sm"
+          >
+            추가
+          </button>
+        </form>
+
+        {/* 리스트 */}
+        <div className="space-y-2">
+          {contractClipboard.map((item, index) => (
+            <div key={item.id}>
+              <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditingClipboard(item)}>
+                    {editingClipboardItemId === item.id ? (
+                      <input
+                        autoFocus
+                        className="w-full border-b-2 border-primary outline-none text-sm"
+                        value={editingClipboardText}
+                        onChange={(e) => setEditingClipboardText(e.target.value)}
+                        onBlur={saveEditingClipboard}
+                        onKeyDown={(e) => e.key === 'Enter' && saveEditingClipboard()}
+                      />
+                    ) : (
+                      <>
+                        <i className="fas fa-circle text-xs text-blue-500 mt-1 flex-shrink-0"></i>
+                        <span className="text-gray-800 font-medium cursor-pointer flex-1 text-sm" title="더블클릭하여 수정">
+                          {item.text}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openClipboardMemo(item)} className="text-gray-400 hover:text-blue-500">
+                      <i className="fas fa-sticky-note text-sm"></i>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClipboard(item.id)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <i className="fas fa-trash-alt text-sm"></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-gray-400">{new Date(item.createdAt).toLocaleString()}</span>
+                  {item.memo && (
+                    <span
+                      onClick={() => openClipboardMemo(item)}
+                      className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                    >
+                      {item.memo.split('\n')[0]}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {index < contractClipboard.length - 1 && (
+                <div className="h-px bg-gray-300 my-2"></div>
+              )}
+            </div>
+          ))}
+          {contractClipboard.length === 0 && (
+            <div className="text-center text-gray-400 py-6 text-sm">
+              등록된 클립보드 항목이 없습니다.
+            </div>
+          )}
+        </div>
+
+        {/* 메모 모달 */}
+        {clipboardMemoItem && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
+              <div className="p-4 border-b flex justify-between items-center">
+                <h4 className="font-bold">메모 관리</h4>
+                <button onClick={() => setClipboardMemoItem(null)} className="text-gray-400 hover:text-gray-600">
+                  <i className="fas fa-times"></i>
+                </button>
+              </div>
+              <div className="p-4">
+                {clipboardMemoMode === 'VIEW' ? (
+                  <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
+                    {clipboardMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
+                  </div>
+                ) : (
+                  <textarea
+                    className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
+                    value={clipboardMemoText}
+                    onChange={(e) => setClipboardMemoText(e.target.value)}
+                    placeholder="메모를 입력하세요..."
+                  />
+                )}
+              </div>
+              <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                {clipboardMemoMode === 'VIEW' ? (
+                  <button
+                    onClick={() => setClipboardMemoMode('EDIT')}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                  >
+                    수정
+                  </button>
+                ) : (
+                  <button
+                    onClick={saveClipboardMemo}
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
+                  >
+                    저장
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
