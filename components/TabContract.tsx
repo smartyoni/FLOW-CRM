@@ -63,9 +63,13 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingModalTitleText, setEditingModalTitleText] = useState('');
   const [contentModalEditMode, setContentModalEditMode] = useState(false);
 
-  // 드래그앤드롭 상태
+  // 드래그앤드롭 상태 - 하위항목
   const [draggingItem, setDraggingItem] = useState<{ categoryId: string; itemId: string } | null>(null);
   const [dragOverItem, setDragOverItem] = useState<{ categoryId: string; itemId: string } | null>(null);
+
+  // 드래그앤드롭 상태 - 카테고리
+  const [draggingCategory, setDraggingCategory] = useState<string | null>(null);
+  const [dragOverCategory, setDragOverCategory] = useState<string | null>(null);
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -391,6 +395,43 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const handleDragEnd = () => {
     setDraggingItem(null);
     setDragOverItem(null);
+  };
+
+  // 카테고리 드래그앤드롭 핸들러
+  const handleCategoryDragStart = (categoryId: string) => {
+    setDraggingCategory(categoryId);
+  };
+
+  const handleCategoryDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleCategoryDrop = async (targetCategoryId: string) => {
+    if (!draggingCategory) return;
+
+    if (draggingCategory === targetCategoryId) {
+      setDraggingCategory(null);
+      setDragOverCategory(null);
+      return;
+    }
+
+    const dragIndex = contractClipboard.findIndex(c => c.id === draggingCategory);
+    const dropIndex = contractClipboard.findIndex(c => c.id === targetCategoryId);
+
+    if (dragIndex === -1 || dropIndex === -1) return;
+
+    const updated = [...contractClipboard];
+    [updated[dragIndex], updated[dropIndex]] = [updated[dropIndex], updated[dragIndex]];
+
+    await updateClipboard(updated);
+    setDraggingCategory(null);
+    setDragOverCategory(null);
+  };
+
+  const handleCategoryDragEnd = () => {
+    setDraggingCategory(null);
+    setDragOverCategory(null);
   };
 
   // 내용 자동 저장 (debounce)
@@ -731,7 +772,21 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         {/* 카테고리 리스트 */}
         <div className="space-y-3">
           {contractClipboard.map((category) => (
-            <div key={category.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+            <div
+              key={category.id}
+              draggable
+              onDragStart={() => handleCategoryDragStart(category.id)}
+              onDragOver={handleCategoryDragOver}
+              onDrop={() => handleCategoryDrop(category.id)}
+              onDragEnd={handleCategoryDragEnd}
+              onDragLeave={() => setDragOverCategory(null)}
+              onDragEnter={() => setDragOverCategory(category.id)}
+              className={`border rounded-lg overflow-hidden bg-white shadow-sm cursor-move transition ${
+                draggingCategory === category.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+              } ${
+                dragOverCategory === category.id ? 'border-2 border-primary bg-blue-50' : ''
+              }`}
+            >
               {/* 카테고리 헤더 */}
               <div className="bg-gray-100 p-3 flex items-center justify-between group">
                 <div className="flex items-center gap-2 flex-1">
