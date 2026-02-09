@@ -447,11 +447,11 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         </div>
       </div>
 
-      {/* 우측: 계약 클립보드 */}
+      {/* 우측: 계약클립보드 */}
       <div className={`${mobileContractTab === 'CLIPBOARD' ? 'block' : 'hidden md:block'} md:w-1/2 overflow-y-auto flex flex-col p-4`}>
         <h3 className="font-bold text-gray-700 mb-3 flex items-center">
           <i className="fas fa-clipboard mr-2 text-primary"></i>
-          계약 클립보드
+          계약클립보드
         </h3>
 
         {/* 입력 폼 */}
