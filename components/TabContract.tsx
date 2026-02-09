@@ -61,7 +61,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const [contentModalText, setContentModalText] = useState('');
   const [editingModalTitle, setEditingModalTitle] = useState(false);
   const [editingModalTitleText, setEditingModalTitleText] = useState('');
-  const [contentModalEditMode, setContentModalEditMode] = useState(true);
+  const [contentModalEditMode, setContentModalEditMode] = useState(false);
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -263,7 +263,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setContentModalText(item.content);
     setEditingModalTitle(false);
     setEditingModalTitleText('');
-    setContentModalEditMode(true);
+    setContentModalEditMode(false);
   };
 
   // 내용 모달 닫기
@@ -272,7 +272,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setContentModalText('');
     setEditingModalTitle(false);
     setEditingModalTitleText('');
-    setContentModalEditMode(true);
+    setContentModalEditMode(false);
   };
 
   // 모달 제목 편집 시작
