@@ -680,7 +680,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                             >
                               <span className="text-gray-800 font-medium">{item.title}</span>
                               {item.content && (
-                                <div className="text-xs text-gray-500 mt-1 truncate">
+                                <div className="text-xs text-green-600 font-medium mt-1 truncate">
                                   {item.content.split('\n')[0]}
                                 </div>
                               )}
@@ -693,9 +693,6 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                           >
                             <i className="fas fa-trash-alt text-sm"></i>
                           </button>
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {new Date(item.createdAt).toLocaleString()}
                         </div>
                       </div>
                     ))
