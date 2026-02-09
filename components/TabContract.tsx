@@ -787,7 +787,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
       {/* 모달 내용 편집 */}
       {contentModalItem && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-h-4xl flex flex-col border-2 border-black" style={{ width: '70vw' }}>
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl flex flex-col border-2 border-black" style={{ height: '70vh' }}>
             {/* 텍스트 입력 영역 - 전체를 텍스트에어리어로 */}
             <textarea
               autoFocus
