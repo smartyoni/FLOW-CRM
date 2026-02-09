@@ -9,6 +9,15 @@ import {
   getPaymentClipboard
 } from '../services/firestore';
 import { generateId } from '../services/storage';
+import { ConfirmModal } from '../components/ConfirmModal';
+
+interface ConfirmState {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+}
 
 interface AppContextType {
   contractClipboard: ClipboardCategory[];
@@ -16,6 +25,9 @@ interface AppContextType {
   paymentClipboard: ClipboardCategory[];
   updatePaymentClipboard: (categories: ClipboardCategory[]) => Promise<void>;
   isLoading: boolean;
+  confirmModal: ConfirmState;
+  showConfirm: (title: string, message: string, confirmText?: string, cancelText?: string) => Promise<boolean>;
+  closeConfirm: (confirmed: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -24,6 +36,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [contractClipboard, setContractClipboard] = useState<ClipboardCategory[]>([]);
   const [paymentClipboard, setPaymentClipboard] = useState<ClipboardCategory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmModal, setConfirmModal] = useState<ConfirmState>({
+    isOpen: false,
+    title: '',
+    message: '',
+  });
+  const [confirmResolve, setConfirmResolve] = useState<((value: boolean) => void) | null>(null);
 
   // Initialize and subscribe to contract clipboard
   useEffect(() => {
@@ -151,9 +169,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Show confirmation modal and return Promise
+  const showConfirm = (title: string, message: string, confirmText = '확인', cancelText = '취소'): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmModal({
+        isOpen: true,
+        title,
+        message,
+        confirmText,
+        cancelText,
+      });
+      setConfirmResolve(() => resolve);
+    });
+  };
+
+  // Close confirmation modal
+  const closeConfirm = (confirmed: boolean) => {
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+    if (confirmResolve) {
+      confirmResolve(confirmed);
+      setConfirmResolve(null);
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ contractClipboard, updateClipboard, paymentClipboard, updatePaymentClipboard, isLoading }}>
+    <AppContext.Provider value={{ contractClipboard, updateClipboard, paymentClipboard, updatePaymentClipboard, isLoading, confirmModal, showConfirm, closeConfirm }}>
       {children}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        onConfirm={() => closeConfirm(true)}
+        onCancel={() => closeConfirm(false)}
+      />
     </AppContext.Provider>
   );
 };

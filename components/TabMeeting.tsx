@@ -10,6 +10,7 @@ import {
 } from '../utils/textParser';
 import { isValidPhoneNumber, generateSmsLink } from '../utils/phoneUtils';
 import { PhotoModal } from './PhotoModal';
+import { useAppContext } from '../contexts/AppContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
+  const { showConfirm } = useAppContext();
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
   const [propertyText, setPropertyText] = useState('');
   const [isAddingProperty, setIsAddingProperty] = useState(false);
@@ -258,8 +260,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     setNewHistoryText('');
   };
 
-  const handleDeleteMeetingHistory = (id: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+  const handleDeleteMeetingHistory = async (id: string) => {
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
     if (!activeMeeting) return;
 
     const updatedMeeting = {
@@ -341,13 +344,14 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // --- Property Management (within Active Meeting) ---
 
-  const handleAddProperty = () => {
+  const handleAddProperty = async () => {
     // propertyText 또는 parsedText 중 하나라도 있으면 등록 가능
     if ((!propertyText.trim() && !parsedText.trim()) || !activeMeeting) return;
 
     // 필수 필드 검증 (선택적)
     if (!parsedRoomName && !parsedJibun && !parsedAgency && !parsedAgencyPhone) {
-      if (!window.confirm('자동 파싱되지 않은 매물입니다. 그대로 등록하시겠습니까?')) {
+      const confirmed = await showConfirm('매물 등록', '자동 파싱되지 않은 매물입니다. 그대로 등록하시겠습니까?');
+      if (!confirmed) {
         return;
       }
     }
@@ -414,8 +418,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     setEditingPropertyId(null);
   };
 
-  const handleDeleteProperty = (propId: string) => {
-    if (!window.confirm('매물을 삭제하시겠습니까?') || !activeMeeting) return;
+  const handleDeleteProperty = async (propId: string) => {
+    const confirmed = await showConfirm('삭제', '매물을 삭제하시겠습니까?');
+    if (!confirmed || !activeMeeting) return;
 
     const updatedProperties = activeMeeting.properties.filter(p => p.id !== propId);
 
@@ -1590,8 +1595,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         <div className="flex-1"></div>
 
                         <button
-                          onClick={() => {
-                            if (window.confirm('이 매물을 삭제하시겠습니까?')) {
+                          onClick={async () => {
+                            const confirmed = await showConfirm('삭제', '이 매물을 삭제하시겠습니까?');
+                            if (confirmed) {
                               if (activeMeeting) {
                                 const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
 

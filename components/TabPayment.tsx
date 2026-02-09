@@ -28,7 +28,7 @@ function debounce<T extends (...args: any[]) => void>(
 
 export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
   const paymentAreaRef = useRef<HTMLDivElement>(null);
-  const { paymentClipboard, updatePaymentClipboard } = useAppContext();
+  const { paymentClipboard, updatePaymentClipboard, showConfirm } = useAppContext();
 
   // 모바일 탭 상태
   const [mobilePaymentTab, setMobilePaymentTab] = useState<'INFO' | 'CLIPBOARD'>('INFO');
@@ -99,8 +99,9 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
     setNewPaymentHistoryText('');
   };
 
-  const handleDeletePaymentHistory = (id: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+  const handleDeletePaymentHistory = async (id: string) => {
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
 
     const updatedCustomer = {
       ...customer,
@@ -181,7 +182,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 카테고리 삭제
   const handleDeleteCategory = async (categoryId: string) => {
-    if (!window.confirm('카테고리와 모든 하위 항목이 삭제됩니다. 계속하시겠습니까?')) return;
+    const confirmed = await showConfirm('카테고리 삭제', '카테고리와 모든 하위 항목이 삭제됩니다. 계속하시겠습니까?');
+    if (!confirmed) return;
     const updated = paymentClipboard.filter(cat => cat.id !== categoryId);
     await updatePaymentClipboard(updated);
   };
@@ -232,7 +234,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 하위 항목 삭제
   const handleDeleteItem = async (categoryId: string, itemId: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
 
     const updated = paymentClipboard.map(cat =>
       cat.id === categoryId
@@ -325,7 +328,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 내용 초기화
   const resetContent = async () => {
-    if (!window.confirm('모든 텍스트가 삭제됩니다. 계속하시겠습니까?')) return;
+    const confirmed = await showConfirm('내용 초기화', '모든 텍스트가 삭제됩니다. 계속하시겠습니까?');
+    if (!confirmed) return;
     setContentModalText('');
     if (contentModalItem) {
       const updated = paymentClipboard.map(cat =>

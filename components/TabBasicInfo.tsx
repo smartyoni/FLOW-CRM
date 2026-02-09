@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint, CustomerContractStatus } from '../types';
 import { generateId } from '../services/storage';
 import { formatPhoneNumber } from '../utils/phoneUtils';
+import { useAppContext } from '../contexts/AppContext';
 
 interface Props {
   customer: Customer;
@@ -13,6 +14,7 @@ const CHECKPOINTS: CustomerCheckpoint[] = ['은행방문중', '재미팅잡기',
 const CONTRACT_STATUSES: CustomerContractStatus[] = ['계약서작성예정', '잔금예정', '잔금일', '입주완료'];
 
 export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
+  const { showConfirm } = useAppContext();
   const [newChecklistText, setNewChecklistText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -143,8 +145,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   // Delete Checklist
-  const handleDeleteChecklist = (id: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+  const handleDeleteChecklist = async (id: string) => {
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
 
     const updatedCustomer = {
       ...activeCustomer,

@@ -28,7 +28,7 @@ function debounce<T extends (...args: any[]) => void>(
 
 export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const contractAreaRef = useRef<HTMLDivElement>(null);
-  const { contractClipboard, updateClipboard } = useAppContext();
+  const { contractClipboard, updateClipboard, showConfirm } = useAppContext();
 
   // 모바일 탭 상태
   const [mobileContractTab, setMobileContractTab] = useState<'INFO' | 'CLIPBOARD'>('INFO');
@@ -99,8 +99,9 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
     setNewContractHistoryText('');
   };
 
-  const handleDeleteContractHistory = (id: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+  const handleDeleteContractHistory = async (id: string) => {
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
 
     const updatedCustomer = {
       ...customer,
@@ -181,7 +182,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 카테고리 삭제
   const handleDeleteCategory = async (categoryId: string) => {
-    if (!window.confirm('카테고리와 모든 하위 항목이 삭제됩니다. 계속하시겠습니까?')) return;
+    const confirmed = await showConfirm('카테고리 삭제', '카테고리와 모든 하위 항목이 삭제됩니다. 계속하시겠습니까?');
+    if (!confirmed) return;
     const updated = contractClipboard.filter(cat => cat.id !== categoryId);
     await updateClipboard(updated);
   };
@@ -232,7 +234,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 하위 항목 삭제
   const handleDeleteItem = async (categoryId: string, itemId: string) => {
-    if (!window.confirm('삭제하시겠습니까?')) return;
+    const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
+    if (!confirmed) return;
 
     const updated = contractClipboard.map(cat =>
       cat.id === categoryId
@@ -325,7 +328,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 내용 초기화
   const resetContent = async () => {
-    if (!window.confirm('모든 텍스트가 삭제됩니다. 계속하시겠습니까?')) return;
+    const confirmed = await showConfirm('내용 초기화', '모든 텍스트가 삭제됩니다. 계속하시겠습니까?');
+    if (!confirmed) return;
     setContentModalText('');
     if (contentModalItem) {
       const updated = contractClipboard.map(cat =>
