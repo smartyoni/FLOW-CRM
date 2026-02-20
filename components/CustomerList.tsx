@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Customer, CustomerStage, CustomerCheckpoint } from '../types';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Props {
   customers: Customer[];
@@ -8,6 +9,7 @@ interface Props {
   onDelete: (id: string, e: React.MouseEvent) => void;
   onToggleFavorite: (id: string) => void;
   onMenuClick: () => void;
+  onUpdate: (customer: Customer) => void;
 }
 
 const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: string; icon: string; bg: string }> = {
@@ -48,41 +50,9 @@ const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: 
   }
 };
 
-const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: string; color: string; icon: string; bg: string }> = {
-  '계약진행': {
-    label: '계약진행',
-    desc: '계약 절차 진행 중',
-    color: 'text-indigo-600',
-    icon: 'fa-file-signature',
-    bg: 'bg-indigo-100'
-  },
-  '재미팅잡기': {
-    label: '재미팅잡기',
-    desc: '추가 미팅 필요',
-    color: 'text-amber-600',
-    icon: 'fa-redo',
-    bg: 'bg-amber-100'
-  },
-  '약속확정': {
-    label: '약속확정(재미팅)',
-    desc: '재미팅 약속 확정',
-    color: 'text-purple-600',
-    icon: 'fa-calendar-check',
-    bg: 'bg-purple-100'
-  },
-  '미팅진행': {
-    label: '미팅진행',
-    desc: '재미팅 진행 중',
-    color: 'text-green-600',
-    icon: 'fa-handshake',
-    bg: 'bg-green-100'
-  }
-};
-
 const STAGE_ORDER: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행'];
-const CHECKPOINT_ORDER: CustomerCheckpoint[] = ['계약진행', '재미팅잡기', '약속확정', '미팅진행'];
 
-export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick }) => {
+export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick, onUpdate }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [activeStageTab, setActiveStageTab] = useState<CustomerStage>('접수고객');
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -129,6 +99,38 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
 
     setTouchStart(null);
     setTouchEnd(null);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // Dropped outside the list
+    if (!destination) {
+      return;
+    }
+
+    // Dropped in the same place
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Find the customer
+    const customer = customers.find(c => c.id === draggableId);
+    if (!customer) return;
+
+    const newStage = destination.droppableId as CustomerStage;
+
+    // Update customer stage
+    const updatedCustomer: Customer = {
+      ...customer,
+      stage: newStage
+    };
+
+    console.log(`[CustomerList] Drag end: ${customer.name} moved from ${source.droppableId} to ${newStage}`);
+    onUpdate(updatedCustomer);
   };
 
   const filterAndSortCustomers = (list: Customer[], query: string) => {
@@ -255,14 +257,14 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
               </div>
               <div>
                 <h2 className="font-bold text-gray-800 text-sm leading-tight">{title}</h2>
-                <p className="text-gray-400 text-[10px] mt-0.5">{desc}</p>
+                <p className="text-gray-400 text-xs mt-0.5">{desc}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex items-center">
                 <span className="text-lg font-bold text-gray-800">{items.length}</span>
-                <span className="text-[10px] text-gray-400 ml-1">명</span>
+                <span className="text-xs text-gray-400 ml-1">명</span>
               </div>
               {showAddButton && (
                 <button
@@ -276,64 +278,85 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
           </div>
         </div>
 
-        {/* List Content */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-          {items.map((customer, idx) => (
+        {/* List Content (Droppable Area) */}
+        <Droppable droppableId={searchKey}>
+          {(provided, snapshot) => (
             <div
-              key={customer.id}
-              onClick={() => onSelect(customer)}
-              onContextMenu={(e) => handleRightClick(e, customer.id)}
-              className={`bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center ${customer.isFavorite ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200 hover:border-blue-400'
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : ''
                 }`}
             >
-              <div className="flex items-center gap-1.5 overflow-hidden">
-                {/* Favorite Star (Inline) */}
-                {customer.isFavorite && (
-                  <i className="fas fa-star text-yellow-400 text-[10px]"></i>
-                )}
-                {/* Name */}
-                <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
-              </div>
+              {items.map((customer, idx) => (
+                // @ts-ignore
+                <Draggable key={customer.id} draggableId={customer.id} index={idx}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      onClick={() => onSelect(customer)}
+                      onContextMenu={(e) => handleRightClick(e, customer.id)}
+                      style={{
+                        ...provided.draggableProps.style,
+                        opacity: snapshot.isDragging ? 0.8 : 1,
+                      }}
+                      className={`bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center ${customer.isFavorite ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200 hover:border-blue-400'
+                        }`}
+                    >
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        {/* Favorite Star (Inline) */}
+                        {customer.isFavorite && (
+                          <i className="fas fa-star text-yellow-400 text-[10px]"></i>
+                        )}
+                        {/* Name */}
+                        <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
+                      </div>
 
-              {/* Buttons */}
-              <div className="flex gap-1 ml-2 shrink-0">
-                {customer.contact && (
-                  <a
-                    href={`sms:${customer.contact.replace(/\D/g, '')}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
-                    title="문자 메시지 보내기"
-                  >
-                    <i className="fas fa-comments text-xs"></i>
-                  </a>
-                )}
-                <button
-                  onClick={(e) => onDelete(customer.id, e)}
-                  className="text-red-600 hover:text-red-800 p-1 transition-colors font-bold"
-                >
-                  <i className="fas fa-trash-alt text-xs"></i>
-                </button>
-              </div>
-            </div>
-          ))}
+                      {/* Buttons */}
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        {customer.contact && (
+                          <a
+                            href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
+                            title="문자 메시지 보내기"
+                          >
+                            <i className="fas fa-comments text-xs"></i>
+                          </a>
+                        )}
+                        <button
+                          onClick={(e) => onDelete(customer.id, e)}
+                          className="text-red-600 hover:text-red-800 p-1 transition-colors font-bold"
+                        >
+                          <i className="fas fa-trash-alt text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
 
-          {items.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-4 text-center">
-              <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center mb-1">
-                <i className="fas fa-user text-gray-300 text-xs"></i>
-              </div>
-              <p className="text-gray-400 text-xs">고객 없음</p>
-              {showAddButton && (
-                <button
-                  onClick={onAddClick}
-                  className="mt-2 text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
-                >
-                  추가
-                </button>
+              {items.length === 0 && !snapshot.isDraggingOver && (
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center mb-1">
+                    <i className="fas fa-user text-gray-300 text-xs"></i>
+                  </div>
+                  <p className="text-gray-400 text-xs">고객 없음</p>
+                  {showAddButton && (
+                    <button
+                      onClick={onAddClick}
+                      className="mt-2 text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
+                    >
+                      추가
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
-        </div>
+        </Droppable>
       </div>
     );
   };
@@ -379,8 +402,8 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                   setActiveStageTab(stage);
                 }}
                 className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 {config.label} ({count})
@@ -404,28 +427,30 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
 
       {/* Desktop View - Hidden on Mobile */}
       <div className="hidden md:flex md:flex-col w-full h-full">
-        {/* Stages (Pre-meeting) */}
+        {/* Stages (Pre-meeting) - DragDropContext Wrapper */}
         <div className="flex-1 overflow-x-auto p-3">
-          <div className="flex h-full">
-            {STAGE_ORDER.map(stage => {
-              const config = STAGE_CONFIG[stage];
-              const stageCustomers = customers.filter(c => (c.stage || '접수고객') === stage && !c.checkpoint && !c.contractStatus);
-              const filtered = filterAndSortCustomers(stageCustomers, searchQueries[stage] || '');
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex h-full">
+              {STAGE_ORDER.map(stage => {
+                const config = STAGE_CONFIG[stage];
+                const stageCustomers = customers.filter(c => (c.stage || '접수고객') === stage && !c.checkpoint && !c.contractStatus);
+                const filtered = filterAndSortCustomers(stageCustomers, searchQueries[stage] || '');
 
-              return (
-                <React.Fragment key={stage}>
-                  {renderColumn(
-                    config.label,
-                    config.desc,
-                    filtered,
-                    config,
-                    stage,
-                    stage === '접수고객'
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
+                return (
+                  <React.Fragment key={stage}>
+                    {renderColumn(
+                      config.label,
+                      config.desc,
+                      filtered,
+                      config,
+                      stage,
+                      stage === '접수고객'
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>

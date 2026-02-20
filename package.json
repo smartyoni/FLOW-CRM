@@ -12,6 +12,7 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
     "browser-image-compression": "^2.0.2",
     "firebase": "^12.7.0",
     "html2canvas": "^1.4.1",

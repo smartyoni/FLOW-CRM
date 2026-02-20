@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Customer, CustomerCheckpoint } from '../types';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Props {
   customers: Customer[];
   onSelect: (customer: Customer) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
   onMenuClick: () => void;
+  onUpdate: (customer: Customer) => void;
 }
 
 const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: string; color: string; icon: string; bg: string }> = {
@@ -45,10 +47,11 @@ export const ManagingCustomerView: React.FC<Props> = ({
   customers,
   onSelect,
   onDelete,
-  onMenuClick
+  onMenuClick,
+  onUpdate
 }) => {
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
-  const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('계약진행');
+  const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('은행방문중');
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
@@ -92,6 +95,32 @@ export const ManagingCustomerView: React.FC<Props> = ({
 
     setTouchStart(null);
     setTouchEnd(null);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) return;
+
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    const customer = customers.find(c => c.id === draggableId);
+    if (!customer) return;
+
+    const newCheckpoint = destination.droppableId as CustomerCheckpoint;
+
+    const updatedCustomer: Customer = {
+      ...customer,
+      checkpoint: newCheckpoint
+    };
+
+    console.log(`[ManagingView] Drag end: ${customer.name} moved to ${newCheckpoint}`);
+    onUpdate(updatedCustomer);
   };
 
   const filterAndSortCustomers = (list: Customer[], query: string) => {
@@ -242,50 +271,71 @@ export const ManagingCustomerView: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* List Content */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
-          {filtered.map(customer => (
+        {/* List Content (Droppable) */}
+        <Droppable droppableId={checkpoint}>
+          {(provided, snapshot) => (
             <div
-              key={customer.id}
-              onClick={() => onSelect(customer)}
-              onContextMenu={handleRightClick}
-              className="bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center border-gray-200 hover:border-blue-400"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className={`flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : ''
+                }`}
             >
-              <div className="flex items-center gap-1.5 overflow-hidden">
-                <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
-              </div>
+              {filtered.map((customer, idx) => (
+                // @ts-ignore
+                <Draggable key={customer.id} draggableId={customer.id} index={idx}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      onClick={() => onSelect(customer)}
+                      onContextMenu={handleRightClick}
+                      style={{
+                        ...provided.draggableProps.style,
+                        opacity: snapshot.isDragging ? 0.8 : 1,
+                      }}
+                      className="bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center border-gray-200 hover:border-blue-400"
+                    >
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
+                      </div>
 
-              {/* Buttons */}
-              <div className="flex gap-1 ml-2 shrink-0">
-                {customer.contact && (
-                  <a
-                    href={`sms:${customer.contact.replace(/\D/g, '')}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
-                    title="문자 메시지 보내기"
-                  >
-                    <i className="fas fa-comments text-xs"></i>
-                  </a>
-                )}
-                <button
-                  onClick={(e) => onDelete(customer.id, e)}
-                  className="text-red-600 hover:text-red-800 p-1 transition-colors font-bold"
-                >
-                  <i className="fas fa-trash-alt text-xs"></i>
-                </button>
-              </div>
-            </div>
-          ))}
+                      {/* Buttons */}
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        {customer.contact && (
+                          <a
+                            href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
+                            title="문자 메시지 보내기"
+                          >
+                            <i className="fas fa-comments text-xs"></i>
+                          </a>
+                        )}
+                        <button
+                          onClick={(e) => onDelete(customer.id, e)}
+                          className="text-red-600 hover:text-red-800 p-1 transition-colors font-bold"
+                        >
+                          <i className="fas fa-trash-alt text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
 
-          {filtered.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-4 text-center">
-              <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center mb-1">
-                <i className="fas fa-user text-gray-300 text-xs"></i>
-              </div>
-              <p className="text-gray-400 text-xs">고객 없음</p>
+              {filtered.length === 0 && !snapshot.isDraggingOver && (
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <div className="w-8 h-8 bg-gray-50 rounded-full flex items-center justify-center mb-1">
+                    <i className="fas fa-user text-gray-300 text-xs"></i>
+                  </div>
+                  <p className="text-gray-400 text-xs">고객 없음</p>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </Droppable>
       </div>
     );
   };
@@ -294,6 +344,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
     <div className="flex flex-col w-full h-full bg-gray-100 overflow-hidden">
       {/* Top Bar - Mobile Header */}
       <div className="bg-white border-b p-3 flex items-center gap-3 shadow-sm shrink-0 md:hidden">
+        {/* ... (Menu Button and Title) ... */}
         <button
           onClick={onMenuClick}
           className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
@@ -317,8 +368,8 @@ export const ManagingCustomerView: React.FC<Props> = ({
                 key={checkpoint}
                 onClick={() => setActiveCheckpointTab(checkpoint)}
                 className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
               >
                 {config.label} ({count})
@@ -343,16 +394,18 @@ export const ManagingCustomerView: React.FC<Props> = ({
       {/* Desktop View */}
       <div className="hidden md:flex md:flex-col w-full h-full">
         <div className="flex-1 overflow-x-auto p-3">
-          <div className="flex h-full">
-            {CHECKPOINT_ORDER.map(checkpoint => {
-              const cpCustomers = customers.filter(c => c.checkpoint === checkpoint && !c.contractStatus);
-              return (
-                <React.Fragment key={checkpoint}>
-                  {renderColumn(checkpoint, cpCustomers)}
-                </React.Fragment>
-              );
-            })}
-          </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="flex h-full">
+              {CHECKPOINT_ORDER.map(checkpoint => {
+                const cpCustomers = customers.filter(c => c.checkpoint === checkpoint && !c.contractStatus);
+                return (
+                  <React.Fragment key={checkpoint}>
+                    {renderColumn(checkpoint, cpCustomers)}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </DragDropContext>
         </div>
       </div>
     </div>

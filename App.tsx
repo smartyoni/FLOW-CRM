@@ -407,166 +407,166 @@ const App: React.FC = () => {
   return (
     <AppProvider>
       <div className="flex flex-row w-full h-full bg-gray-100 relative overflow-hidden">
-      {/* Pull to Refresh Indicator */}
-      {pullDistance > 0 && (
-        <div
-          className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 z-40 transition-all"
-          style={{ transform: `translateY(${pullDistance}px)` }}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <i
-              className="fas fa-arrow-down transition-transform"
-              style={{
-                transform: `rotate(${pullDistance > 60 ? 180 : 0}deg)`,
-                opacity: Math.min(pullDistance / 60, 1),
-              }}
-            ></i>
-            <span>{pullDistance > 60 ? '놓아서 새로고침' : '당겨서 새로고침'}</span>
+        {/* Pull to Refresh Indicator */}
+        {pullDistance > 0 && (
+          <div
+            className="fixed top-0 left-0 right-0 bg-blue-500 text-white text-center py-2 z-40 transition-all"
+            style={{ transform: `translateY(${pullDistance}px)` }}
+          >
+            <div className="flex items-center justify-center gap-2">
+              <i
+                className="fas fa-arrow-down transition-transform"
+                style={{
+                  transform: `rotate(${pullDistance > 60 ? 180 : 0}deg)`,
+                  opacity: Math.min(pullDistance / 60, 1),
+                }}
+              ></i>
+              <span>{pullDistance > 60 ? '놓아서 새로고침' : '당겨서 새로고침'}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Offline indicator */}
-      {!isOnline && (
-        <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50">
-          <i className="fas fa-wifi-slash mr-2"></i>
-          오프라인 모드 - 온라인 연결 시 동기화됩니다
-        </div>
-      )}
+        {/* Offline indicator */}
+        {!isOnline && (
+          <div className="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 z-50">
+            <i className="fas fa-wifi-slash mr-2"></i>
+            오프라인 모드 - 온라인 연결 시 동기화됩니다
+          </div>
+        )}
 
-      {/* Mobile Sidebar Backdrop */}
-      {isMobileSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
-          onClick={() => setIsMobileSidebarOpen(false)}
-          aria-label="사이드바 닫기"
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="사이드바 닫기"
+          />
+        )}
+
+        {/* Left Sidebar */}
+        <Sidebar
+          isOpen={isMobileSidebarOpen}
+          onClose={() => setIsMobileSidebarOpen(false)}
+          currentView={currentView}
+          onViewChange={handleViewChange}
+          customers={customers}
         />
-      )}
 
-      {/* Left Sidebar */}
-      <Sidebar
-        isOpen={isMobileSidebarOpen}
-        onClose={() => setIsMobileSidebarOpen(false)}
-        currentView={currentView}
-        onViewChange={handleViewChange}
-        customers={customers}
-      />
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden">
+            {currentView === 'managingCustomer' ? (
+              <ManagingCustomerView
+                customers={customers}
+                onSelect={handleSelectCustomer}
+                onDelete={handleDeleteCustomer}
+                onMenuClick={() => setIsMobileSidebarOpen(true)}
+                onUpdate={handleUpdateCustomer}
+              />
+            ) : currentView === 'contractCustomer' ? (
+              <ContractCustomerView
+                customers={customers.filter(c => c.contractStatus)}
+                onSelect={handleSelectCustomer}
+                onDelete={handleDeleteCustomer}
+                onMenuClick={() => setIsMobileSidebarOpen(true)}
+                onUpdate={handleUpdateCustomer}
+              />
+            ) : (
+              <CustomerList
+                customers={customers}
+                onSelect={handleSelectCustomer}
+                onAddClick={() => setIsFormOpen(true)}
+                onDelete={handleDeleteCustomer}
+                onToggleFavorite={handleToggleFavorite}
+                onMenuClick={() => setIsMobileSidebarOpen(true)}
+                onUpdate={handleUpdateCustomer}
+              />
+            )}
+          </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden">
-          {currentView === 'managingCustomer' ? (
-            <ManagingCustomerView
-              customers={customers}
-              onSelect={handleSelectCustomer}
-              onDelete={handleDeleteCustomer}
-              onMenuClick={() => setIsMobileSidebarOpen(true)}
-            />
-          ) : currentView === 'contractCustomer' ? (
-            <ContractCustomerView
-              customers={customers.filter(c => c.contractStatus)}
-              onSelect={handleSelectCustomer}
-              onDelete={handleDeleteCustomer}
-              onMenuClick={() => setIsMobileSidebarOpen(true)}
-            />
-          ) : (
-            <CustomerList
-              customers={customers}
-              onSelect={handleSelectCustomer}
-              onAddClick={() => setIsFormOpen(true)}
-              onDelete={handleDeleteCustomer}
-              onToggleFavorite={handleToggleFavorite}
-              onMenuClick={() => setIsMobileSidebarOpen(true)}
-            />
-          )}
-        </div>
-
-        {/* Mobile Bottom Tab Bar */}
-        <div className="md:hidden border-t bg-white flex items-center shrink-0">
-          <button
-            onClick={() => handleViewChange('customerList')}
-            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
-              currentView === 'customerList'
+          {/* Mobile Bottom Tab Bar */}
+          <div className="md:hidden border-t bg-white flex items-center shrink-0">
+            <button
+              onClick={() => handleViewChange('customerList')}
+              className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${currentView === 'customerList'
                 ? 'bg-blue-200 border-blue-700 text-blue-700'
                 : 'bg-blue-100 border-transparent text-blue-600'
-            }`}
-          >
-            접수~첫미팅
-          </button>
-          <div className="w-px h-6 bg-gray-200"></div>
-          <button
-            onClick={() => handleViewChange('managingCustomer')}
-            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
-              currentView === 'managingCustomer'
+                }`}
+            >
+              접수~첫미팅
+            </button>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <button
+              onClick={() => handleViewChange('managingCustomer')}
+              className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${currentView === 'managingCustomer'
                 ? 'bg-purple-200 border-purple-700 text-purple-700'
                 : 'bg-purple-100 border-transparent text-purple-600'
-            }`}
-          >
-            재미팅~계약
-          </button>
-          <div className="w-px h-6 bg-gray-200"></div>
-          <button
-            onClick={() => handleViewChange('contractCustomer')}
-            className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${
-              currentView === 'contractCustomer'
+                }`}
+            >
+              재미팅~계약
+            </button>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <button
+              onClick={() => handleViewChange('contractCustomer')}
+              className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${currentView === 'contractCustomer'
                 ? 'bg-green-200 border-green-700 text-green-700'
                 : 'bg-green-100 border-transparent text-green-600'
-            }`}
-          >
-            계약~잔금
-          </button>
-        </div>
-      </div>
-
-      {/* Right Detail Sidebar (Overlay) */}
-      <CustomerDetailSidebar
-        customer={selectedCustomer}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onUpdate={handleUpdateCustomer}
-      />
-
-      {/* Customer Form Modal */}
-      {isFormOpen && (
-        <CustomerForm
-          onClose={() => {
-            setIsFormOpen(false);
-            setInitialCustomerData(undefined);
-          }}
-          onSubmit={handleAddCustomer}
-          initialData={initialCustomerData}
-        />
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">고객 삭제</h3>
-              <p className="text-gray-600 mb-4">
-                <span className="font-semibold">{deleteConfirmation.customerName}</span> 고객을 정말 삭제하시겠습니까?
-              </p>
-              <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</p>
-            </div>
-            <div className="p-4 border-t border-gray-200 flex justify-end gap-2 bg-gray-50 rounded-b-lg">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-              >
-                삭제
-              </button>
-            </div>
+                }`}
+            >
+              계약~잔금
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Right Detail Sidebar (Overlay) */}
+        <CustomerDetailSidebar
+          customer={selectedCustomer}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          onUpdate={handleUpdateCustomer}
+        />
+
+        {/* Customer Form Modal */}
+        {isFormOpen && (
+          <CustomerForm
+            onClose={() => {
+              setIsFormOpen(false);
+              setInitialCustomerData(undefined);
+            }}
+            onSubmit={handleAddCustomer}
+            initialData={initialCustomerData}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+              <div className="p-6">
+                <h3 className="text-lg font-bold text-gray-800 mb-2">고객 삭제</h3>
+                <p className="text-gray-600 mb-4">
+                  <span className="font-semibold">{deleteConfirmation.customerName}</span> 고객을 정말 삭제하시겠습니까?
+                </p>
+                <p className="text-sm text-gray-500">이 작업은 되돌릴 수 없습니다.</p>
+              </div>
+              <div className="p-4 border-t border-gray-200 flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                <button
+                  onClick={cancelDelete}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </AppProvider>
   );
