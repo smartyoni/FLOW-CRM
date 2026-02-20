@@ -272,8 +272,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           <button
             onClick={() => setMobileBasicInfoTab('INFO')}
             className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${mobileBasicInfoTab === 'INFO'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary text-white shadow-md'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
           >
             <i className="fas fa-user mr-2"></i>
@@ -282,8 +282,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           <button
             onClick={() => setMobileBasicInfoTab('HISTORY')}
             className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${mobileBasicInfoTab === 'HISTORY'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-primary text-white shadow-md'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
           >
             <i className="fas fa-history mr-2"></i>
@@ -297,7 +297,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         {/* Top/Left: Basic Info */}
         <div
           ref={basicInfoAreaRef}
-          className={`w-full md:w-1/2 overflow-y-auto md:pr-2 ${mobileBasicInfoTab === 'INFO' ? 'block' : 'hidden md:block'
+          className={`w-full md:w-1/2 min-h-0 overflow-y-auto md:pr-2 ${mobileBasicInfoTab === 'INFO' ? 'flex-1 block' : 'hidden md:block'
             }`}
         >
           <div className="space-y-3 text-sm">
@@ -438,7 +438,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         {/* Bottom/Right: History */}
         <div
           ref={historyAreaRef}
-          className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${mobileBasicInfoTab === 'HISTORY' ? 'block h-full' : 'hidden md:block'
+          className={`w-full md:w-1/2 min-h-0 flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${mobileBasicInfoTab === 'HISTORY' ? 'flex-1' : 'hidden md:flex'
             }`}
         >
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
