@@ -271,22 +271,20 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         <div className="flex p-2 gap-2">
           <button
             onClick={() => setMobileBasicInfoTab('INFO')}
-            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
-              mobileBasicInfoTab === 'INFO'
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${mobileBasicInfoTab === 'INFO'
                 ? 'bg-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+              }`}
           >
             <i className="fas fa-user mr-2"></i>
             고객정보
           </button>
           <button
             onClick={() => setMobileBasicInfoTab('HISTORY')}
-            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${
-              mobileBasicInfoTab === 'HISTORY'
+            className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-sm transition-all ${mobileBasicInfoTab === 'HISTORY'
                 ? 'bg-primary text-white shadow-md'
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+              }`}
           >
             <i className="fas fa-history mr-2"></i>
             히스토리
@@ -299,9 +297,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         {/* Top/Left: Basic Info */}
         <div
           ref={basicInfoAreaRef}
-          className={`w-full md:w-1/2 overflow-y-auto md:pr-2 ${
-            mobileBasicInfoTab === 'INFO' ? 'block' : 'hidden md:block'
-          }`}
+          className={`w-full md:w-1/2 overflow-y-auto md:pr-2 ${mobileBasicInfoTab === 'INFO' ? 'block' : 'hidden md:block'
+            }`}
         >
           <div className="space-y-3 text-sm">
             {/* 고객명 */}
@@ -441,9 +438,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         {/* Bottom/Right: History */}
         <div
           ref={historyAreaRef}
-          className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${
-            mobileBasicInfoTab === 'HISTORY' ? 'block' : 'hidden md:block'
-          }`}
+          className={`w-full md:w-1/2 overflow-hidden flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${mobileBasicInfoTab === 'HISTORY' ? 'block h-full' : 'hidden md:block'
+            }`}
         >
           <h3 className="font-bold text-gray-700 mb-3 flex items-center">
             <i className="fas fa-history mr-2 text-primary"></i>
@@ -472,46 +468,46 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             {activeCustomer.checklists.map((item, index) => (
               <div key={item.id}>
                 <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditing(item)}>
-                    {editingItemId === item.id ? (
-                      <input
-                        autoFocus
-                        className="w-full border-b-2 border-primary outline-none"
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        onBlur={saveEditing}
-                        onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
-                      />
-                    ) : (
-                      <>
-                        <i className="fas fa-circle text-xs text-blue-500 mt-1 flex-shrink-0"></i>
-                        <span className="text-gray-800 font-medium cursor-pointer flex-1" title="더블클릭하여 수정">
-                          {item.text}
-                        </span>
-                      </>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex-1 mr-2 flex items-start gap-2" onDoubleClick={() => startEditing(item)}>
+                      {editingItemId === item.id ? (
+                        <input
+                          autoFocus
+                          className="w-full border-b-2 border-primary outline-none"
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          onBlur={saveEditing}
+                          onKeyDown={(e) => e.key === 'Enter' && saveEditing()}
+                        />
+                      ) : (
+                        <>
+                          <i className="fas fa-circle text-xs text-blue-500 mt-1 flex-shrink-0"></i>
+                          <span className="text-gray-800 font-medium cursor-pointer flex-1" title="더블클릭하여 수정">
+                            {item.text}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => openMemo(item)} className="text-gray-400 hover:text-blue-500">
+                        <i className="fas fa-sticky-note"></i>
+                      </button>
+                      <button onClick={() => handleDeleteChecklist(item.id)} className="text-gray-400 hover:text-red-500">
+                        <i className="fas fa-trash-alt"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-gray-400">
+                    <span>{new Date(item.createdAt).toLocaleString()}</span>
+                    {item.memo && (
+                      <span
+                        onClick={() => openMemo(item)}
+                        className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
+                      >
+                        {item.memo.split('\n')[0]}
+                      </span>
                     )}
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openMemo(item)} className="text-gray-400 hover:text-blue-500">
-                      <i className="fas fa-sticky-note"></i>
-                    </button>
-                    <button onClick={() => handleDeleteChecklist(item.id)} className="text-gray-400 hover:text-red-500">
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center text-xs text-gray-400">
-                  <span>{new Date(item.createdAt).toLocaleString()}</span>
-                  {item.memo && (
-                    <span
-                      onClick={() => openMemo(item)}
-                      className="text-green-600 font-medium truncate max-w-xs ml-2 cursor-pointer hover:text-green-700 hover:underline"
-                    >
-                      {item.memo.split('\n')[0]}
-                    </span>
-                  )}
-                </div>
                 </div>
                 {index < activeCustomer.checklists.length - 1 && (
                   <div className="h-px bg-red-500 my-3"></div>
@@ -553,14 +549,14 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
             <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
               {memoModalMode === 'VIEW' ? (
-                <button 
+                <button
                   onClick={() => setMemoModalMode('EDIT')}
                   className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                 >
                   수정
                 </button>
               ) : (
-                <button 
+                <button
                   onClick={saveMemo}
                   className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
                 >
