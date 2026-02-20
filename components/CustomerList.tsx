@@ -11,17 +11,17 @@ interface Props {
 }
 
 const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: string; icon: string; bg: string }> = {
-  '접수고객': { 
-    label: '접수고객', 
-    desc: '신규 등록된 고객 리스트', 
-    color: 'text-blue-600', 
+  '접수고객': {
+    label: '접수고객',
+    desc: '신규 등록된 고객 리스트',
+    color: 'text-blue-600',
     icon: 'fa-search',
     bg: 'bg-blue-100'
   },
-  '연락대상': { 
-    label: '연락대상', 
-    desc: '첫 연락을 위해 준비하는 고객', 
-    color: 'text-orange-600', 
+  '연락대상': {
+    label: '연락대상',
+    desc: '첫 연락을 위해 준비하는 고객',
+    color: 'text-orange-600',
     icon: 'fa-phone-alt',
     bg: 'bg-orange-100'
   },
@@ -32,10 +32,10 @@ const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: 
     icon: 'fa-calendar-check',
     bg: 'bg-purple-100'
   },
-  '미팅진행': { 
-    label: '미팅진행', 
-    desc: '현재 미팅 및 계약 진행 중', 
-    color: 'text-green-600', 
+  '미팅진행': {
+    label: '미팅진행',
+    desc: '현재 미팅 및 계약 진행 중',
+    color: 'text-green-600',
     icon: 'fa-handshake',
     bg: 'bg-green-100'
   },
@@ -279,13 +279,12 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
         {/* List Content */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
           {items.map((customer, idx) => (
-            <div 
-              key={customer.id} 
+            <div
+              key={customer.id}
               onClick={() => onSelect(customer)}
               onContextMenu={(e) => handleRightClick(e, customer.id)}
-              className={`bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center ${
-                customer.isFavorite ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200 hover:border-blue-400'
-              }`}
+              className={`bg-white border rounded-lg px-3 py-2 cursor-pointer transition-all shadow-sm group relative flex justify-between items-center ${customer.isFavorite ? 'border-yellow-300 ring-1 ring-yellow-100' : 'border-gray-200 hover:border-blue-400'
+                }`}
             >
               <div className="flex items-center gap-1.5 overflow-hidden">
                 {/* Favorite Star (Inline) */}
@@ -295,7 +294,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                 {/* Name */}
                 <h3 className="font-bold text-sm text-gray-700 truncate">{customer.name}</h3>
               </div>
-              
+
               {/* Buttons */}
               <div className="flex gap-1 ml-2 shrink-0">
                 {customer.contact && (
@@ -325,7 +324,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
               </div>
               <p className="text-gray-400 text-xs">고객 없음</p>
               {showAddButton && (
-                <button 
+                <button
                   onClick={onAddClick}
                   className="mt-2 text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-colors shadow-sm"
                 >
@@ -370,7 +369,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
         <div className="flex p-2 gap-2 min-w-max">
           {STAGE_ORDER.map(stage => {
             const config = STAGE_CONFIG[stage];
-            const count = customers.filter(c => (c.stage || '접수고객') === stage).length;
+            const count = customers.filter(c => (c.stage || '접수고객') === stage && !c.checkpoint && !c.contractStatus).length;
             const isActive = activeStageTab === stage;
 
             return (
@@ -379,11 +378,10 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                 onClick={() => {
                   setActiveStageTab(stage);
                 }}
-                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                  isActive
+                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 {config.label} ({count})
               </button>
@@ -400,7 +398,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       >
         {renderMobileColumn(
           activeStageTab,
-          customers.filter(c => (c.stage || '접수고객') === activeStageTab)
+          customers.filter(c => (c.stage || '접수고객') === activeStageTab && !c.checkpoint && !c.contractStatus)
         )}
       </div>
 
@@ -408,27 +406,27 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       <div className="hidden md:flex md:flex-col w-full h-full">
         {/* Stages (Pre-meeting) */}
         <div className="flex-1 overflow-x-auto p-3">
-        <div className="flex h-full">
-          {STAGE_ORDER.map(stage => {
-            const config = STAGE_CONFIG[stage];
-            const stageCustomers = customers.filter(c => (c.stage || '접수고객') === stage);
-            const filtered = filterAndSortCustomers(stageCustomers, searchQueries[stage] || '');
+          <div className="flex h-full">
+            {STAGE_ORDER.map(stage => {
+              const config = STAGE_CONFIG[stage];
+              const stageCustomers = customers.filter(c => (c.stage || '접수고객') === stage && !c.checkpoint && !c.contractStatus);
+              const filtered = filterAndSortCustomers(stageCustomers, searchQueries[stage] || '');
 
-            return (
-              <React.Fragment key={stage}>
-                {renderColumn(
-                  config.label,
-                  config.desc,
-                  filtered,
-                  config,
-                  stage,
-                  stage === '접수고객'
-                )}
-              </React.Fragment>
-            );
-          })}
+              return (
+                <React.Fragment key={stage}>
+                  {renderColumn(
+                    config.label,
+                    config.desc,
+                    filtered,
+                    config,
+                    stage,
+                    stage === '접수고객'
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

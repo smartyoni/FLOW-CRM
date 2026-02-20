@@ -309,18 +309,17 @@ export const ManagingCustomerView: React.FC<Props> = ({
         <div className="flex p-2 gap-2 min-w-max">
           {CHECKPOINT_ORDER.map(checkpoint => {
             const config = CHECKPOINT_CONFIG[checkpoint];
-            const count = customers.filter(c => c.checkpoint === checkpoint).length;
+            const count = customers.filter(c => c.checkpoint === checkpoint && !c.contractStatus).length;
             const isActive = activeCheckpointTab === checkpoint;
 
             return (
               <button
                 key={checkpoint}
                 onClick={() => setActiveCheckpointTab(checkpoint)}
-                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                  isActive
+                className={`flex-shrink-0 px-2 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${isActive
                     ? 'bg-primary text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 {config.label} ({count})
               </button>
@@ -337,7 +336,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
       >
         {renderMobileColumn(
           activeCheckpointTab,
-          customers.filter(c => c.checkpoint === activeCheckpointTab)
+          customers.filter(c => c.checkpoint === activeCheckpointTab && !c.contractStatus)
         )}
       </div>
 
@@ -346,7 +345,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
         <div className="flex-1 overflow-x-auto p-3">
           <div className="flex h-full">
             {CHECKPOINT_ORDER.map(checkpoint => {
-              const cpCustomers = customers.filter(c => c.checkpoint === checkpoint);
+              const cpCustomers = customers.filter(c => c.checkpoint === checkpoint && !c.contractStatus);
               return (
                 <React.Fragment key={checkpoint}>
                   {renderColumn(checkpoint, cpCustomers)}
