@@ -437,7 +437,7 @@ const App: React.FC = () => {
         {/* Mobile Sidebar Backdrop */}
         {isMobileSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+            className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
             onClick={() => setIsMobileSidebarOpen(false)}
             aria-label="사이드바 닫기"
           />
@@ -486,7 +486,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Mobile Bottom Tab Bar */}
-          <div className="md:hidden border-t bg-white flex items-center shrink-0">
+          <div className="lg:hidden border-t bg-white flex items-center shrink-0">
             <button
               onClick={() => handleViewChange('customerList')}
               className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${currentView === 'customerList'

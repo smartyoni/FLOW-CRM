@@ -364,7 +364,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
   return (
     <div className="flex flex-col w-full h-full bg-gray-100 overflow-hidden">
       {/* Top Bar - Mobile Header */}
-      <div className="bg-white border-b p-3 flex items-center gap-3 shadow-sm shrink-0 md:hidden">
+      <div className="bg-white border-b p-3 flex items-center gap-3 shadow-sm shrink-0 lg:hidden">
         {/* Hamburger Button */}
         <button
           onClick={onMenuClick}
@@ -388,7 +388,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       </div>
 
       {/* Top Stage Tabs - 미팅 전 (Always Visible) */}
-      <div className="md:hidden bg-white border-b shrink-0 overflow-x-auto">
+      <div className="lg:hidden bg-white border-b shrink-0 overflow-x-auto">
         <div className="flex p-2 gap-2 min-w-max">
           {STAGE_ORDER.map(stage => {
             const config = STAGE_CONFIG[stage];
@@ -415,7 +415,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
 
       {/* Mobile Single Column View */}
       <div
-        className="flex-1 overflow-hidden md:hidden"
+        className="flex-1 overflow-hidden lg:hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -426,7 +426,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
       </div>
 
       {/* Desktop View - Hidden on Mobile */}
-      <div className="hidden md:flex md:flex-col w-full h-full">
+      <div className="hidden lg:flex lg:flex-col w-full h-full overflow-x-auto">
         {/* Stages (Pre-meeting) - DragDropContext Wrapper */}
         <div className="flex-1 overflow-x-auto p-3">
           <DragDropContext onDragEnd={onDragEnd}>

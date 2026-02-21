@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       fixed inset-y-0 left-0 z-30
 
       /* 데스크톱: 일반 플로우 */
-      md:flex md:relative
+      lg:flex lg:relative
 
       /* 애니메이션 */
       transform transition-transform duration-300 ease-in-out
@@ -50,10 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       /* 모바일 상태 */
       flex
       ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      md:translate-x-0
+      lg:translate-x-0
     `}>
       {/* 모바일 닫기 버튼 */}
-      <div className="md:hidden absolute top-4 right-4">
+      <div className="lg:hidden absolute top-4 right-4">
         <button
           onClick={handleMenuClick}
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-600 transition-colors"
@@ -75,11 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('customerList')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'customerList'
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${currentView === 'customerList'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl leading-none text-red-500">•</span>
@@ -93,11 +92,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('managingCustomer')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'managingCustomer'
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${currentView === 'managingCustomer'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl leading-none text-red-500">•</span>
@@ -111,11 +109,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('contractCustomer')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                currentView === 'contractCustomer'
+              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-colors ${currentView === 'contractCustomer'
                   ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-200'
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <span className="text-2xl leading-none text-red-500">•</span>
