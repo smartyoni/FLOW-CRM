@@ -20,6 +20,13 @@
     <script>
       tailwind.config = {
         theme: {
+          screens: {
+            'sm': '640px',
+            'md': { 'raw': '(min-width: 768px) and (orientation: landscape)' },
+            'lg': { 'raw': '(min-width: 1024px) and (orientation: landscape)' },
+            'xl': '1280px',
+            '2xl': '1536px',
+          },
           extend: {
             colors: {
               primary: '#2563eb', // Blue 600
