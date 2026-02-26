@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 try {
     console.log('Building Vite app...');
-    execSync('npx vite build', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') });
+    execSync('npx vite build', { stdio: 'inherit', cwd: path.resolve(__dirname, '..'), windowsHide: true });
 
     console.log('Copying index.html to 404.html...');
     const distPath = path.resolve(__dirname, '../dist');
@@ -23,7 +23,7 @@ try {
     }
 
     console.log('Deploying to gh-pages...');
-    execSync('npx gh-pages -d dist', { stdio: 'inherit', cwd: path.resolve(__dirname, '..') });
+    execSync('npx gh-pages -d dist', { stdio: 'inherit', cwd: path.resolve(__dirname, '..'), windowsHide: true });
 
     console.log('✅ Deployment successful!');
 } catch (error) {
