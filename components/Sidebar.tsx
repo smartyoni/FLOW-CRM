@@ -75,9 +75,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('customerList')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'customerList'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                : 'text-slate-300 hover:bg-slate-700/50'
+              className={`w-full flex items-center p-3 rounded-lg transition-colors group ${currentView === 'customerList'
+                ? 'bg-blue-600/20 text-blue-400'
+                // Cache bust comment to force new hash for PWA
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               <div className="flex items-center gap-3">
