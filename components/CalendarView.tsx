@@ -38,6 +38,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [viewEvent, setViewEvent] = useState<ManualEvent | null>(null);
   // 종일 일정 전체 보기 모달
   const [allDayModalEvents, setAllDayModalEvents] = useState<any[]>([]);
+  // 종일 일정 모달 드래그 앤 드롭 상태
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   // 캘린더 컨테이너 ref
   const calendarContainerRef = useRef<HTMLDivElement>(null);
 
@@ -129,6 +131,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         backgroundColor: '#eff6ff', // 은은한 파란색 (blue-50)
         borderColor: '#000000',     // 검정 외곽선
         textColor: '#1e3a8a',       // 진한 파란색 텍스트 (blue-900)
+        editable: true,             // 캘린더 드래그앤드롭 활성화
+        order: me.order || 0,       // 정렬 순서 적용
         extendedProps: { isManual: true, manualEvent: me }
       });
     });
@@ -169,6 +173,48 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
+  const handleEventDrop = async (info: any) => {
+    const { isManual, manualEvent } = info.event.extendedProps;
+    if (!isManual || !onUpdateManualEvent) {
+      info.revert();
+      return;
+    }
+
+    const newStart = info.event.allDay ? info.event.startStr : info.event.startStr.substring(0, 16);
+    const newEnd = info.event.end ? (info.event.allDay ? info.event.endStr : info.event.endStr.substring(0, 16)) : undefined;
+
+    try {
+      await onUpdateManualEvent(manualEvent.id, {
+        start: newStart,
+        end: newEnd,
+        allDay: info.event.allDay
+      });
+    } catch {
+      info.revert();
+    }
+  };
+
+  const handleEventResize = async (info: any) => {
+    const { isManual, manualEvent } = info.event.extendedProps;
+    if (!isManual || !onUpdateManualEvent) {
+      info.revert();
+      return;
+    }
+
+    const newStart = info.event.allDay ? info.event.startStr : info.event.startStr.substring(0, 16);
+    const newEnd = info.event.end ? (info.event.allDay ? info.event.endStr : info.event.endStr.substring(0, 16)) : undefined;
+
+    try {
+      await onUpdateManualEvent(manualEvent.id, {
+        start: newStart,
+        end: newEnd,
+        allDay: info.event.allDay
+      });
+    } catch {
+      info.revert();
+    }
+  };
+
   const handleDateSelect = (info: any) => {
     // 날짜/시간 선택 시: 새 수동 일정 추가 모달 열기
     // allDay 선택이면 날짜만 (YYYY-MM-DD), 아니면 datetime-local 형식
@@ -192,11 +238,48 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const handleAllDayLabelClick = () => {
     const todayEvents = events.filter(e => {
       if (!e.allDay) return false;
-      // 종일 이벤트는 모두 표시
       return true;
-    });
+    }).sort((a, b) => (a.order || 0) - (b.order || 0)); // 정렬 적용
+
     if (todayEvents.length > 0) {
       setAllDayModalEvents(todayEvents);
+    }
+  };
+
+  // 모달 내 순서 변경을 위한 드래그 핸들러
+  const handleModalDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox fallback
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleModalDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // 드롭 허용
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleModalDrop = async (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === targetIndex || !onUpdateManualEvent) {
+      setDraggedIdx(null);
+      return;
+    }
+
+    const eventsCopy = [...allDayModalEvents];
+    const item = eventsCopy.splice(draggedIdx, 1)[0];
+    eventsCopy.splice(targetIndex, 0, item);
+
+    setAllDayModalEvents(eventsCopy);
+    setDraggedIdx(null);
+
+    // 새 순서대로 order 부여하며 DB 업데이트
+    for (let i = 0; i < eventsCopy.length; i++) {
+      const ev = eventsCopy[i];
+      const manualEvent = ev.extendedProps?.manualEvent;
+      if (manualEvent) {
+        await onUpdateManualEvent(manualEvent.id, { order: i });
+      }
     }
   };
 
@@ -294,7 +377,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               right: 'dayGridMonth,timeGridWeek,timeGridDay'
             }}
             events={events}
+            eventOrder="order,start"
             eventClick={handleEventClick}
+            eventDrop={handleEventDrop}
+            eventResize={handleEventResize}
             selectable={true}
             select={handleDateSelect}
             views={{
@@ -338,22 +424,35 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </button>
             </div>
             <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
-              {allDayModalEvents.map((ev, idx) => (
-                <div
-                  key={ev.id || idx}
-                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors"
-                  style={{ borderLeft: `3px solid ${ev.borderColor || ev.backgroundColor || '#3b82f6'}` }}
-                >
+              {allDayModalEvents.map((ev, idx) => {
+                const isManual = ev.extendedProps?.isManual;
+                return (
                   <div
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ backgroundColor: ev.borderColor || ev.backgroundColor || '#3b82f6' }}
-                  ></div>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{ev.title}</p>
-                    <p className="text-xs text-slate-400">{ev.start}</p>
+                    key={ev.id || idx}
+                    draggable={isManual}
+                    onDragStart={isManual ? (e) => handleModalDragStart(e, idx) : undefined}
+                    onDragOver={isManual ? handleModalDragOver : undefined}
+                    onDrop={isManual ? (e) => handleModalDrop(e, idx) : undefined}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isManual
+                        ? 'cursor-move hover:bg-slate-100 bg-white ring-1 ring-slate-200 shadow-sm'
+                        : 'bg-slate-50 opacity-90'
+                      } ${draggedIdx === idx ? 'opacity-50' : ''}`}
+                    style={{ borderLeft: `3px solid ${ev.borderColor || ev.backgroundColor || '#3b82f6'}` }}
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: ev.borderColor || ev.backgroundColor || '#3b82f6' }}
+                    ></div>
+                    <div className="flex-1 flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{ev.title}</p>
+                        <p className="text-xs text-slate-400">{ev.start}</p>
+                      </div>
+                      {isManual && <i className="fas fa-grip-lines text-slate-300"></i>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
