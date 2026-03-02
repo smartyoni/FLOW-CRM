@@ -508,8 +508,12 @@ const App: React.FC = () => {
             ) : currentView === 'calendar' ? (
               <CalendarView
                 customers={customers}
+                manualEvents={manualEvents}
                 onSelectCustomer={handleSelectCustomer}
                 onMenuClick={() => setIsMobileSidebarOpen(true)}
+                onCreateManualEvent={createManualEvent}
+                onUpdateManualEvent={updateManualEvent}
+                onDeleteManualEvent={deleteManualEvent}
               />
             ) : (
               <CustomerList
