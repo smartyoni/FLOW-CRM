@@ -696,11 +696,12 @@ export const getManualEvents = async (): Promise<ManualEvent[]> => {
 export const createManualEvent = async (event: ManualEvent): Promise<void> => {
   try {
     const eventRef = doc(db, 'manual_events', event.id);
-    await setDoc(eventRef, {
-      ...event,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+    // undefined 값은 Firestore에 저장 불가능 — 제거 후 저장
+    const cleanData: Record<string, any> = {};
+    Object.entries({ ...event, createdAt: Date.now(), updatedAt: Date.now() }).forEach(([k, v]) => {
+      if (v !== undefined) cleanData[k] = v;
     });
+    await setDoc(eventRef, cleanData);
     console.log('✓ Manual event created:', event.id);
   } catch (error) {
     console.error('Error creating manual event:', error);
@@ -714,10 +715,12 @@ export const createManualEvent = async (event: ManualEvent): Promise<void> => {
 export const updateManualEvent = async (eventId: string, updates: Partial<ManualEvent>): Promise<void> => {
   try {
     const eventRef = doc(db, 'manual_events', eventId);
-    await updateDoc(eventRef, {
-      ...updates,
-      updatedAt: Date.now(),
+    // undefined 값 제거
+    const cleanUpdates: Record<string, any> = {};
+    Object.entries({ ...updates, updatedAt: Date.now() }).forEach(([k, v]) => {
+      if (v !== undefined) cleanUpdates[k] = v;
     });
+    await updateDoc(eventRef, cleanUpdates);
     console.log('✓ Manual event updated:', eventId);
   } catch (error) {
     console.error('Error updating manual event:', error);
