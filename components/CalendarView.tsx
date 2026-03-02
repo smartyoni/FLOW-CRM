@@ -208,7 +208,60 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         }
         .calendar-container .fc-day-today .fc-daygrid-day-number {
           color: #2563eb;
-          font-weight: 800;
+          background-color: #dbeafe;
+          border-radius: 50%;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 4px;
+          padding: 0 !important;
+        }
+
+        /* 모바일 헤더 최적화 */
+        @media (max-width: 768px) {
+          .calendar-container .fc-header-toolbar {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 2px !important;
+            margin-bottom: 0.75rem !important;
+            padding: 0 4px !important;
+          }
+          .calendar-container .fc-toolbar-chunk {
+            display: flex !important;
+            align-items: center !important;
+            gap: 2px !important;
+          }
+          .calendar-container .fc-toolbar-title {
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            margin: 0 !important;
+            max-width: 80px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+          }
+          .calendar-container .fc-button {
+            padding: 4px 6px !important;
+            font-size: 0.75rem !important;
+            height: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          .calendar-container .fc-toolbar-chunk:nth-child(2) {
+            flex: 1;
+            justify-content: center;
+          }
+          /* 버튼 그룹 간격 조정 */
+          .calendar-container .fc-button-group {
+            gap: 1px !important;
+          }
         }
         /* 시간구분선 뚜렷하게 */
         .calendar-container .fc-timegrid-slot {
