@@ -129,10 +129,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 titleFormat: { year: 'numeric', month: 'long' }
               },
               timeGridWeek: {
-                titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                titleFormat: { year: 'numeric', month: 'long' },
+                dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
               },
               timeGridDay: {
-                titleFormat: { year: 'numeric', month: 'long', day: 'numeric' }
+                titleFormat: { year: 'numeric', month: 'long' },
+                dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
               }
             }}
             locale="ko"
