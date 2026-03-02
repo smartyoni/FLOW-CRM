@@ -151,35 +151,48 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const handleDateSelect = (info: any) => {
     // 날짜/시간 선택 시: 새 수동 일정 추가 모달 열기
+    // allDay 선택이면 날짜만 (YYYY-MM-DD), 아니면 datetime-local 형식
+    const startStr = info.allDay
+      ? info.startStr  // YYYY-MM-DD
+      : info.startStr.substring(0, 16); // YYYY-MM-DDTHH:mm
+    const endStr = info.allDay
+      ? ''
+      : info.endStr.substring(0, 16);
     setModalData({
       id: undefined,
       title: '',
-      start: info.startStr.substring(0, 16),
-      end: info.endStr.substring(0, 16),
+      start: startStr,
+      end: endStr,
       description: ''
     });
     setIsModalOpen(true);
   };
 
   const handleSaveModal = async () => {
-    if (!modalData.title || !modalData.start) return;
+    if (!modalData.title) return;
+
+    // 시간 미입력 시 종일 일정으로 처리
+    const hasTime = modalData.start && modalData.start.includes('T');
+    const today = new Date().toISOString().split('T')[0];
+    const eventStart = modalData.start || today; // 시간 없으면 오늘 날짜
+    const isAllDay = !hasTime;
+
+    const eventPayload: any = {
+      title: modalData.title,
+      start: eventStart,
+      end: (!isAllDay && modalData.end) ? modalData.end : undefined,
+      description: modalData.description,
+      allDay: isAllDay
+    };
 
     if (modalData.id && onUpdateManualEvent) {
       // 업데이트
-      await onUpdateManualEvent(modalData.id, {
-        title: modalData.title,
-        start: modalData.start,
-        end: modalData.end || undefined,
-        description: modalData.description
-      });
+      await onUpdateManualEvent(modalData.id, eventPayload);
     } else if (onCreateManualEvent) {
       // 생성
       await onCreateManualEvent({
         id: Math.random().toString(36).substr(2, 9),
-        title: modalData.title,
-        start: modalData.start,
-        end: modalData.end || undefined,
-        description: modalData.description,
+        ...eventPayload,
         createdAt: Date.now()
       });
     }
@@ -285,7 +298,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1">시작 시간 <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">시작 시간 <span className="text-xs font-normal text-slate-400">(미입력 시 종일)</span></label>
                   <input
                     type="datetime-local"
                     value={modalData.start}
@@ -335,7 +348,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 </button>
                 <button
                   onClick={handleSaveModal}
-                  disabled={!modalData.title || !modalData.start}
+                  disabled={!modalData.title}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <i className="fas fa-check"></i>저장
