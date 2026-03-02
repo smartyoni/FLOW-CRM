@@ -4,8 +4,8 @@ import { Customer } from '../types';
 interface SidebarProps {
   isOpen?: boolean;
   onClose?: () => void;
-  currentView?: 'customerList' | 'managingCustomer' | 'contractCustomer';
-  onViewChange?: (view: 'customerList' | 'managingCustomer' | 'contractCustomer') => void;
+  currentView?: 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar';
+  onViewChange?: (view: 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar') => void;
   customers?: Customer[];
 }
 
@@ -28,7 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onClose?.();
   };
 
-  const handleViewClick = (view: 'customerList' | 'managingCustomer' | 'contractCustomer') => {
+  const handleViewClick = (view: 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar') => {
     onViewChange?.(view);
     onClose?.();
   };
@@ -120,6 +120,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-medium text-sm">계약~잔금</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'contractCustomer' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{contractCustomerCount}</span>
+            </button>
+          </li>
+
+          {/* 구분선 */}
+          <li className="pt-2 pb-1">
+            <div className="border-t border-slate-700/50 mx-2"></div>
+          </li>
+
+          {/* 메뉴 항목 4: 캘린더 */}
+          <li>
+            <button
+              onClick={() => handleViewClick('calendar')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'calendar'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                : 'text-slate-300 hover:bg-slate-700/50'
+                }`}
+            >
+              <i className={`fas fa-calendar-alt w-5 text-center ${currentView === 'calendar' ? 'text-white' : 'text-slate-400'}`}></i>
+              <span className="font-medium text-sm">캘린더</span>
             </button>
           </li>
         </ul>

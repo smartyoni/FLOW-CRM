@@ -476,34 +476,31 @@ export function extractFeatures(text: string): string {
  * // returns '경동미르웰'
  */
 export function extractPropertyNameNaver(text: string): string {
-  const lines = normalizeText(text).split('\n').filter(l => l.trim());
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
   if (lines.length === 0) return '';
-
-  const firstLine = lines[0];
-
-  // "숫자동 숫자층" 패턴 제거
-  const cleaned = firstLine.replace(/\d+동\s*\d+층/g, '').trim();
-
-  // 건물명은 보통 마지막 단어들
-  const parts = cleaned.split(/\s+/);
-
-  // 지역명(2-3개)을 제거하고 나머지를 건물명으로
-  if (parts.length >= 3) {
-    return parts.slice(2).join(' ');
-  }
-
-  return cleaned;
+  // 규칙: 첫 줄은 소재지(건물명)
+  return lines[0];
 }
 
 /**
  * 네이버부동산 형식에서 부동산명을 추출합니다.
  */
 export function extractAgencyNameNaver(text: string): string {
-  // "중개사: 우리중개사(우리중개법인)" 패턴
-  const agencyMatch = text.match(/중개사[:：]\s*([^(\n]+)/);
+  // "중개사" 키워드 이후에 나오는 부동산명 추출
+  // 보통 "중개사 ~공인중개사사무소" 또는 "~부동산" 형식
+  const agencyMatch = text.match(/중개사\s+([^\s\n]+(?:공인중개사사무소|공인중개사|부동산|중개법인))/);
   if (agencyMatch) {
     return agencyMatch[1].trim();
   }
+
+  // 대체 패턴 (예시 텍스트 기준)
+  const lines = text.split('\n').map(l => l.trim());
+  const brokerIdx = lines.findIndex(l => l === '중개사');
+  if (brokerIdx !== -1 && lines[brokerIdx + 1]) {
+    // "중개사" 다음 줄에 이름이 있는 경우 (길찾기 등 특수문자 제거)
+    return lines[brokerIdx + 1].replace(/길찾기.*/, '').trim();
+  }
+
   return '';
 }
 
@@ -513,36 +510,41 @@ export function extractAgencyNameNaver(text: string): string {
  * 우선순위: 유선번호(02, 지역번호) > 휴대전화(010)
  */
 export function extractContactNumberNaver(text: string): string {
-  // 모든 전화번호 추출
-  const phonePattern = /(전화|TEL|휴대폰|핸드폰)[\s:：]*([0-9\-]+)/gi;
-  const matches = [...text.matchAll(phonePattern)];
+  // 중개사 정보 이후의 전화번호 추출 시도
+  const brokerIdx = text.indexOf('중개사');
+  const searchText = brokerIdx !== -1 ? text.substring(brokerIdx) : text;
 
-  if (matches.length === 0) return '';
+  // "전화" 또는 "연락처" 키워드 뒤의 번호
+  const phoneMatch = searchText.match(/(?:전화|TEL|휴대폰|핸드폰)[\s:：]*([0-9\-,]+)/i);
+  if (phoneMatch) {
+    const numbers = phoneMatch[1].split(',')[0].trim();
+    return normalizePhoneNumber(numbers);
+  }
 
-  const phones = matches.map(m => normalizePhoneNumber(m[2]));
+  // 010 등으로 시작하는 패턴
+  const mobileMatch = searchText.match(/(010-\d{3,4}-\d{4}|0\d{1,2}-\d{3,4}-\d{4})/);
+  if (mobileMatch) {
+    return mobileMatch[1];
+  }
 
-  // 우선순위 규칙: 유선번호(지역번호) > 휴대전화(010)
-  // 1. 서울 지역번호 (02)
-  const seoul = phones.find(p => p.startsWith('02-'));
-  if (seoul) return seoul;
-
-  // 2. 기타 지역번호 (031, 051 등, 010 제외)
-  const regional = phones.find(p => /^0\d{1,2}-/.test(p) && !p.startsWith('010-'));
-  if (regional) return regional;
-
-  // 3. 휴대전화 (010)
-  const mobile = phones.find(p => p.startsWith('010-'));
-  if (mobile) return mobile;
-
-  // 4. 그 외 번호
-  return phones[0] || '';
+  return '';
 }
 
 /**
  * 네이버부동산 형식에서 보증금/전세금을 추출합니다.
  */
 export function extractDepositNaver(text: string): string {
-  // "매매가:", "전세금:", "보증금:" 패턴
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length >= 2) {
+    // 규칙: 둘째 줄은 임대료 (예: 월세1억 5,000/10)
+    const rentLine = lines[1];
+    const match = rentLine.match(/(?:월세|전세|매매)?\s*([^/]+)/);
+    if (match) {
+      return match[1].trim();
+    }
+  }
+
+  // 기존 방식 백업
   const match = text.match(/(?:매매가|전세금|보증금)[:：]\s*([^\n/]+)/);
   if (match) {
     return match[1].trim();
@@ -554,6 +556,16 @@ export function extractDepositNaver(text: string): string {
  * 네이버부동산 형식에서 월세를 추출합니다.
  */
 export function extractMonthlyRentNaver(text: string): string {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length >= 2) {
+    // 규칙: 둘째 줄은 임대료 (예: 월세1억 5,000/10)
+    const rentLine = lines[1];
+    const parts = rentLine.split('/');
+    if (parts.length > 1) {
+      return parts[1].trim();
+    }
+  }
+
   const match = text.match(/월[\s]*세[:：]\s*([^\n]+)/);
   if (match) {
     return match[1].trim();
@@ -565,11 +577,28 @@ export function extractMonthlyRentNaver(text: string): string {
  * 네이버부동산 형식에서 전용면적을 추출합니다.
  */
 export function extractAreaNaver(text: string): string {
-  // "계약/전용면적: 84.5㎡"
-  const match = text.match(/계약\/전용면적[:：]\s*([\d.]+)㎡?/);
+  // 규칙: "면적:" 다음의 /로 구분되는 2개의 면적 중 작은 면적 (보통 뒤에 위치)
+  const match = text.match(/면적[:：]\s*([\d.]+)[^\d/]*\/([\s\d.]+)/);
   if (match) {
-    return match[1];
+    const area1 = parseFloat(match[1]);
+    const area2 = parseFloat(match[2].trim());
+    if (!isNaN(area1) && !isNaN(area2)) {
+      return Math.min(area1, area2).toString();
+    }
+    return match[2].trim();
   }
+
+  // "계약/전용면적: 84.5㎡"
+  const altMatch = text.match(/계약\/전용면적[:：]?\s*([\d.]+)[^/]*\/([\s\d.]+)/);
+  if (altMatch) {
+    const area1 = parseFloat(altMatch[1]);
+    const area2 = parseFloat(altMatch[2].trim());
+    if (!isNaN(area1) && !isNaN(area2)) {
+      return Math.min(area1, area2).toString();
+    }
+    return altMatch[2].trim();
+  }
+
   return '';
 }
 
@@ -614,11 +643,14 @@ export function extractBuildingNaver(text: string): string {
  * "해당층/총층:" 라벨 사용
  */
 export function extractFloorNaver(text: string): string {
-  // "해당층/총층: 10층"
-  const match = text.match(/해당층\/총층[:：]\s*(\d+)층?/);
+  // "해당층/총층: 10/14층" 또는 "해당층/총층 10/14층"
+  const match = text.match(/해당층\/총층[\s:：]*(\d+)\//);
   if (match) {
     return match[1] + '층';
   }
+  // 백업
+  const altMatch = text.match(/(\d+)층/);
+  if (altMatch) return altMatch[1] + '층';
   return '';
 }
 
@@ -626,8 +658,8 @@ export function extractFloorNaver(text: string): string {
  * 네이버부동산 형식에서 입주가능일을 추출합니다.
  */
 export function extractMoveInDateNaver(text: string): string {
-  // "입주가능일:" 패턴
-  const match = text.match(/입주가능일[:：]\s*([^\n]+)/);
+  // "입주가능일:" 또는 "입주가능일 " 패턴
+  const match = text.match(/입주가능일[\s:：]*([^\n\t]+)/);
   if (match) {
     return match[1].trim();
   }
@@ -638,8 +670,8 @@ export function extractMoveInDateNaver(text: string): string {
  * 네이버부동산 형식에서 특징을 추출합니다.
  */
 export function extractFeaturesNaver(text: string): string {
-  // "매물특징:" 패턴
-  const match = text.match(/매물특징[:：]\s*([^\n]+)/);
+  // "매물특징:" 또는 "매물특징 " 패턴
+  const match = text.match(/매물특징[\s:：]*([^\n\t]+)/);
   if (match) {
     return match[1].trim();
   }
@@ -651,19 +683,9 @@ export function extractFeaturesNaver(text: string): string {
  * 첫 줄에서 법정동 정보를 추출합니다.
  */
 export function extractJibunNaver(text: string): string {
-  const lines = normalizeText(text).split('\n').filter(l => l.trim());
-  if (lines.length === 0) return '';
-
-  const firstLine = lines[0];
-  // 첫 줄에서 "지역 법정동" 부분만 추출
-  const parts = firstLine.split(/\s+/);
-
-  // 보통 첫 2-3개가 지역 정보
-  if (parts.length >= 2) {
-    return parts.slice(0, 2).join(' ');
-  }
-
-  return firstLine;
+  // 사용자의 요청에 따라 하단 실제주소(부동산 소재지) 파싱을 중단합니다.
+  // 네이버 부동산의 경우 지번은 사용자가 직접 입력합니다.
+  return '';
 }
 
 /**
@@ -719,24 +741,24 @@ export function generateStructuredPropertyInfo(rawInput: string): string {
  * // { roomName: '경동미르웰', jibun: '강남구 학동', agency: '우리중개사', agencyPhone: '02-542-6666' }
  */
 export function parsePropertyDetails(rawInput: string): ParsedPropertyFields {
-  try {
-    const defaultFields: ParsedPropertyFields = {
-      roomName: '',
-      jibun: '',
-      agency: '',
-      agencyPhone: '',
-      deposit: '',
-      monthlyRent: '',
-      area: '',
-      pyeong: '',
-      rooms: '',
-      bathrooms: '',
-      building: '',
-      floor: '',
-      moveInDate: '',
-      features: ''
-    };
+  const defaultFields: ParsedPropertyFields = {
+    roomName: '',
+    jibun: '',
+    agency: '',
+    agencyPhone: '',
+    deposit: '',
+    monthlyRent: '',
+    area: '',
+    pyeong: '',
+    rooms: '',
+    bathrooms: '',
+    building: '',
+    floor: '',
+    moveInDate: '',
+    features: ''
+  };
 
+  try {
     if (!rawInput || !rawInput.trim()) {
       return defaultFields;
     }
@@ -966,18 +988,32 @@ export function generateStructuredPropertyInfoByPlatform(
     ? `${fields.deposit}/${fields.monthlyRent}`
     : (fields.deposit || fields.monthlyRent || '미등록');
 
-  // 구조정보 포맷: "29.47㎡ (전용 8.9평)/1방,욕실1"
-  const structure = fields.area && fields.rooms && fields.bathrooms
-    ? `${fields.area}㎡ (전용 ${fields.pyeong}평)/${fields.rooms}방,욕실${fields.bathrooms}`
-    : '미등록';
+  // 구조정보 포맷: "23.84㎡ (7.2평)"
+  let structure = '미등록';
+  if (fields.area) {
+    const pyeongValue = calculatePyeong(fields.area);
+    structure = `${fields.area}㎡ (${pyeongValue}평)`;
 
-  // 동/층 포맷: "1동 / 7층"
+    // TEN인 경우 방/욕실 정보 추가 유지
+    if (platform === 'TEN' && fields.rooms && fields.bathrooms) {
+      structure += ` / 방${fields.rooms},욕실${fields.bathrooms}`;
+    }
+  }
+
+  // 동/층 포맷: "1동 / 10층"
   const buildingFloor = (fields.building && fields.floor)
     ? `${fields.building} / ${fields.floor}`
-    : '미등록';
+    : (fields.floor || '미등록');
 
-  // 특징 포맷: "{입주가능일} {특징/비고}"
-  const features = [fields.moveInDate, fields.features].filter(f => f).join(' ') || '미등록';
+  // 특징 포맷: "{매물특징} ({입주가능일})"
+  let features = '미등록';
+  if (platform === 'NAVER') {
+    const mainFeatures = fields.features || '';
+    const moveIn = fields.moveInDate ? `(${fields.moveInDate})` : '';
+    features = `${mainFeatures} ${moveIn}`.trim() || '미등록';
+  } else {
+    features = [fields.moveInDate, fields.features].filter(f => f).join(' ') || '미등록';
+  }
 
   return `🏠 매물정보
 • 소재지: ${fields.roomName || '미등록'}(${fields.jibun || '미등록'})

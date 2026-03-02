@@ -8,12 +8,10 @@ service firebase.storage {
 
     // Allow write/delete for photos in the correct structure
     match /customers/{customerId}/meetings/{meetingId}/properties/{propertyId}/{photoFile} {
-      // Allow upload if file is an image and under 1MB
       allow write: if request.resource.size < 1 * 1024 * 1024
                    && request.resource.contentType.matches('image/.*');
-
-      // Allow delete
       allow delete: if true;
     }
+
   }
 }

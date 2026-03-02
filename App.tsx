@@ -6,10 +6,11 @@ import { CustomerForm } from './components/CustomerForm';
 import { Sidebar } from './components/Sidebar';
 import { ManagingCustomerView } from './components/ManagingCustomerView';
 import { ContractCustomerView } from './components/ContractCustomerView';
+import { CalendarView } from './components/CalendarView';
 import { AppProvider } from './contexts/AppContext';
 import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays, migrateStageFromMeetingComplete, migrateCheckpointFromContractToBank } from './services/firestore';
 
-type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer';
+type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -237,6 +238,7 @@ const App: React.FC = () => {
       // Persist to Firestore
       await createCustomer(customer);
       console.log(`[App] ✅ Customer added successfully: ${customer.id}`);
+
     } catch (err) {
       console.error('[App] ❌ Error adding customer:', err);
       setError('고객을 추가할 수 없습니다.');
@@ -276,6 +278,7 @@ const App: React.FC = () => {
       // Persist to Firestore
       await deleteCustomer(id);
       setDeleteConfirmation(null);
+
     } catch (err) {
       console.error('고객 삭제 실패:', err);
       setError('고객을 삭제할 수 없습니다.');
@@ -346,6 +349,7 @@ const App: React.FC = () => {
       // Persist to Firestore
       await updateCustomer(updatedCustomer.id, updatedCustomer);
       console.log(`[App] ✅ Customer updated successfully: ${updatedCustomer.id}`);
+
     } catch (err) {
       console.error('[App] ❌ Error updating customer:', err);
       setError('고객을 수정할 수 없습니다.');
@@ -471,6 +475,12 @@ const App: React.FC = () => {
                 onDelete={handleDeleteCustomer}
                 onMenuClick={() => setIsMobileSidebarOpen(true)}
                 onUpdate={handleUpdateCustomer}
+              />
+            ) : currentView === 'calendar' ? (
+              <CalendarView
+                customers={customers}
+                onSelectCustomer={handleSelectCustomer}
+                onMenuClick={() => setIsMobileSidebarOpen(true)}
               />
             ) : (
               <CustomerList
