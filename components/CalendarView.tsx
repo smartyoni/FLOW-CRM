@@ -76,7 +76,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           id: `movein-${customer.id}`,
           title: `🏠 입주: ${customer.name}`,
           start: customer.moveInDate,
-          color: '#8b5cf6', // violet-500
+          backgroundColor: '#ede9fe', // soft violet
+          borderColor: '#a78bfa',
+          textColor: '#5b21b6',
           allDay: true,
           extendedProps: { customer, type: 'movein' }
         });
@@ -88,9 +90,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           id: `reg-${customer.id}`,
           title: `📋 접수: ${customer.name}`,
           start: customer.registrationDate,
-          backgroundColor: '#f1f5f9', // soft slate
-          borderColor: '#94a3b8',
-          textColor: '#475569',
+          backgroundColor: '#dbeafe', // soft blue
+          borderColor: '#60a5fa',
+          textColor: '#1e40af',
           allDay: true,
           extendedProps: { customer, type: 'registration' }
         });
@@ -302,17 +304,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           animation: slideDown 0.3s ease-out;
         }
 
-        @media (max-width: 640px) {
-          .calendar-container .fc-toolbar {
-            flex-direction: column;
-            gap: 10px;
-          }
-          .calendar-container .fc-toolbar-chunk {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-          }
-        }
       `}</style>
     </div>
   );
