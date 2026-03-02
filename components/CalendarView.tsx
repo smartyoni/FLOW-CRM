@@ -81,6 +81,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           extendedProps: { customer, type: 'movein' }
         });
       }
+
+      // 6. 접수일
+      if (customer.registrationDate) {
+        allEvents.push({
+          id: `reg-${customer.id}`,
+          title: `📋 접수: ${customer.name}`,
+          start: customer.registrationDate,
+          backgroundColor: '#f1f5f9', // soft slate
+          borderColor: '#94a3b8',
+          textColor: '#475569',
+          allDay: true,
+          extendedProps: { customer, type: 'registration' }
+        });
+      }
     });
 
     return allEvents;
