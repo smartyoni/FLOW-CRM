@@ -1,4 +1,4 @@
-import { Customer, Meeting, Property, ChecklistItem, AppSettings, ClipboardCategory } from '../types';
+import { Customer, Meeting, Property, ChecklistItem, AppSettings, ClipboardCategory, ManualEvent } from '../types';
 import { db } from './firebase';
 import {
   collection,
@@ -589,7 +589,7 @@ export const subscribeToContractClipboard = (
     return unsubscribe;
   } catch (error) {
     console.error('Error setting up contract clipboard listener:', error);
-    return () => {};
+    return () => { };
   }
 };
 
@@ -665,6 +665,97 @@ export const subscribeToPaymentClipboard = (
     return unsubscribe;
   } catch (error) {
     console.error('Error setting up payment clipboard listener:', error);
-    return () => {};
+    return () => { };
   }
+};
+// =====================
+// MANUAL EVENT OPERATIONS
+// =====================
+
+/**
+ * Fetch all manual events
+ */
+export const getManualEvents = async (): Promise<ManualEvent[]> => {
+  try {
+    const eventsRef = collection(db, 'manual_events');
+    const snapshot = await getDocs(query(eventsRef, orderBy('start', 'asc')));
+
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ManualEvent));
+  } catch (error) {
+    console.error('Error fetching manual events:', error);
+    return [];
+  }
+};
+
+/**
+ * Create a new manual event
+ */
+export const createManualEvent = async (event: ManualEvent): Promise<void> => {
+  try {
+    const eventRef = doc(db, 'manual_events', event.id);
+    await setDoc(eventRef, {
+      ...event,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    console.log('✓ Manual event created:', event.id);
+  } catch (error) {
+    console.error('Error creating manual event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update a manual event
+ */
+export const updateManualEvent = async (eventId: string, updates: Partial<ManualEvent>): Promise<void> => {
+  try {
+    const eventRef = doc(db, 'manual_events', eventId);
+    await updateDoc(eventRef, {
+      ...updates,
+      updatedAt: Date.now(),
+    });
+    console.log('✓ Manual event updated:', eventId);
+  } catch (error) {
+    console.error('Error updating manual event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete a manual event
+ */
+export const deleteManualEvent = async (eventId: string): Promise<void> => {
+  try {
+    const eventRef = doc(db, 'manual_events', eventId);
+    await deleteDoc(eventRef);
+    console.log('✓ Manual event deleted:', eventId);
+  } catch (error) {
+    console.error('Error deleting manual event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Real-time listener for manual events
+ */
+export const subscribeToManualEvents = (callback: (events: ManualEvent[]) => void): (() => void) => {
+  const eventsRef = collection(db, 'manual_events');
+  const q = query(eventsRef, orderBy('start', 'asc'));
+
+  console.log('[Firestore] 🔄 Setting up real-time listener for manual events');
+
+  return onSnapshot(q, (snapshot) => {
+    const events = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ManualEvent));
+    callback(events);
+  }, (error) => {
+    console.error('[Firestore] ❌ Error in manual events listener:', error);
+    callback([]);
+  });
 };

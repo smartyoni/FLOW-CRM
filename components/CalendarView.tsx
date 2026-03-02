@@ -3,23 +3,37 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Customer } from '../types';
+import { Customer, ManualEvent } from '../types';
 import { storage } from '../services/firebase';
 
 interface CalendarViewProps {
   customers: Customer[];
+  manualEvents?: ManualEvent[];
   onSelectCustomer: (customer: Customer) => void;
   onMenuClick?: () => void;
+  onCreateManualEvent?: (event: ManualEvent) => Promise<void>;
+  onUpdateManualEvent?: (id: string, updates: Partial<ManualEvent>) => Promise<void>;
+  onDeleteManualEvent?: (id: string) => Promise<void>;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
   customers,
+  manualEvents = [],
   onSelectCustomer,
-  onMenuClick
+  onMenuClick,
+  onCreateManualEvent,
+  onUpdateManualEvent,
+  onDeleteManualEvent
 }) => {
   // 화면 크기에 따른 초기 뷰 설정
   const isMobile = window.innerWidth < 1024;
   const initialView = isMobile ? 'timeGridDay' : 'dayGridMonth';
+
+  // 수동 일정 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<{ id?: string, title: string, start: string, end: string, description: string }>({
+    title: '', start: '', end: '', description: ''
+  });
 
   // 고객 데이터를 FullCalendar 이벤트 형식으로 변환
   const events = useMemo(() => {
@@ -99,13 +113,85 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       }
     });
 
+    // 수동 일정 추가
+    manualEvents.forEach(me => {
+      allEvents.push({
+        id: `manual-${me.id}`,
+        title: me.title,
+        start: me.start,
+        end: me.end,
+        backgroundColor: me.color || '#3b82f6', // 기본 파란색 (blue-500)
+        borderColor: me.color || '#2563eb',
+        textColor: '#ffffff',
+        extendedProps: { isManual: true, manualEvent: me }
+      });
+    });
+
     return allEvents;
-  }, [customers]);
+  }, [customers, manualEvents]);
 
   const handleEventClick = (info: any) => {
-    const customer = info.event.extendedProps.customer;
-    if (customer) {
+    const { isManual, manualEvent, customer } = info.event.extendedProps;
+
+    if (isManual && manualEvent) {
+      // 수동 일정 클릭 시: 수정/삭제 모달 열기
+      setModalData({
+        id: manualEvent.id,
+        title: manualEvent.title,
+        start: manualEvent.start.substring(0, 16), // datetime-local format format string logic
+        end: manualEvent.end ? manualEvent.end.substring(0, 16) : '',
+        description: manualEvent.description || ''
+      });
+      setIsModalOpen(true);
+    } else if (customer) {
+      // 기존 자동 일정 클릭 시: 고객 상세로 이동
       onSelectCustomer(customer);
+    }
+  };
+
+  const handleDateSelect = (info: any) => {
+    // 날짜/시간 선택 시: 새 수동 일정 추가 모달 열기
+    setModalData({
+      id: undefined,
+      title: '',
+      start: info.startStr.substring(0, 16),
+      end: info.endStr.substring(0, 16),
+      description: ''
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSaveModal = async () => {
+    if (!modalData.title || !modalData.start) return;
+
+    if (modalData.id && onUpdateManualEvent) {
+      // 업데이트
+      await onUpdateManualEvent(modalData.id, {
+        title: modalData.title,
+        start: modalData.start,
+        end: modalData.end || undefined,
+        description: modalData.description
+      });
+    } else if (onCreateManualEvent) {
+      // 생성
+      await onCreateManualEvent({
+        id: Math.random().toString(36).substr(2, 9),
+        title: modalData.title,
+        start: modalData.start,
+        end: modalData.end || undefined,
+        description: modalData.description,
+        createdAt: Date.now()
+      });
+    }
+    setIsModalOpen(false);
+  };
+
+  const handleDeleteModal = async () => {
+    if (modalData.id && onDeleteManualEvent) {
+      if (window.confirm('이 일정을 삭제하시겠습니까?')) {
+        await onDeleteManualEvent(modalData.id);
+        setIsModalOpen(false);
+      }
     }
   };
 
@@ -140,6 +226,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             }}
             events={events}
             eventClick={handleEventClick}
+            selectable={true}
+            select={handleDateSelect}
             views={{
               dayGridMonth: {
                 titleFormat: { year: 'numeric', month: 'long' }
@@ -166,6 +254,97 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           />
         </div>
       </div>
+
+      {/* 수동 일정 추가/수정 모달 */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slideDown">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800">
+                {modalData.id ? '일정 수정' : '새 일정 추가'}
+              </h3>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <i className="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">일정 제목 <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={modalData.title}
+                  onChange={e => setModalData({ ...modalData, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="일정 제목을 입력하세요"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">시작 시간 <span className="text-red-500">*</span></label>
+                  <input
+                    type="datetime-local"
+                    value={modalData.start}
+                    onChange={e => setModalData({ ...modalData, start: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">종료 시간</label>
+                  <input
+                    type="datetime-local"
+                    value={modalData.end}
+                    onChange={e => setModalData({ ...modalData, end: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">설명</label>
+                <textarea
+                  value={modalData.description}
+                  onChange={e => setModalData({ ...modalData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-none"
+                  rows={3}
+                  placeholder="일정에 대한 상세 설명을 입력하세요"
+                />
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              {modalData.id ? (
+                <button
+                  onClick={handleDeleteModal}
+                  className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
+                >
+                  <i className="fas fa-trash-alt mr-2"></i>삭제
+                </button>
+              ) : <div></div>}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-lg font-medium transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleSaveModal}
+                  disabled={!modalData.title || !modalData.start}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <i className="fas fa-check"></i>저장
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         .calendar-container .fc {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Customer } from './types';
+import { Customer, ManualEvent } from './types';
 import { CustomerList } from './components/CustomerList';
 import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
@@ -8,12 +8,27 @@ import { ManagingCustomerView } from './components/ManagingCustomerView';
 import { ContractCustomerView } from './components/ContractCustomerView';
 import { CalendarView } from './components/CalendarView';
 import { AppProvider } from './contexts/AppContext';
-import { subscribeToCustomers, subscribeToCustomer, createCustomer, deleteCustomer, updateCustomer, generateId, migrateSubcollectionsToArrays, migrateStageFromMeetingComplete, migrateCheckpointFromContractToBank } from './services/firestore';
+import {
+  subscribeToCustomers,
+  subscribeToCustomer,
+  createCustomer,
+  deleteCustomer,
+  updateCustomer,
+  generateId,
+  migrateSubcollectionsToArrays,
+  migrateStageFromMeetingComplete,
+  migrateCheckpointFromContractToBank,
+  subscribeToManualEvents,
+  createManualEvent,
+  updateManualEvent,
+  deleteManualEvent
+} from './services/firestore';
 
 type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar';
 
 const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [manualEvents, setManualEvents] = useState<ManualEvent[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -110,6 +125,20 @@ const App: React.FC = () => {
       console.error('[App] ❌ Firebase 연결 오류:', err);
       setError('데이터를 로드할 수 없습니다. Firebase 연결을 확인해주세요.');
       setLoading(false);
+    }
+  }, []);
+
+  // Real-time listener for manual events
+  useEffect(() => {
+    console.log('[App] 🚀 Initializing manual events real-time listener');
+    try {
+      const unsubscribe = subscribeToManualEvents((fetchedEvents) => {
+        console.log(`[App] 📥 Received ${fetchedEvents.length} manual events`);
+        setManualEvents(fetchedEvents);
+      });
+      return () => unsubscribe();
+    } catch (err) {
+      console.error('[App] ❌ Manual events subscription error:', err);
     }
   }, []);
 

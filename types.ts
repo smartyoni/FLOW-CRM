@@ -90,6 +90,17 @@ export interface ClipboardCategory {
   createdAt: number;
 }
 
+export interface ManualEvent {
+  id: string;
+  title: string;
+  start: string; // ISO string
+  end?: string;  // ISO string
+  description?: string;
+  allDay?: boolean;
+  color?: string;
+  createdAt: number;
+}
+
 export interface AppSettings {
   contractClipboard: ClipboardCategory[];
   paymentClipboard: ClipboardCategory[];
