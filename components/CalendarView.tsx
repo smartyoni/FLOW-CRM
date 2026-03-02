@@ -367,7 +367,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           --fc-button-hover-bg-color: #f1f5f9;
           --fc-button-active-bg-color: #cbd5e1;
           --fc-border-color: #cbd5e1; /* 진해진 테두리 색상 */
-          --fc-today-bg-color: #eff6ff;
+          --fc-today-bg-color: #fff1f2;
           font-family: inherit;
         }
         .calendar-container .fc-scrollgrid {
@@ -417,8 +417,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           text-decoration: underline !important;
         }
         .calendar-container .fc-day-today .fc-daygrid-day-number {
-          color: #2563eb;
-          background-color: #dbeafe;
+          color: #dc2626;
+          background-color: #fee2e2;
           border-radius: 50%;
           width: 32px;
           height: 32px;
