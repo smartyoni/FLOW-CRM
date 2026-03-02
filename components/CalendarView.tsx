@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -36,6 +36,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   });
   // 수동 일정 보기 모달 상태
   const [viewEvent, setViewEvent] = useState<ManualEvent | null>(null);
+  // 종일 일정 전체 보기 모달
+  const [allDayModalEvents, setAllDayModalEvents] = useState<any[]>([]);
+  // 캘린더 컨테이너 ref
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
 
   // 고객 데이터를 FullCalendar 이벤트 형식으로 변환
   const events = useMemo(() => {
@@ -184,6 +188,42 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setIsModalOpen(true);
   };
 
+  // 종일 라벨 클릭 시 현재 캘린더 날짜의 종일 일정만 모달로 표시
+  const handleAllDayLabelClick = () => {
+    const todayEvents = events.filter(e => {
+      if (!e.allDay) return false;
+      // 종일 이벤트는 모두 표시
+      return true;
+    });
+    if (todayEvents.length > 0) {
+      setAllDayModalEvents(todayEvents);
+    }
+  };
+
+  // 컴플리트 후 종일 라벨에 클릭 이벤트 연결
+  useEffect(() => {
+    const container = calendarContainerRef.current;
+    if (!container) return;
+
+    const attachListener = () => {
+      // timeGrid 뷰의 종일 라벨 셀 (.fc-timegrid-axis)
+      const allDayLabel = container.querySelector('.fc-timegrid-axis');
+      if (allDayLabel) {
+        const handler = (e: Event) => {
+          e.stopPropagation();
+          handleAllDayLabelClick();
+        };
+        allDayLabel.addEventListener('click', handler);
+        return () => allDayLabel.removeEventListener('click', handler);
+      }
+    };
+
+    // 랜더링 완료 후 연결
+    const timer = setTimeout(attachListener, 500);
+    return () => clearTimeout(timer);
+  }, [events]);
+
+
   const handleSaveModal = async () => {
     if (!modalData.title) return;
 
@@ -244,7 +284,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
       {/* 캘린더 메인 영역 */}
       <div className="flex-1 p-4 overflow-hidden">
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container">
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container" ref={calendarContainerRef}>
           <FullCalendar
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView={initialView}
@@ -270,6 +310,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
               }
             }}
+            allDayText="종일"
             locale="ko"
             height="100%"
             dayMaxEvents={true}
@@ -283,6 +324,40 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           />
         </div>
       </div>
+
+      {/* 종일 일정 전체 보기 모달 */}
+      {allDayModalEvents.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setAllDayModalEvents([])}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-slideDown" onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i className="fas fa-calendar-day text-blue-500"></i>종일 일정 전체 보기
+              </h3>
+              <button onClick={() => setAllDayModalEvents([])} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
+              {allDayModalEvents.map((ev, idx) => (
+                <div
+                  key={ev.id || idx}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors"
+                  style={{ borderLeft: `3px solid ${ev.borderColor || ev.backgroundColor || '#3b82f6'}` }}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: ev.borderColor || ev.backgroundColor || '#3b82f6' }}
+                  ></div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{ev.title}</p>
+                    <p className="text-xs text-slate-400">{ev.start}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 수동 일정 보기 모달 (Google Calendar 스타일) */}
       {viewEvent && (
@@ -436,6 +511,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       )}
 
       <style>{`
+        .calendar-container .fc-timegrid-axis {
+          cursor: pointer;
+          user-select: none;
+        }
+        .calendar-container .fc-timegrid-axis:hover {
+          background-color: #eff6ff;
+          color: #2563eb;
+        }
+        .calendar-container .fc-timegrid-axis-frame {
+          font-weight: 600;
+        }
         .calendar-container .fc {
           --fc-button-bg-color: #f8fafc;
           --fc-button-border-color: #e2e8f0;
