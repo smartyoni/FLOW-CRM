@@ -126,9 +126,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         title: me.title,
         start: me.start,
         end: me.end,
-        backgroundColor: me.color || '#3b82f6', // 기본 파란색 (blue-500)
-        borderColor: me.color || '#2563eb',
-        textColor: '#ffffff',
+        backgroundColor: '#eff6ff', // 은은한 파란색 (blue-50)
+        borderColor: '#000000',     // 검정 외곽선
+        textColor: '#1e3a8a',       // 진한 파란색 텍스트 (blue-900)
         extendedProps: { isManual: true, manualEvent: me }
       });
     });
