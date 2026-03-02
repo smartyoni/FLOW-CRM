@@ -29,11 +29,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const isMobile = window.innerWidth < 1024;
   const initialView = isMobile ? 'timeGridDay' : 'dayGridMonth';
 
-  // 수동 일정 모달 상태
+  // 수동 일정 편집 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalData, setModalData] = useState<{ id?: string, title: string, start: string, end: string, description: string }>({
     title: '', start: '', end: '', description: ''
   });
+  // 수동 일정 보기 모달 상태
+  const [viewEvent, setViewEvent] = useState<ManualEvent | null>(null);
 
   // 고객 데이터를 FullCalendar 이벤트 형식으로 변환
   const events = useMemo(() => {
@@ -134,18 +136,32 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     const { isManual, manualEvent, customer } = info.event.extendedProps;
 
     if (isManual && manualEvent) {
-      // 수동 일정 클릭 시: 수정/삭제 모달 열기
-      setModalData({
-        id: manualEvent.id,
-        title: manualEvent.title,
-        start: manualEvent.start.substring(0, 16), // datetime-local format format string logic
-        end: manualEvent.end ? manualEvent.end.substring(0, 16) : '',
-        description: manualEvent.description || ''
-      });
-      setIsModalOpen(true);
+      // 수동 일정 클릭 시: 보기 모달 열기
+      setViewEvent(manualEvent);
     } else if (customer) {
       // 기존 자동 일정 클릭 시: 고객 상세로 이동
       onSelectCustomer(customer);
+    }
+  };
+
+  const openEditFromView = () => {
+    if (!viewEvent) return;
+    setModalData({
+      id: viewEvent.id,
+      title: viewEvent.title,
+      start: viewEvent.start.length > 10 ? viewEvent.start.substring(0, 16) : viewEvent.start,
+      end: viewEvent.end ? (viewEvent.end.length > 10 ? viewEvent.end.substring(0, 16) : viewEvent.end) : '',
+      description: viewEvent.description || ''
+    });
+    setViewEvent(null);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteFromView = async () => {
+    if (!viewEvent || !onDeleteManualEvent) return;
+    if (window.confirm('이 일정을 삭제하시겠습니까?')) {
+      await onDeleteManualEvent(viewEvent.id);
+      setViewEvent(null);
     }
   };
 
@@ -267,6 +283,66 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           />
         </div>
       </div>
+
+      {/* 수동 일정 보기 모달 (Google Calendar 스타일) */}
+      {viewEvent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm" onClick={() => setViewEvent(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-slideDown" onClick={e => e.stopPropagation()}>
+            {/* 상단 컬러 바 & 닫기 */}
+            <div className="h-2 bg-blue-500 rounded-t-2xl"></div>
+            <div className="px-5 pt-4 pb-2 flex items-start justify-between">
+              <div className="flex-1 pr-4">
+                <h3 className="text-xl font-bold text-slate-800 leading-tight">{viewEvent.title}</h3>
+              </div>
+              <button onClick={() => setViewEvent(null)} className="text-slate-400 hover:text-slate-600 transition-colors mt-0.5">
+                <i className="fas fa-times text-lg"></i>
+              </button>
+            </div>
+
+            {/* 일정 상세 정보 */}
+            <div className="px-5 pb-4 space-y-3">
+              {/* 시간 */}
+              <div className="flex items-start gap-3 text-slate-600">
+                <i className="fas fa-clock mt-0.5 text-slate-400 w-4 shrink-0"></i>
+                <div className="text-sm">
+                  {viewEvent.allDay ? (
+                    <span>{viewEvent.start} (종일)</span>
+                  ) : (
+                    <span>
+                      {viewEvent.start?.replace('T', ' ')}
+                      {viewEvent.end ? ` ~ ${viewEvent.end.replace('T', ' ')}` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* 설명 */}
+              {viewEvent.description && (
+                <div className="flex items-start gap-3 text-slate-600">
+                  <i className="fas fa-align-left mt-0.5 text-slate-400 w-4 shrink-0"></i>
+                  <p className="text-sm whitespace-pre-wrap">{viewEvent.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* 액션 버튼 */}
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <button
+                onClick={handleDeleteFromView}
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+              >
+                <i className="fas fa-trash-alt"></i>삭제
+              </button>
+              <button
+                onClick={openEditFromView}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <i className="fas fa-pencil-alt"></i>수정
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 수동 일정 추가/수정 모달 */}
       {isModalOpen && (
