@@ -99,6 +99,7 @@ export interface ManualEvent {
   allDay?: boolean;
   color?: string;
   order?: number; // 정렬 순서
+  isCompleted?: boolean;
   createdAt: number;
 }
 

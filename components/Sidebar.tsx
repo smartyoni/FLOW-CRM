@@ -71,6 +71,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* 메뉴 */}
       <nav className="flex-1 p-4 overflow-y-auto">
         <ul className="space-y-2">
+          {/* 메뉴 항목 4: 캘린더 */}
+          <li>
+            <button
+              onClick={() => handleViewClick('calendar')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'calendar'
+                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
+                : 'text-slate-300 hover:bg-slate-700/50'
+                }`}
+            >
+              <i className={`fas fa-calendar-alt w-5 text-center ${currentView === 'calendar' ? 'text-white' : 'text-slate-400'}`}></i>
+              <span className="font-medium text-sm">캘린더</span>
+            </button>
+          </li>
+
+          {/* 구분선 */}
+          <li className="pt-2 pb-1">
+            <div className="border-t border-slate-700/50 mx-2"></div>
+          </li>
+
           {/* 메뉴 항목 1: 접수~첫미팅 (CustomerList) */}
           <li>
             <button
@@ -123,24 +142,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </li>
 
-          {/* 구분선 */}
-          <li className="pt-2 pb-1">
-            <div className="border-t border-slate-700/50 mx-2"></div>
-          </li>
-
-          {/* 메뉴 항목 4: 캘린더 */}
-          <li>
-            <button
-              onClick={() => handleViewClick('calendar')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'calendar'
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                : 'text-slate-300 hover:bg-slate-700/50'
-                }`}
-            >
-              <i className={`fas fa-calendar-alt w-5 text-center ${currentView === 'calendar' ? 'text-white' : 'text-slate-400'}`}></i>
-              <span className="font-medium text-sm">캘린더</span>
-            </button>
-          </li>
         </ul>
       </nav>
     </div>

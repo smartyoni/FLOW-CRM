@@ -38,7 +38,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [currentView, setCurrentView] = useState<ViewMode>('customerList');
+  const [currentView, setCurrentView] = useState<ViewMode>('calendar');
   const [deleteConfirmation, setDeleteConfirmation] = useState<{ customerId: string; customerName: string } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);

@@ -42,6 +42,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   // 캘린더 컨테이너 ref
   const calendarContainerRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<any>(null);
 
   // 고객 데이터를 FullCalendar 이벤트 형식으로 변환
   const events = useMemo(() => {
@@ -54,7 +55,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         if (meeting.date) {
           allEvents.push({
             id: `meeting-${meeting.id}`,
-            title: `🤝 미팅: ${customer.name}`,
+            title: `미팅: ${customer.name}`,
             start: meeting.date,
             backgroundColor: '#f3e8ff', // soft purple
             borderColor: '#c084fc',
@@ -68,7 +69,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (customer.contractDate) {
         allEvents.push({
           id: `contract-${customer.id}`,
-          title: `📝 계약: ${customer.name}`,
+          title: `계약: ${customer.name}`,
           start: customer.contractDate,
           backgroundColor: '#dcfce7', // soft green
           borderColor: '#4ade80',
@@ -82,7 +83,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (customer.paymentDate) {
         allEvents.push({
           id: `payment-${customer.id}`,
-          title: `💰 잔금: ${customer.name}`,
+          title: `잔금: ${customer.name}`,
           start: customer.paymentDate,
           backgroundColor: '#fee2e2', // soft red
           borderColor: '#f87171',
@@ -96,7 +97,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (customer.moveInDate) {
         allEvents.push({
           id: `movein-${customer.id}`,
-          title: `🏠 입주: ${customer.name}`,
+          title: `입주: ${customer.name}`,
           start: customer.moveInDate,
           backgroundColor: '#ede9fe', // soft violet
           borderColor: '#a78bfa',
@@ -110,7 +111,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (customer.registrationDate) {
         allEvents.push({
           id: `reg-${customer.id}`,
-          title: `📋 접수: ${customer.name}`,
+          title: `접수: ${customer.name}`,
           start: customer.registrationDate,
           backgroundColor: '#dbeafe', // soft blue
           borderColor: '#60a5fa',
@@ -133,6 +134,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         textColor: '#1e3a8a',       // 진한 파란색 텍스트 (blue-900)
         editable: true,             // 캘린더 드래그앤드롭 활성화
         order: me.order || 0,       // 정렬 순서 적용
+        classNames: me.isCompleted ? ['completed-event'] : [],
         extendedProps: { isManual: true, manualEvent: me }
       });
     });
@@ -171,6 +173,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       await onDeleteManualEvent(viewEvent.id);
       setViewEvent(null);
     }
+  };
+
+  const handleToggleComplete = async () => {
+    if (!viewEvent || !onUpdateManualEvent) return;
+    await onUpdateManualEvent(viewEvent.id, {
+      isCompleted: !viewEvent.isCompleted
+    });
+    setViewEvent(null);
   };
 
   const handleEventDrop = async (info: any) => {
@@ -369,12 +379,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       <div className="flex-1 p-4 overflow-hidden">
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container" ref={calendarContainerRef}>
           <FullCalendar
+            ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView={initialView}
+            customButtons={{
+              customToday: {
+                text: '오늘',
+                click: () => {
+                  calendarRef.current?.getApi().today();
+                }
+              }
+            }}
             headerToolbar={{
-              left: 'prev,next today',
+              left: '',
               center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay'
+              right: 'prev,next customToday dayGridMonth,timeGridWeek,timeGridDay'
             }}
             events={events}
             eventOrder="order,start"
@@ -434,8 +453,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     onDragOver={isManual ? handleModalDragOver : undefined}
                     onDrop={isManual ? (e) => handleModalDrop(e, idx) : undefined}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isManual
-                        ? 'cursor-move hover:bg-slate-100 bg-white ring-1 ring-slate-200 shadow-sm'
-                        : 'bg-slate-50 opacity-90'
+                      ? 'cursor-move hover:bg-slate-100 bg-white ring-1 ring-slate-200 shadow-sm'
+                      : 'bg-slate-50 opacity-90'
                       } ${draggedIdx === idx ? 'opacity-50' : ''}`}
                     style={{ borderLeft: `3px solid ${ev.borderColor || ev.backgroundColor || '#3b82f6'}` }}
                   >
@@ -443,7 +462,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: ev.borderColor || ev.backgroundColor || '#3b82f6' }}
                     ></div>
-                    <div className="flex-1 flex justify-between items-center">
+                    <div className={`flex-1 flex justify-between items-center ${isManual && ev.extendedProps?.manualEvent?.isCompleted ? 'opacity-50 line-through' : ''}`}>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{ev.title}</p>
                         <p className="text-xs text-slate-400">{ev.start}</p>
@@ -502,17 +521,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             {/* 액션 버튼 */}
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
               <button
-                onClick={handleDeleteFromView}
-                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                onClick={handleToggleComplete}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${viewEvent.isCompleted ? 'text-blue-600 hover:bg-blue-50' : 'text-green-600 hover:bg-green-50'}`}
               >
-                <i className="fas fa-trash-alt"></i>삭제
+                <i className={`fas ${viewEvent.isCompleted ? 'fa-undo' : 'fa-check'}`}></i>{viewEvent.isCompleted ? '완료 취소' : '완료'}
               </button>
-              <button
-                onClick={openEditFromView}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <i className="fas fa-pencil-alt"></i>수정
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={openEditFromView}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <i className="fas fa-pencil-alt"></i>수정
+                </button>
+                <button
+                  onClick={handleDeleteFromView}
+                  className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <i className="fas fa-trash-alt"></i>삭제
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -628,7 +655,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           --fc-button-hover-bg-color: #f1f5f9;
           --fc-button-active-bg-color: #cbd5e1;
           --fc-border-color: #cbd5e1; /* 진해진 테두리 색상 */
-          --fc-today-bg-color: #fff1f2;
+          --fc-today-bg-color: #f0fdf4;
           font-family: inherit;
         }
         .calendar-container .fc-scrollgrid {
@@ -646,9 +673,55 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         }
         .calendar-container .fc-button-primary:not(:disabled).fc-button-active,
         .calendar-container .fc-button-primary:not(:disabled):active {
-          background-color: #2563eb !important;
+          color: white !important;
+        }
+
+        /* 오늘 버튼: 녹색 (더 진하게) */
+        .calendar-container .fc-customToday-button {
+          background-color: #166534 !important; /* green-800 */
+          border-color: #14532d !important; /* green-900 */
+          color: #000000 !important;
+          font-weight: 900 !important;
+        }
+        .calendar-container .fc-customToday-button:hover,
+        .calendar-container .fc-customToday-button:active {
+          background-color: #14532d !important; /* green-900 */
+        }
+
+        /* 월간 버튼: 빨강 */
+        .calendar-container .fc-dayGridMonth-button {
+          background-color: #ef4444 !important; /* red-500 */
+          border-color: #dc2626 !important;
+          color: white !important;
+        }
+        .calendar-container .fc-dayGridMonth-button:hover,
+        .calendar-container .fc-dayGridMonth-button.fc-button-active {
+          background-color: #b91c1c !important; /* red-700 */
+          border-color: #991b1b !important;
+        }
+
+        /* 주간 버튼: 파랑 */
+        .calendar-container .fc-timeGridWeek-button {
+          background-color: #3b82f6 !important; /* blue-500 */
           border-color: #2563eb !important;
           color: white !important;
+        }
+        .calendar-container .fc-timeGridWeek-button:hover,
+        .calendar-container .fc-timeGridWeek-button.fc-button-active {
+          background-color: #1d4ed8 !important; /* blue-700 */
+          border-color: #1e40af !important;
+        }
+
+        /* 일간 버튼: 보라 */
+        .calendar-container .fc-timeGridDay-button {
+          background-color: #a855f7 !important; /* purple-500 */
+          border-color: #9333ea !important;
+          color: white !important;
+        }
+        .calendar-container .fc-timeGridDay-button:hover,
+        .calendar-container .fc-timeGridDay-button.fc-button-active {
+          background-color: #7e22ce !important; /* purple-700 */
+          border-color: #6b21a8 !important;
         }
         .calendar-container .fc-event {
           cursor: pointer;
@@ -678,8 +751,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           text-decoration: underline !important;
         }
         .calendar-container .fc-day-today .fc-daygrid-day-number {
-          color: #dc2626;
-          background-color: #fee2e2;
+          color: #16a34a;
+          background-color: #dcfce7;
           border-radius: 50%;
           width: 32px;
           height: 32px;
@@ -755,6 +828,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         }
         .animate-slideDown {
           animation: slideDown 0.3s ease-out;
+        }
+
+        .calendar-container .completed-event {
+          opacity: 0.5 !important;
+        }
+        .calendar-container .completed-event .fc-event-title,
+        .calendar-container .completed-event .fc-event-time {
+          text-decoration: line-through !important;
         }
 
       `}</style>
