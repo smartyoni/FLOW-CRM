@@ -244,15 +244,22 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     setIsModalOpen(true);
   };
 
-  // 종일 라벨 클릭 시 현재 캘린더 날짜의 종일 일정만 모달로 표시
-  const handleAllDayLabelClick = () => {
-    const todayEvents = events.filter(e => {
+  // 종일 라벨 또는 날짜 클릭 시 해당 날짜의 종일 일정만 모달로 표시
+  const openDayReorderModal = (dateStr: string) => {
+    const targetEvents = events.filter(e => {
       if (!e.allDay) return false;
-      return true;
-    }).sort((a, b) => (a.order || 0) - (b.order || 0)); // 정렬 적용
+      // Convert start back to local date string matching dateStr format
+      const eDate = e.start.length > 10 ? e.start.substring(0, 10) : e.start;
+      return eDate === dateStr;
+    }).sort((a, b) => {
+      const orderA = a.order || 0;
+      const orderB = b.order || 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.title.localeCompare(b.title, 'ko');
+    });
 
-    if (todayEvents.length > 0) {
-      setAllDayModalEvents(todayEvents);
+    if (targetEvents.length > 0) {
+      setAllDayModalEvents(targetEvents);
     }
   };
 
@@ -304,7 +311,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       if (allDayLabel) {
         const handler = (e: Event) => {
           e.stopPropagation();
-          handleAllDayLabelClick();
+          const currentViewDate = calendarRef.current?.getApi().getDate();
+          if (currentViewDate) {
+            // Handle timezone offset to ensure safe string comparison for local date
+            const localDate = new Date(currentViewDate.getTime() - (currentViewDate.getTimezoneOffset() * 60000));
+            const dateStr = localDate.toISOString().split('T')[0];
+            openDayReorderModal(dateStr);
+          }
         };
         allDayLabel.addEventListener('click', handler);
         return () => allDayLabel.removeEventListener('click', handler);
@@ -396,12 +409,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               right: 'prev,next customToday dayGridMonth,timeGridWeek,timeGridDay'
             }}
             events={events}
-            eventOrder="order,start"
+            eventOrder="order,title,start"
             eventClick={handleEventClick}
             eventDrop={handleEventDrop}
             eventResize={handleEventResize}
             selectable={true}
             select={handleDateSelect}
+            selectLongPressDelay={50}
+            eventLongPressDelay={50}
             views={{
               dayGridMonth: {
                 titleFormat: { year: 'numeric', month: 'long' }
@@ -420,6 +435,29 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             height="100%"
             dayMaxEvents={true}
             navLinks={true}
+            navLinkDayClick={(date) => {
+              // Handle timezone offset to ensure safe string comparison for local date
+              const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+              const dateStr = localDate.toISOString().split('T')[0];
+
+              // 해당 날짜의 종일 일정이 2개 이상이면 순서 변경 모달 열기, 아니면 일간 뷰로 이동
+              const targetEvents = events.filter(e => {
+                if (!e.allDay) return false;
+                const eDate = e.start.length > 10 ? e.start.substring(0, 10) : e.start;
+                return eDate === dateStr;
+              }).sort((a, b) => {
+                const orderA = a.order || 0;
+                const orderB = b.order || 0;
+                if (orderA !== orderB) return orderA - orderB;
+                return a.title.localeCompare(b.title, 'ko');
+              });
+
+              if (targetEvents.length > 1) {
+                setAllDayModalEvents(targetEvents);
+              } else {
+                calendarRef.current?.getApi().changeView('timeGridDay', date);
+              }
+            }}
             buttonText={{
               today: '오늘',
               month: '월간',
