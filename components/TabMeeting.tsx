@@ -58,6 +58,9 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editingFieldValue, setEditingFieldValue] = useState('');
 
+  // 볼 수 있는 매물 필터 상태
+  const [showRegisteredOnly, setShowRegisteredOnly] = useState(false);
+
   // 보고서 프리뷰 모달 상태
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false);
   const [reportFileName, setReportFileName] = useState('');
@@ -1227,9 +1230,25 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                   {/* 등록된 매물 미리보기 목록 */}
                   {activeMeeting?.properties && activeMeeting.properties.length > 0 && (
                     <div className="mt-6">
-                      <h3 className="font-bold text-sm text-primary mb-3">등록된 매물 ({activeMeeting.properties.length}개)</h3>
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-sm text-primary">등록된 매물 ({activeMeeting.properties.length}개)</h3>
+                        <label className="flex items-center cursor-pointer">
+                          <div className="relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={showRegisteredOnly}
+                              onChange={() => setShowRegisteredOnly(!showRegisteredOnly)}
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${showRegisteredOnly ? 'bg-primary' : 'bg-gray-300'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${showRegisteredOnly ? 'transform translate-x-4' : ''}`}></div>
+                          </div>
+                          <div className="ml-2 text-sm text-gray-700 font-medium">✨ 볼 수 있는 매물만</div>
+                        </label>
+                      </div>
                       <div className="space-y-3">
                         {activeMeeting.properties
+                          .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
                           .slice()
                           .sort((a, b) => {
                             const timeA = a.visitTime || '99:99';
