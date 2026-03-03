@@ -135,14 +135,21 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     // 수동 일정 추가
     manualEvents.forEach(me => {
+      // 종일 일정은 녹색 테마, 시간 지정 일정은 파란색 테마 (불렛 색상을 위한 borderColor)
+      const isAllDay = me.allDay === true;
+      const bg = isAllDay ? '#dcfce7' : '#eff6ff'; // green-100 : blue-50
+      const border = isAllDay ? '#22c55e' : '#3b82f6'; // green-500 : blue-500
+      const text = isAllDay ? '#15803d' : '#1e3a8a'; // green-700 : blue-900
+
       allEvents.push({
         id: `manual-${me.id}`,
         title: me.title,
         start: me.start,
         end: me.end,
-        backgroundColor: '#eff6ff', // 은은한 파란색 (blue-50)
-        borderColor: '#000000',     // 검정 외곽선
-        textColor: '#1e3a8a',       // 진한 파란색 텍스트 (blue-900)
+        allDay: me.allDay,
+        backgroundColor: bg,
+        borderColor: border,
+        textColor: text,
         editable: true,             // 캘린더 드래그앤드롭 활성화
         order: me.order || 0,       // 정렬 순서 적용
         classNames: me.isCompleted ? ['completed-event'] : [],
