@@ -492,6 +492,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               timeGridDay: {
                 titleFormat: { year: 'numeric', month: 'long' },
                 dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
+              },
+              listMonth: {
+                displayEventEnd: false
               }
             }}
             allDayText="종일"
