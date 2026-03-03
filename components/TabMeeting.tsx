@@ -1287,6 +1287,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                   <option value="확인중">확인중</option>
                                   <option value="볼수있음">볼수있음</option>
                                   <option value="현장방문완료">현장방문완료</option>
+                                  <option value="오늘못봄">오늘못봄</option>
                                 </select>
 
                                 <div className="flex-1"></div>

@@ -17,7 +17,7 @@ export interface Property {
   memo?: string;              // 매물 메모 (선택사항)
 
   // 상태 관리
-  status?: '확인전' | '확인중' | '볼수있음' | '현장방문완료';  // 매물 상태
+  status?: '확인전' | '확인중' | '볼수있음' | '현장방문완료' | '오늘못봄';  // 매물 상태
   visitTime?: string;         // 방문 시간 (HH:mm 형식)
 }
 
