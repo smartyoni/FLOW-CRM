@@ -1394,7 +1394,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                       className="w-full px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                                       title="더블클릭 또는 두 번 탭하여 편집"
                                     >
-                                      {prop.unit || '호실을 입력해주세요'}
+                                      {prop.unit ? (
+                                        prop.unit
+                                      ) : (
+                                        <span className="text-gray-400 font-normal">호실을 입력해주세요</span>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1437,7 +1441,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                         }}
                                         title="더블클릭 또는 두 번 탭하여 편집"
                                       >
-                                        {prop.agencyPhone || '연락처를 입력해주세요'}
+                                        {prop.agencyPhone ? (
+                                          prop.agencyPhone
+                                        ) : (
+                                          <span className="text-gray-400 font-normal">연락처를 입력해주세요</span>
+                                        )}
                                       </div>
                                       {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) && (
                                         <a
@@ -1489,7 +1497,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                       }}
                                       title="더블클릭 또는 두 번 탭하여 편집"
                                     >
-                                      {prop.jibun || '미등록'}
+                                      {prop.jibun ? (
+                                        prop.jibun
+                                      ) : (
+                                        <span className="text-gray-400 font-normal">지번을 입력해주세요</span>
+                                      )}
                                     </span>
                                   )}
                                   {prop.jibun && (
@@ -1624,7 +1636,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                     }}
                                     className="w-full border rounded px-2 py-1 mt-1 min-h-[60px] bg-gray-50 whitespace-pre-wrap text-sm cursor-pointer hover:bg-gray-100"
                                   >
-                                    {prop.memo || '(메모 없음)'}
+                                    {prop.memo ? (
+                                      prop.memo
+                                    ) : (
+                                      <span className="text-gray-400 italic">내용을 입력해주세요</span>
+                                    )}
                                   </div>
                                 )}
                               </div>

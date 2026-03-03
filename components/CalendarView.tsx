@@ -3,6 +3,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import listPlugin from '@fullcalendar/list';
 import { Customer, ManualEvent } from '../types';
 import { storage } from '../services/firebase';
 
@@ -393,7 +394,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container" ref={calendarContainerRef}>
           <FullCalendar
             ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={initialView}
             customButtons={{
               customToday: {
@@ -406,7 +407,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             headerToolbar={{
               left: '',
               center: 'title',
-              right: 'prev,next customToday dayGridMonth,timeGridWeek,timeGridDay'
+              right: 'prev,next customToday dayGridMonth,timeGridWeek,timeGridDay,listMonth'
             }}
             events={events}
             eventOrder="order,title,start"
@@ -469,7 +470,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               today: '오늘',
               month: '월간',
               week: '주간',
-              day: '일간'
+              day: '일간',
+              listMonth: '일정'
             }}
           />
         </div>
@@ -775,6 +777,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         .calendar-container .fc-timeGridDay-button.fc-button-active {
           background-color: #7e22ce !important; /* purple-700 */
           border-color: #6b21a8 !important;
+        }
+
+        /* 일정 버튼: 주황 */
+        .calendar-container .fc-listMonth-button {
+          background-color: #f97316 !important; /* orange-500 */
+          border-color: #ea580c !important;
+          color: white !important;
+        }
+        .calendar-container .fc-listMonth-button:hover,
+        .calendar-container .fc-listMonth-button.fc-button-active {
+          background-color: #c2410c !important; /* orange-700 */
+          border-color: #9a3412 !important;
         }
         .calendar-container .fc-event {
           cursor: pointer;
