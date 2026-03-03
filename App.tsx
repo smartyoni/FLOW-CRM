@@ -538,7 +538,7 @@ const App: React.FC = () => {
                 }`}
               title="캘린더"
             >
-              📅
+              �️
             </button>
             <div className="w-px h-6 bg-gray-200"></div>
             <button
