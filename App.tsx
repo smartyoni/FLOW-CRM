@@ -531,6 +531,17 @@ const App: React.FC = () => {
           {/* Mobile Bottom Tab Bar */}
           <div className="lg:hidden border-t bg-white flex items-center shrink-0">
             <button
+              onClick={() => handleViewChange('calendar')}
+              className={`flex-initial py-2 px-3 text-center text-lg transition-colors border-t-2 ${currentView === 'calendar'
+                ? 'bg-slate-200 border-slate-700'
+                : 'bg-slate-100 border-transparent'
+                }`}
+              title="캘린더"
+            >
+              📅
+            </button>
+            <div className="w-px h-6 bg-gray-200"></div>
+            <button
               onClick={() => handleViewChange('customerList')}
               className={`flex-1 py-2 px-4 text-center text-sm font-medium transition-colors border-t-2 ${currentView === 'customerList'
                 ? 'bg-blue-200 border-blue-700 text-blue-700'
