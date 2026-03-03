@@ -8,7 +8,7 @@ export interface ChecklistItem {
 export interface Property {
   id: string;
   rawInput: string;           // 원본 입력 (TEN/네이버/정리본)
-  roomName: string;           // 호실명/건물명
+  roomName?: string;          // 호실명/건물명 (선택사항)
   jibun: string;              // 지번 주소
   agency: string;             // 부동산명
   agencyPhone: string;        // 부동산 연락처

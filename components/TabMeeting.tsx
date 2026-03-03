@@ -354,7 +354,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
             ...p,
             // ⭐ rawInput: 원본 텍스트 (parsedText가 있으면 그걸 사용, 없으면 propertyText)
             rawInput: parsedText || propertyText,
-            roomName: parsedRoomName,
+            unit: parsedRoomName,
             jibun: parsedJibun,
             agency: parsedAgency,
             agencyPhone: parsedAgencyPhone,
@@ -368,7 +368,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         id: generateId(),
         // ⭐ rawInput: 원본 텍스트 (parsedText가 있으면 그걸 사용, 없으면 propertyText)
         rawInput: parsedText || propertyText,
-        roomName: parsedRoomName,
+        unit: parsedRoomName,
         jibun: parsedJibun,
         agency: parsedAgency,
         agencyPhone: parsedAgencyPhone,
@@ -1367,55 +1367,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                               )}
 
                               {/* 건물명, 호실, 지번 */}
+                              {/* 호실, 연락처, 지번 */}
                               <div className="flex flex-col md:flex-row gap-1 md:gap-2 mb-4 items-start md:items-center">
-                                {/* 건물명 */}
-                                <div className="w-full md:flex-[1.3] flex items-center gap-1">
-                                  <span className="text-xs text-gray-600 font-bold whitespace-nowrap">건물명:</span>
-                                  {editingField === `${prop.id}-roomName` ? (
-                                    <input
-                                      autoFocus
-                                      type="text"
-                                      className="w-full md:w-auto border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
-                                      value={editingFieldValue}
-                                      onChange={(e) => setEditingFieldValue(e.target.value)}
-                                      onBlur={() => savePropertyInlineField(prop.id, 'roomName')}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                          savePropertyInlineField(prop.id, 'roomName');
-                                        }
-                                        if (e.key === 'Escape') {
-                                          setEditingField(null);
-                                          setEditingFieldValue('');
-                                        }
-                                      }}
-                                    />
-                                  ) : (
-                                    <div
-                                      className="w-full md:w-auto px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
-                                      onDoubleClick={() => {
-                                        setEditingField(`${prop.id}-roomName`);
-                                        setEditingFieldValue(prop.roomName || '');
-                                      }}
-                                      onTouchEnd={() => {
-                                        handleTouchDoubleTap(`room-${prop.id}`, () => {
-                                          setEditingField(`${prop.id}-roomName`);
-                                          setEditingFieldValue(prop.roomName || '');
-                                        });
-                                      }}
-                                      title="더블클릭 또는 두 번 탭하여 편집"
-                                    >
-                                      {prop.roomName || '(건물명)'}
-                                    </div>
-                                  )}
-                                </div>
-
                                 {/* 호실 */}
-                                <div className="w-full md:flex-1 flex items-center gap-1">
+                                <div className="w-full md:flex-[1.2] flex items-center gap-1">
                                   <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
                                   {editingUnitId === prop.id ? (
                                     <input
                                       autoFocus
                                       type="text"
+                                      placeholder="호실을 입력해주세요"
                                       value={prop.unit || ''}
                                       onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
                                       onBlur={() => setEditingUnitId(null)}
@@ -1433,7 +1394,61 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                       className="w-full px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
                                       title="더블클릭 또는 두 번 탭하여 편집"
                                     >
-                                      {prop.unit || '(호실)'}
+                                      {prop.unit || '호실을 입력해주세요'}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* 연락처 */}
+                                <div className="w-full md:flex-[1.2] flex items-center gap-1">
+                                  <span className="text-xs text-gray-600 font-bold whitespace-nowrap">연락처:</span>
+                                  {editingField === `${prop.id}-agencyPhone` ? (
+                                    <input
+                                      autoFocus
+                                      type="text"
+                                      placeholder="연락처를 입력해주세요"
+                                      className="w-full border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                                      value={editingFieldValue}
+                                      onChange={(e) => setEditingFieldValue(e.target.value)}
+                                      onBlur={() => savePropertyInlineField(prop.id, 'agencyPhone')}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          savePropertyInlineField(prop.id, 'agencyPhone');
+                                        }
+                                        if (e.key === 'Escape') {
+                                          setEditingField(null);
+                                          setEditingFieldValue('');
+                                        }
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="flex-1 flex items-center gap-0.5">
+                                      <div
+                                        className="flex-1 px-1 py-1 cursor-pointer hover:bg-yellow-100 rounded text-xs min-h-[28px] flex items-center truncate font-semibold"
+                                        onDoubleClick={() => {
+                                          setEditingField(`${prop.id}-agencyPhone`);
+                                          setEditingFieldValue(prop.agencyPhone || '');
+                                        }}
+                                        onTouchEnd={() => {
+                                          handleTouchDoubleTap(`phone-${prop.id}`, () => {
+                                            setEditingField(`${prop.id}-agencyPhone`);
+                                            setEditingFieldValue(prop.agencyPhone || '');
+                                          });
+                                        }}
+                                        title="더블클릭 또는 두 번 탭하여 편집"
+                                      >
+                                        {prop.agencyPhone || '연락처를 입력해주세요'}
+                                      </div>
+                                      {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) && (
+                                        <a
+                                          href={generateSmsLink(prop.agencyPhone)}
+                                          className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] hover:bg-blue-600 flex-shrink-0"
+                                          title="문자 보내기"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          SMS
+                                        </a>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1491,102 +1506,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 </div>
                               </div>
 
-                              {/* 미리보기 정보 */}
-                              <div className="mb-3">
-                                {/* 부동산과 연락처 */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                  <div>
-                                    <span className="text-gray-600">부동산:</span>
-                                    {editingField === `${prop.id}-agency` ? (
-                                      <input
-                                        autoFocus
-                                        type="text"
-                                        className="border rounded px-2 py-1 ml-1 focus:ring-1 focus:ring-primary outline-none text-sm"
-                                        value={editingFieldValue}
-                                        onChange={(e) => setEditingFieldValue(e.target.value)}
-                                        onBlur={() => savePropertyInlineField(prop.id, 'agency')}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            savePropertyInlineField(prop.id, 'agency');
-                                          }
-                                          if (e.key === 'Escape') {
-                                            setEditingField(null);
-                                            setEditingFieldValue('');
-                                          }
-                                        }}
-                                      />
-                                    ) : (
-                                      <span
-                                        className="font-semibold cursor-pointer hover:bg-blue-100 px-1 rounded inline-block"
-                                        onDoubleClick={() => {
-                                          setEditingField(`${prop.id}-agency`);
-                                          setEditingFieldValue(prop.agency || '');
-                                        }}
-                                        onTouchEnd={() => {
-                                          handleTouchDoubleTap(`agency-${prop.id}`, () => {
-                                            setEditingField(`${prop.id}-agency`);
-                                            setEditingFieldValue(prop.agency || '');
-                                          });
-                                        }}
-                                        title="더블클릭 또는 두 번 탭하여 편집"
-                                      >
-                                        {prop.agency || '미등록'}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-gray-600">연락처:</span>
-                                    {editingField === `${prop.id}-agencyPhone` ? (
-                                      <input
-                                        autoFocus
-                                        type="text"
-                                        className="border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-sm flex-1"
-                                        value={editingFieldValue}
-                                        onChange={(e) => setEditingFieldValue(e.target.value)}
-                                        onBlur={() => savePropertyInlineField(prop.id, 'agencyPhone')}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') {
-                                            savePropertyInlineField(prop.id, 'agencyPhone');
-                                          }
-                                          if (e.key === 'Escape') {
-                                            setEditingField(null);
-                                            setEditingFieldValue('');
-                                          }
-                                        }}
-                                      />
-                                    ) : (
-                                      <>
-                                        <div className="flex-1">
-                                          {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) ? (
-                                            <a
-                                              href={generateSmsLink(prop.agencyPhone)}
-                                              className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                                              title="클릭하면 SMS로 연결됩니다"
-                                              onClick={(e) => e.stopPropagation()}
-                                            >
-                                              {prop.agencyPhone}
-                                            </a>
-                                          ) : (
-                                            <span className="font-semibold text-gray-800">
-                                              {prop.agencyPhone || '미등록'}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <button
-                                          onClick={() => {
-                                            setEditingField(`${prop.id}-agencyPhone`);
-                                            setEditingFieldValue(prop.agencyPhone || '');
-                                          }}
-                                          className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-600 rounded whitespace-nowrap"
-                                          title="연락처 수정"
-                                        >
-                                          <i className="fas fa-edit mr-1"></i>수정
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
 
                               {/* 메모 섹션 */}
                               <div className="mt-3 pt-3 border-t border-gray-200">
@@ -1825,16 +1744,20 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               <h1 className="text-2xl font-bold text-primary">매물 #{idx + 1}</h1>
             </div>
 
-            {/* 호실명과 지번 */}
+            {/* 호실, 지번, 연락처 */}
             <div className="mb-6 pb-6 border-b border-gray-300">
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500 font-semibold mb-2">호실명</p>
-                  <p className="text-lg font-bold text-gray-800">{prop.roomName || '미등록'}</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">호실</p>
+                  <p className="text-base font-bold text-gray-800">{prop.unit || '미등록'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 font-semibold mb-2">지번</p>
-                  <p className="text-lg font-bold text-gray-800">{prop.jibun || '미등록'}</p>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">연락처</p>
+                  <p className="text-base font-bold text-gray-800">{prop.agencyPhone || '미등록'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 font-semibold mb-1">지번</p>
+                  <p className="text-base font-bold text-gray-800">{prop.jibun || '미등록'}</p>
                 </div>
               </div>
             </div>
