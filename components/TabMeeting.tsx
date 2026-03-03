@@ -835,7 +835,421 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const [isFullScreenMode, setIsFullScreenMode] = useState(false);
 
   const renderPropertyList = () => (
-    { renderPropertyList() }
+    <div className="space-y-3">
+      {activeMeeting && activeMeeting.properties
+        .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
+        .slice()
+        .sort((a, b) => {
+          const timeA = a.visitTime || '99:99';
+          const timeB = b.visitTime || '99:99';
+          return timeA.localeCompare(timeB);
+        })
+        .map((prop) => (
+          <div key={prop.id} className="p-4 bg-gray-50 border border-black rounded-lg">
+            {/* 시간 선택 및 상태 셀렉터 */}
+            <div className="flex gap-1 md:gap-3 mb-4 items-center">
+              <div className="flex gap-1 md:gap-2 items-center">
+                <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
+                <select
+                  value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
+                  onChange={(e) => {
+                    const hour = e.target.value || '00';
+                    const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
+                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                  }}
+                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">시</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>
+                      {String(i).padStart(2, '0')}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
+                  onChange={(e) => {
+                    const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
+                    const minute = e.target.value || '00';
+                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                  }}
+                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">분</option>
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>
+                      {String(i).padStart(2, '0')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <select
+                value={prop.status || '확인전'}
+                onChange={(e) => {
+                  updatePropertyField(prop.id, 'status', e.target.value as any);
+                }}
+                className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="확인전">확인전</option>
+                <option value="확인중">확인중</option>
+                <option value="볼수있음">볼수있음</option>
+                <option value="현장방문완료">현장방문완료</option>
+                <option value="오늘못봄">오늘못봄</option>
+              </select>
+
+              <div className="flex-1"></div>
+
+              <button
+                onClick={async () => {
+                  const confirmed = await showConfirm('삭제', '이 매물을 삭제하시겠습니까?');
+                  if (confirmed) {
+                    if (activeMeeting) {
+                      const updatedProperties = activeMeeting.properties.filter(p => p.id !== prop.id);
+                      const updatedLocalMeeting = {
+                        ...activeMeeting,
+                        properties: updatedProperties
+                      };
+                      setLocalMeeting(updatedLocalMeeting);
+                      onUpdate({
+                        ...customer,
+                        meetings: customer.meetings.map(m =>
+                          m.id === activeMeeting.id ? updatedLocalMeeting : m
+                        )
+                      });
+                    }
+                  }
+                }}
+                className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-bold whitespace-nowrap"
+              >
+                매물삭제
+              </button>
+            </div>
+
+            {/* 정리본 텍스트 표시 (매물정보) */}
+            {prop.parsedText && (
+              <div className="mb-4">
+                {editingField === `${prop.id}-parsedText` ? (
+                  <textarea
+                    autoFocus
+                    className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                    value={editingFieldValue}
+                    onChange={(e) => setEditingFieldValue(e.target.value)}
+                    onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.ctrlKey) {
+                        savePropertyInlineField(prop.id, 'parsedText');
+                      }
+                      if (e.key === 'Escape') {
+                        setEditingField(null);
+                        setEditingFieldValue('');
+                      }
+                    }}
+                    rows={10}
+                    placeholder="정리본 텍스트를 입력하세요.."
+                  />
+                ) : (
+                  <div
+                    className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                    onDoubleClick={() => {
+                      setEditingField(`${prop.id}-parsedText`);
+                      setEditingFieldValue(prop.parsedText || '');
+                    }}
+                    onTouchEnd={() => {
+                      handleTouchDoubleTap(`parsed-${prop.id}`, () => {
+                        setEditingField(`${prop.id}-parsedText`);
+                        setEditingFieldValue(prop.parsedText || '');
+                      });
+                    }}
+                    title="더블클릭 또는 두 번 탭하여 수정"
+                  >
+                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">
+                      {prop.parsedText}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 호실, 연락처, 지번 */}
+            <div className="flex flex-col md:flex-row gap-1 md:gap-2 mb-4 items-start md:items-center">
+              {/* 호실 */}
+              <div className="w-full md:flex-[1.2] flex items-center gap-1">
+                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
+                {editingUnitId === prop.id ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="호실명을 입력해주세요"
+                    value={prop.unit || ''}
+                    onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
+                    onBlur={() => setEditingUnitId(null)}
+                    onKeyDown={(e) => e.key === 'Enter' && setEditingUnitId(null)}
+                    className="w-full px-2 py-1 border border-blue-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                ) : (
+                  <div
+                    onDoubleClick={() => setEditingUnitId(prop.id)}
+                    onTouchEnd={() => {
+                      handleTouchDoubleTap(`unit-${prop.id}`, () => {
+                        setEditingUnitId(prop.id);
+                      });
+                    }}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-xs cursor-pointer hover:bg-blue-50 min-h-[28px] flex items-center"
+                    title="더블클릭 또는 두 번 탭하여 수정"
+                  >
+                    {prop.unit ? (
+                      prop.unit
+                    ) : (
+                      <span className="text-gray-400 font-normal">호실명을 입력해주세요</span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 연락처 */}
+              <div className="w-full md:flex-[1.2] flex items-center gap-1">
+                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">연락처:</span>
+                {editingField === `${prop.id}-agencyPhone` ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="연락처를 입력해주세요"
+                    className="w-full border border-blue-300 rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                    value={editingFieldValue}
+                    onChange={(e) => setEditingFieldValue(e.target.value)}
+                    onBlur={() => savePropertyInlineField(prop.id, 'agencyPhone')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        savePropertyInlineField(prop.id, 'agencyPhone');
+                      }
+                      if (e.key === 'Escape') {
+                        setEditingField(null);
+                        setEditingFieldValue('');
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center gap-0.5">
+                    <div
+                      className="flex-1 px-1 py-1 cursor-pointer hover:bg-yellow-100 rounded text-xs min-h-[28px] flex items-center truncate font-semibold"
+                      onDoubleClick={() => {
+                        setEditingField(`${prop.id}-agencyPhone`);
+                        setEditingFieldValue(prop.agencyPhone || '');
+                      }}
+                      onTouchEnd={() => {
+                        handleTouchDoubleTap(`phone-${prop.id}`, () => {
+                          setEditingField(`${prop.id}-agencyPhone`);
+                          setEditingFieldValue(prop.agencyPhone || '');
+                        });
+                      }}
+                      title="더블클릭 또는 두 번 탭하여 수정"
+                    >
+                      {prop.agencyPhone ? (
+                        prop.agencyPhone
+                      ) : (
+                        <span className="text-gray-400 font-normal">연락처를 입력해주세요</span>
+                      )}
+                    </div>
+                    {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) && (
+                      <a
+                        href={generateSmsLink(prop.agencyPhone)}
+                        className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] hover:bg-blue-600 flex-shrink-0"
+                        title="문자 보내기"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        SMS
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 지번 */}
+              <div className="w-full md:w-auto flex items-center gap-1 md:ml-4">
+                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
+                {editingField === `${prop.id}-jibun` ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    className="w-full md:w-auto border rounded px-2 py-1 focus:ring-1 focus:ring-primary outline-none text-xs"
+                    value={editingFieldValue}
+                    onChange={(e) => setEditingFieldValue(e.target.value)}
+                    onBlur={() => savePropertyInlineField(prop.id, 'jibun')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        savePropertyInlineField(prop.id, 'jibun');
+                      }
+                      if (e.key === 'Escape') {
+                        setEditingField(null);
+                        setEditingFieldValue('');
+                      }
+                    }}
+                  />
+                ) : (
+                  <span
+                    className="font-semibold cursor-pointer hover:bg-yellow-100 px-1 rounded inline-block text-xs py-1"
+                    onDoubleClick={() => {
+                      setEditingField(`${prop.id}-jibun`);
+                      setEditingFieldValue(prop.jibun || '');
+                    }}
+                    onTouchEnd={() => {
+                      handleTouchDoubleTap(`jibun-${prop.id}`, () => {
+                        setEditingField(`${prop.id}-jibun`);
+                        setEditingFieldValue(prop.jibun || '');
+                      });
+                    }}
+                    title="더블클릭 또는 두 번 탭하여 수정"
+                  >
+                    {prop.jibun ? (
+                      prop.jibun
+                    ) : (
+                      <span className="text-gray-400 font-normal">지번을 입력해주세요</span>
+                    )}
+                  </span>
+                )}
+                {prop.jibun && (
+                  <button
+                    onClick={() => {
+                      const mapUrl = `https://map.kakao.com/?q=${encodeURIComponent(prop.jibun)}`;
+                      window.open(mapUrl, '_blank');
+                    }}
+                    className="px-2 py-1 bg-yellow-400 text-black rounded text-xs hover:bg-yellow-500 font-bold flex-shrink-0"
+                  >
+                    지도
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* 메모 영역 */}
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              {editingMemoId === prop.id ? (
+                <>
+                  {/* 반투명 오버레이 */}
+                  <div
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      zIndex: 9990,
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => saveMemo(prop.id)}
+                  />
+
+                  {/* 편집 모달 창 */}
+                  <div
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 9999,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      padding: '2rem',
+                      pointerEvents: 'none'
+                    }}
+                  >
+                    <div
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        pointerEvents: 'auto',
+                        backgroundColor: 'white',
+                        borderRadius: '8px',
+                        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '1rem',
+                        padding: '1rem 1.5rem',
+                        borderBottom: '1px solid #e5e7eb'
+                      }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>메모 수정</h3>
+                        <button
+                          onClick={() => saveMemo(prop.id)}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#3b82f6',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                          }}
+                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+                        >
+                          저장
+                        </button>
+                      </div>
+                      <textarea
+                        autoFocus
+                        style={{
+                          flex: 1,
+                          border: '1px solid #d1d5db',
+                          borderRadius: '4px',
+                          padding: '1rem',
+                          fontSize: '0.875rem',
+                          resize: 'none',
+                          overflow: 'auto',
+                          backgroundColor: 'white',
+                          outline: 'none',
+                          fontFamily: 'inherit'
+                        }}
+                        value={memoText}
+                        onChange={(e) => setMemoText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            saveMemo(prop.id);
+                          }
+                          if (e.key === 'Escape') {
+                            saveMemo(prop.id);
+                          }
+                        }}
+                        onFocus={(e) => e.currentTarget.style.outline = '2px solid #3b82f6'}
+                        onBlur={(e) => e.currentTarget.style.outline = 'none'}
+                        placeholder="메모를 입력하세요.. (Ctrl+Enter로 저장, Esc로 닫기)"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // 조회 모드
+                <div
+                  onDoubleClick={() => {
+                    setEditingMemoId(prop.id);
+                    setMemoText(prop.memo || '');
+                  }}
+                  onTouchEnd={() => {
+                    handleTouchDoubleTap(`memo-${prop.id}`, () => {
+                      setEditingMemoId(prop.id);
+                      setMemoText(prop.memo || '');
+                    });
+                  }}
+                  className="w-full border rounded px-2 py-1 mt-1 min-h-[60px] bg-gray-50 whitespace-pre-wrap text-sm cursor-pointer hover:bg-gray-100"
+                >
+                  {prop.memo ? (
+                    prop.memo
+                  ) : (
+                    <span className="text-gray-400 italic">메모를 입력해주세요</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+    </div>
   );
 
   return (
