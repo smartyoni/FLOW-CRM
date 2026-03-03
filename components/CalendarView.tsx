@@ -37,7 +37,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const isMobile = windowWidth < 1024;
   const isSmallMobile = windowWidth < 768; // 3일 뷰를 위한 임계값
-  const initialView = isMobile ? 'timeGridDay' : 'dayGridMonth';
+  const initialView = 'listMonth'; // 모바일과 데스크탑 모두 초기 뷰를 일정뷰로 설정
   const weekViewName = isSmallMobile ? 'timeGridThreeDay' : 'timeGridWeek';
 
   // 수동 일정 편집 모달 상태
