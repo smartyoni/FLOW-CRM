@@ -381,6 +381,46 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
     }
   };
 
+  // 모바일 스와이프 제스처 (왼쪽/오른쪽으로 스와이프 시 이전/다음 이동)
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchStartY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+    touchEndY.current = e.targetTouches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === null || touchEndX.current === null || touchStartY.current === null || touchEndY.current === null) return;
+
+    const deltaX = touchStartX.current - touchEndX.current;
+    const deltaY = touchStartY.current - touchEndY.current;
+
+    // X축 이동이 Y축 이동보다 크고, 최소 50px 이상 이동했을 때만 가로 스와이프로 인식
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+      if (deltaX > 0) {
+        // 왼쪽으로 스와이프 (다음)
+        calendarRef.current?.getApi().next();
+      } else {
+        // 오른쪽으로 스와이프 (이전)
+        calendarRef.current?.getApi().prev();
+      }
+    }
+
+    // 상태 초기화
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
+  };
+
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
       {/* 헤더 */}
@@ -401,7 +441,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
       {/* 캘린더 메인 영역 */}
       <div className="flex-1 p-4 overflow-hidden">
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container" ref={calendarContainerRef}>
+        <div
+          className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container"
+          ref={calendarContainerRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <FullCalendar
             key={isSmallMobile ? 'mobile-calendar' : 'desktop-calendar'}
             ref={calendarRef}
