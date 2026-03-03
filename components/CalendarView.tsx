@@ -27,8 +27,18 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onDeleteManualEvent
 }) => {
   // 화면 크기에 따른 초기 뷰 설정
-  const isMobile = window.innerWidth < 1024;
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isMobile = windowWidth < 1024;
+  const isSmallMobile = windowWidth < 768; // 3일 뷰를 위한 임계값
   const initialView = isMobile ? 'timeGridDay' : 'dayGridMonth';
+  const weekViewName = isSmallMobile ? 'timeGridThreeDay' : 'timeGridWeek';
 
   // 수동 일정 편집 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -393,6 +403,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       <div className="flex-1 p-4 overflow-hidden">
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 h-full p-2 lg:p-4 calendar-container" ref={calendarContainerRef}>
           <FullCalendar
+            key={isSmallMobile ? 'mobile-calendar' : 'desktop-calendar'}
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
             initialView={initialView}
@@ -407,7 +418,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             headerToolbar={{
               left: '',
               center: 'title',
-              right: 'prev,next customToday dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+              right: `prev,next customToday dayGridMonth,${weekViewName},timeGridDay,listMonth`
             }}
             events={events}
             eventOrder="order,title,start"
@@ -423,6 +434,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 titleFormat: { year: 'numeric', month: 'long' }
               },
               timeGridWeek: {
+                titleFormat: { year: 'numeric', month: 'long' },
+                dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
+              },
+              timeGridThreeDay: {
+                type: 'timeGrid',
+                duration: { days: 3 },
                 titleFormat: { year: 'numeric', month: 'long' },
                 dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }
               },
@@ -470,6 +487,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               today: '오늘',
               month: '월간',
               week: '주간',
+              timeGridWeek: '주간',
+              timeGridThreeDay: '주간',
               day: '일간',
               listMonth: '일정'
             }}
@@ -756,13 +775,16 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         }
 
         /* 주간 버튼: 파랑 */
-        .calendar-container .fc-timeGridWeek-button {
+        .calendar-container .fc-timeGridWeek-button,
+        .calendar-container .fc-timeGridThreeDay-button {
           background-color: #3b82f6 !important; /* blue-500 */
           border-color: #2563eb !important;
           color: white !important;
         }
         .calendar-container .fc-timeGridWeek-button:hover,
-        .calendar-container .fc-timeGridWeek-button.fc-button-active {
+        .calendar-container .fc-timeGridWeek-button.fc-button-active,
+        .calendar-container .fc-timeGridThreeDay-button:hover,
+        .calendar-container .fc-timeGridThreeDay-button.fc-button-active {
           background-color: #1d4ed8 !important; /* blue-700 */
           border-color: #1e40af !important;
         }
