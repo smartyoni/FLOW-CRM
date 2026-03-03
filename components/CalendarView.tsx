@@ -901,7 +901,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           opacity: 0.5 !important;
         }
         .calendar-container .completed-event .fc-event-title,
-        .calendar-container .completed-event .fc-event-time {
+        .calendar-container .completed-event .fc-event-time,
+        .calendar-container .completed-event .fc-list-event-title,
+        .calendar-container .completed-event .fc-list-event-time {
           text-decoration: line-through !important;
         }
 
