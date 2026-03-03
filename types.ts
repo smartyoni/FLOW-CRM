@@ -12,7 +12,6 @@ export interface Property {
   jibun: string;              // 지번 주소
   agency: string;             // 부동산명
   agencyPhone: string;        // 부동산 연락처
-  photos: string[];           // Base64 data URLs
   parsedText?: string;        // 정리본 텍스트 (선택사항)
   unit?: string;              // 호실 정보
   memo?: string;              // 매물 메모 (선택사항)
@@ -58,6 +57,7 @@ export interface Customer {
   depositReturnAccount?: string; // 보증금반환계좌번호 (optional)
   paymentAccount?: string; // 잔금입금계좌번호 (optional)
   managementFeeSettlementDate?: string; // 관리비정산 요청일 (optional)
+  meetingHistory?: ChecklistItem[]; // 전회차 통합 미팅 히스토리
 
   // Favorites
   isFavorite?: boolean;

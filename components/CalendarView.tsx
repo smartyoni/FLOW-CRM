@@ -435,6 +435,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             height="100%"
             dayMaxEvents={true}
             navLinks={true}
+            slotDuration="00:30:00"
+            slotLabelInterval="00:30:00"
+            slotLabelContent={(arg) => {
+              const hour = arg.date.getHours();
+              const minute = arg.date.getMinutes();
+              return `${hour}:${minute === 0 ? '00' : minute}`;
+            }}
             navLinkDayClick={(date) => {
               // Handle timezone offset to ensure safe string comparison for local date
               const localDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
@@ -678,6 +685,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         .calendar-container .fc-timegrid-axis {
           cursor: pointer;
           user-select: none;
+        }
+        /* 종일 영역 배경색: 항상 노란색 */
+        .calendar-container .fc-timegrid-allday,
+        .calendar-container .fc-timegrid-allday .fc-timegrid-col {
+          background-color: #fef9c3 !important; /* yellow-100 */
+        }
+        .calendar-container .fc-timegrid-axis.fc-scrollgrid-shrink {
+          background-color: #fef9c3 !important;
         }
         .calendar-container .fc-timegrid-axis:hover {
           background-color: #eff6ff;

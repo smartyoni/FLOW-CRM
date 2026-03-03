@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Customer, Property, Meeting, ChecklistItem } from '../types';
 import { generateId } from '../services/firestore';
-import { fileToBase64, compressAndConvertToBase64 } from '../services/storage-firebase';
 import {
   parsePropertyDetails,
   generateStructuredPropertyInfo,
@@ -9,7 +8,6 @@ import {
   generateStructuredPropertyInfoByPlatform
 } from '../utils/textParser';
 import { isValidPhoneNumber, generateSmsLink } from '../utils/phoneUtils';
-import { PhotoModal } from './PhotoModal';
 import { useAppContext } from '../contexts/AppContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -37,9 +35,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   // 플랫폼 선택 (TEN 주거, TEN 상업용, 또는 NAVER)
   const [selectedPlatform, setSelectedPlatform] = useState<'TEN' | 'TEN_COMMERCIAL' | 'NAVER'>('TEN');
 
-  // 사진 모달
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [photoUploadPropId, setPhotoUploadPropId] = useState<string | null>(null);
 
   // ⭐ 로컬 미팅 상태 (즉시 미리보기를 위함)
   const [localMeeting, setLocalMeeting] = useState<Meeting | null>(null);
@@ -65,7 +60,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 보고서 프리뷰 모달 상태
   const [reportPreviewOpen, setReportPreviewOpen] = useState(false);
-  const [reportImages, setReportImages] = useState<string[]>([]);
   const [reportFileName, setReportFileName] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
 
@@ -117,6 +111,37 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       setLocalMeeting(propsActiveMeeting);
     }
   }, [propsActiveMeeting?.id]);
+
+  // ⭐ 미팅 히스토리 통합 마이그레이션 및 동기화
+  // 기존 각 차수별로 흩어져 있던 히스토리를 고객 레벨의 통합 히스토리로 모읍니다.
+  useEffect(() => {
+    if (customer.meetings && customer.meetings.length > 0 && (!customer.meetingHistory || customer.meetingHistory.length === 0)) {
+      const allHistories: ChecklistItem[] = [];
+      const seenIds = new Set<string>();
+
+      // 모든 차수의 히스토리를 수집 (중복 방지)
+      customer.meetings.forEach(m => {
+        if (m.meetingHistory) {
+          m.meetingHistory.forEach(h => {
+            if (!seenIds.has(h.id)) {
+              allHistories.push(h);
+              seenIds.add(h.id);
+            }
+          });
+        }
+      });
+
+      if (allHistories.length > 0) {
+        // 최신순 정렬
+        allHistories.sort((a, b) => b.createdAt - a.createdAt);
+
+        onUpdate({
+          ...customer,
+          meetingHistory: allHistories
+        });
+      }
+    }
+  }, [customer.id]); // 고객이 바뀔 때 한 번만 체크
 
   // ⭐ 렌더링할 때는 로컬 상태를 사용 (Firebase 저장 대기 없이 즉시 표시)
   const activeMeeting = (localMeeting || propsActiveMeeting) ? {
@@ -232,7 +257,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const handleAddMeetingHistory = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newHistoryText.trim() || !activeMeeting) return;
+    if (!newHistoryText.trim()) return;
 
     const newItem: ChecklistItem = {
       id: generateId(),
@@ -241,20 +266,10 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
       memo: ''
     };
 
-    const updatedMeeting = {
-      ...activeMeeting,
-      meetingHistory: [newItem, ...activeMeeting.meetingHistory]
-    };
-
-    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-    setLocalMeeting(updatedMeeting);
-
-    // ⭐ 2. Firebase에 저장 (백그라운드)
+    // ⭐ 고객 레벨의 통합 히스토리에 추가
     onUpdate({
       ...customer,
-      meetings: customer.meetings.map(m =>
-        m.id === activeMeeting.id ? updatedMeeting : m
-      )
+      meetingHistory: [newItem, ...(customer.meetingHistory || [])]
     });
 
     setNewHistoryText('');
@@ -263,22 +278,11 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   const handleDeleteMeetingHistory = async (id: string) => {
     const confirmed = await showConfirm('삭제', '삭제하시겠습니까?');
     if (!confirmed) return;
-    if (!activeMeeting) return;
 
-    const updatedMeeting = {
-      ...activeMeeting,
-      meetingHistory: activeMeeting.meetingHistory.filter(item => item.id !== id)
-    };
-
-    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-    setLocalMeeting(updatedMeeting);
-
-    // ⭐ 2. Firebase에 저장 (백그라운드)
+    // ⭐ 고객 레벨의 통합 히스토리에서 삭제
     onUpdate({
       ...customer,
-      meetings: customer.meetings.map(m =>
-        m.id === activeMeeting.id ? updatedMeeting : m
-      )
+      meetingHistory: (customer.meetingHistory || []).filter(item => item.id !== id)
     });
   };
 
@@ -289,24 +293,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const saveHistoryMemo = () => {
-    if (!historyMemoItem || !activeMeeting) return;
+    if (!historyMemoItem) return;
 
-    const updatedMeeting = {
-      ...activeMeeting,
-      meetingHistory: activeMeeting.meetingHistory.map(item =>
-        item.id === historyMemoItem.id ? { ...item, memo: historyMemoText } : item
-      )
-    };
+    // ⭐ 고객 레벨의 통합 히스토리 메모 업데이트
+    const updatedHistory = (customer.meetingHistory || []).map(item =>
+      item.id === historyMemoItem.id ? { ...item, memo: historyMemoText } : item
+    );
 
-    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-    setLocalMeeting(updatedMeeting);
-
-    // ⭐ 2. Firebase에 저장 (백그라운드)
     onUpdate({
       ...customer,
-      meetings: customer.meetings.map(m =>
-        m.id === activeMeeting.id ? updatedMeeting : m
-      )
+      meetingHistory: updatedHistory
     });
 
     setHistoryMemoMode('VIEW');
@@ -319,24 +315,16 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const saveEditingHistory = () => {
-    if (!editingHistoryItemId || !activeMeeting) return;
+    if (!editingHistoryItemId) return;
 
-    const updatedMeeting = {
-      ...activeMeeting,
-      meetingHistory: activeMeeting.meetingHistory.map(item =>
-        item.id === editingHistoryItemId ? { ...item, text: editingHistoryText } : item
-      )
-    };
+    // ⭐ 고객 레벨의 통합 히스토리 텍스트 업데이트
+    const updatedHistory = (customer.meetingHistory || []).map(item =>
+      item.id === editingHistoryItemId ? { ...item, text: editingHistoryText } : item
+    );
 
-    // ⭐ 1. 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-    setLocalMeeting(updatedMeeting);
-
-    // ⭐ 2. Firebase에 저장 (백그라운드)
     onUpdate({
       ...customer,
-      meetings: customer.meetings.map(m =>
-        m.id === activeMeeting.id ? updatedMeeting : m
-      )
+      meetingHistory: updatedHistory
     });
 
     setEditingHistoryItemId(null);
@@ -384,7 +372,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         jibun: parsedJibun,
         agency: parsedAgency,
         agencyPhone: parsedAgencyPhone,
-        photos: [],
         parsedText: parsedText || propertyText
       };
 
@@ -509,169 +496,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   };
 
-  const handlePhotoUpload = async (files: File[]) => {
-    // ⭐ 함수 시작 시 상태 스냅샷 저장 (async 진행 중 상태 변경 방지)
-    const propId = photoUploadPropId;
-    const meeting = activeMeeting;
 
-    console.log('🎬 handlePhotoUpload called with', files.length, 'files');
-    console.log('📍 propId:', propId);
-    console.log('📍 meeting:', meeting?.id);
-
-    if (!propId) {
-      console.error('❌ propId is not set');
-      alert('매물이 선택되지 않았습니다.');
-      return;
-    }
-
-    if (!meeting) {
-      console.error('❌ meeting is not set');
-      alert('미팅이 선택되지 않았습니다.');
-      return;
-    }
-
-    const currentProp = meeting.properties.find(p => p.id === propId);
-    console.log('🔍 currentProp found:', !!currentProp);
-
-    if (!currentProp) {
-      console.error('❌ currentProp not found for id:', propId);
-      alert('해당 매물을 찾을 수 없습니다.');
-      return;
-    }
-
-    const remainingSlots = 4 - currentProp.photos.length;
-    console.log('📸 remainingSlots:', remainingSlots, 'currentPhotos:', currentProp.photos.length);
-
-    if (remainingSlots <= 0) {
-      alert('사진은 최대 4장까지만 등록 가능합니다.');
-      return;
-    }
-
-    // File type validation
-    const validFiles: File[] = [];
-    const invalidTypes: string[] = [];
-
-    for (const file of files) {
-      console.log(`📄 File check: ${file.name}, type: ${file.type}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      if (file.type.startsWith('image/')) {
-        validFiles.push(file);
-      } else {
-        invalidTypes.push(file.name);
-      }
-    }
-
-    if (invalidTypes.length > 0) {
-      alert(`이미지 파일만 업로드 가능합니다: ${invalidTypes.join(', ')}`);
-    }
-
-    if (validFiles.length === 0) {
-      console.warn('⚠️ No valid image files');
-      return;
-    }
-
-    const filesToProcess = validFiles.slice(0, remainingSlots);
-    console.log(`✅ Processing ${filesToProcess.length} valid files`);
-
-    try {
-      // ⭐ Step 1: 압축 시작 전에 즉시 UI 업데이트 (로딩 표시)
-      console.log(`📸 Compressing ${filesToProcess.length} image(s)...`);
-
-      const base64Images: string[] = [];
-
-      // ⭐ Step 2: 압축 작업 (병렬 처리로 더 빠르게)
-      const compressionPromises = filesToProcess.map(async (file) => {
-        try {
-          console.log(`📸 Processing: ${file.name}`);
-          const base64 = await compressAndConvertToBase64(file);
-          console.log(`✅ ${file.name} compressed successfully`);
-          return base64;
-        } catch (error) {
-          console.error(`❌ Error processing ${file.name}:`, error);
-          throw error;
-        }
-      });
-
-      // 모든 압축 작업이 완료될 때까지 대기
-      try {
-        const results = await Promise.allSettled(compressionPromises);
-
-        for (const result of results) {
-          if (result.status === 'fulfilled') {
-            base64Images.push(result.value);
-          } else {
-            const error = result.reason;
-            console.error('❌ Compression failed:', error);
-            alert(`사진 처리 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error in compression:', error);
-      }
-
-      if (base64Images.length === 0) {
-        console.warn('⚠️ 압축된 이미지가 없습니다.');
-        alert('압축에 실패한 사진이 있습니다. 다시 시도해주세요.');
-        return;
-      }
-
-      // ⭐ Step 3: 로컬 상태 먼저 업데이트 (즉시 미리보기 표시)
-      console.log(`✅ 로컬 상태 업데이트: ${base64Images.length}장의 사진 추가`);
-      const updatedPhotos = [...currentProp.photos, ...base64Images];
-      const updatedLocalMeeting = {
-        ...meeting,
-        properties: meeting.properties.map(p =>
-          p.id === propId
-            ? { ...p, photos: updatedPhotos }
-            : p
-        )
-      };
-
-      // 즉시 로컬 상태 반영 (렌더링 즉시 일어남)
-      setLocalMeeting(updatedLocalMeeting);
-      console.log(`📝 Updated photos count: ${updatedPhotos.length}`);
-
-      // ⭐ Step 4: Firebase에 저장 (백그라운드, 시간 걸려도 상관없음)
-      console.log('💾 Saving to Firebase in background...');
-      updateMeeting(meeting.id, {
-        properties: meeting.properties.map(p =>
-          p.id === propId
-            ? { ...p, photos: updatedPhotos }
-            : p
-        )
-      });
-
-      console.log(`✅ ${base64Images.length}장의 사진이 업로드되었습니다.`);
-      setPhotoUploadPropId(null);
-    } catch (error) {
-      console.error('❌ 사진 업로드 중 오류:', error);
-      alert('사진 업로드 중 오류가 발생했습니다.');
-      setPhotoUploadPropId(null);
-    }
-  };
-
-  const removePhoto = (propId: string, photoIndex: number) => {
-    if (!activeMeeting) return;
-    const currentProp = activeMeeting.properties.find(p => p.id === propId);
-    if (!currentProp) return;
-
-    const updatedPhotos = currentProp.photos.filter((_, i) => i !== photoIndex);
-
-    // ⭐ 로컬 상태 먼저 업데이트 (즉시 UI 반영)
-    const updatedLocalMeeting = {
-      ...activeMeeting,
-      properties: activeMeeting.properties.map(p =>
-        p.id === propId ? { ...p, photos: updatedPhotos } : p
-      )
-    };
-    setLocalMeeting(updatedLocalMeeting);
-
-    // Firebase에 저장 (백그라운드)
-    updateMeeting(activeMeeting.id, {
-      properties: activeMeeting.properties.map(p =>
-        p.id === propId ? { ...p, photos: updatedPhotos } : p
-      )
-    });
-  };
 
   // 매물 메모 저장
   const saveMemo = (propId: string) => {
@@ -702,115 +527,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // --- PDF Generation ---
 
-  // 단일 매물 이미지 재생성 (사진만)
-  const regeneratePropertyImage = async (propIndex: number) => {
-    if (propIndex < 0 || propIndex >= reportProperties.length) return;
-
-    const prop = reportProperties[propIndex];
-
-    try {
-      // HTML 요소 동적 생성
-      const reportContainer = document.createElement('div');
-      reportContainer.style.width = '210mm';
-      reportContainer.style.padding = '10mm';
-      reportContainer.style.backgroundColor = 'white';
-      reportContainer.style.fontFamily = 'Arial, sans-serif';
-      reportContainer.style.fontSize = '12px';
-      reportContainer.style.color = '#333';
-      reportContainer.style.position = 'absolute';
-      reportContainer.style.left = '-9999px';
-      reportContainer.style.top = '-9999px';
-
-      let html = '';
-
-      // 사진 섹션만
-      if (prop.photos && prop.photos.length > 0) {
-        html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
-        html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
-        for (const photoData of prop.photos) {
-          html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
-        }
-        html += '</div>';
-      }
-
-      reportContainer.innerHTML = html;
-      document.body.appendChild(reportContainer);
-
-      // html2canvas로 캡처
-      const canvas = await html2canvas(reportContainer, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-
-      document.body.removeChild(reportContainer);
-
-      // reportImages 배열의 해당 인덱스만 업데이트
-      setReportImages(prev => {
-        const newImages = [...prev];
-        newImages[propIndex] = canvas.toDataURL('image/png');
-        return newImages;
-      });
-    } catch (err) {
-      console.error('이미지 재생성 오류:', err);
-    }
-  };
-
-  // 모든 매물 이미지 생성 (사진만)
-  const regenerateAllImages = async (properties: Property[], memos: { [propId: string]: string }) => {
-    const images: string[] = [];
-
-    for (let i = 0; i < properties.length; i++) {
-      const prop = properties[i];
-
-      try {
-        // HTML 요소 동적 생성
-        const reportContainer = document.createElement('div');
-        reportContainer.style.width = '210mm';
-        reportContainer.style.padding = '10mm';
-        reportContainer.style.backgroundColor = 'white';
-        reportContainer.style.fontFamily = 'Arial, sans-serif';
-        reportContainer.style.fontSize = '12px';
-        reportContainer.style.color = '#333';
-        reportContainer.style.position = 'absolute';
-        reportContainer.style.left = '-9999px';
-        reportContainer.style.top = '-9999px';
-
-        let html = '';
-
-        // 사진 섹션만
-        if (prop.photos && prop.photos.length > 0) {
-          html += `<h3 style="font-size: 13px; font-weight: bold; margin: 12px 0 8px 0;">사진 (${prop.photos.length}장):</h3>`;
-          html += '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 0;">';
-          for (const photoData of prop.photos) {
-            html += `<img src="${photoData}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" />`;
-          }
-          html += '</div>';
-        }
-
-        reportContainer.innerHTML = html;
-        document.body.appendChild(reportContainer);
-
-        // html2canvas로 캡처
-        const canvas = await html2canvas(reportContainer, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff'
-        });
-
-        document.body.removeChild(reportContainer);
-
-        images.push(canvas.toDataURL('image/png'));
-      } catch (err) {
-        console.error(`매물 ${i} 이미지 생성 오류:`, err);
-      }
-    }
-
-    setReportImages(images);
-  };
-
   // 미리보기 이미지 생성
   const generateReportPreview = async () => {
     if (!activeMeeting || activeMeeting.properties.length === 0) {
@@ -836,9 +552,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
         initialMemos[prop.id] = prop.memo || '';
       }
       setReportMemos(initialMemos);
-
-      // 모든 이미지 생성
-      await regenerateAllImages(sortedProperties, initialMemos);
 
       setReportFileName(`${customer.name}_${activeMeeting.round}차미팅_매물보고서`);
       setReportPreviewOpen(true);
@@ -969,7 +682,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
       // 모달 닫기
       setReportPreviewOpen(false);
-      setReportImages([]);
       setReportFileName('');
       setReportMemos({});
       setReportProperties([]);
@@ -985,9 +697,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
     // 메모 상태 업데이트
     setReportMemos(prev => ({ ...prev, [propId]: newMemo }));
-
-    // 해당 이미지 재생성
-    await regeneratePropertyImage(propIndex);
   };
 
   const generatePropertyReport = generateReportPreview;
@@ -1007,7 +716,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                 <button
                   onClick={() => {
                     setReportPreviewOpen(false);
-                    setReportImages([]);
                     setReportFileName('');
                     setReportMemos({});
                     setReportProperties([]);
@@ -1053,13 +761,13 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
           {/* 미리보기 */}
           <div className="p-6 space-y-6">
-            {reportImages.map((img, idx) => (
-              <div key={idx} className="space-y-4">
+            {reportProperties.map((prop, idx) => (
+              <div key={prop.id} className="space-y-4">
                 {/* 1. 매물정보 텍스트 */}
-                {reportProperties[idx]?.parsedText && (
+                {prop.parsedText && (
                   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 group cursor-pointer" onDoubleClick={() => {
                     setEditingPropertyIdx(idx);
-                    setEditingPropertyText(reportProperties[idx].parsedText);
+                    setEditingPropertyText(prop.parsedText);
                   }}>
                     {editingPropertyIdx === idx ? (
                       <div className="space-y-2">
@@ -1098,7 +806,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                         </div>
                       </div>
                     ) : (
-                      <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed group-hover:bg-gray-100 p-2 rounded transition-colors">{reportProperties[idx].parsedText}</pre>
+                      <pre className="text-xs whitespace-pre-wrap text-gray-800 font-semibold leading-relaxed group-hover:bg-gray-100 p-2 rounded transition-colors">{prop.parsedText}</pre>
                     )}
                   </div>
                 )}
@@ -1123,14 +831,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
   return (
     <>
-      <PhotoModal
-        isOpen={photoModalOpen}
-        onClose={() => {
-          setPhotoModalOpen(false);
-          setPhotoUploadPropId(null);
-        }}
-        onPhotoCapture={handlePhotoUpload}
-      />
       <div className="flex flex-col h-full bg-white overflow-hidden">
         <div className="p-4 bg-white border-b shrink-0">
           {/* Meeting Navigation Tabs */}
@@ -2010,44 +1710,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                                 )}
                               </div>
 
-                              {/* 사진 미리보기 섹션 */}
-                              <div className="mt-4 pt-4 border-t border-gray-200">
-                                <div className="flex justify-between items-center mb-2">
-                                  <span className="text-xs font-semibold text-gray-600">사진 ({prop.photos.length}/4)</span>
-                                  {prop.photos.length < 4 && (
-                                    <button
-                                      onClick={() => {
-                                        setPhotoUploadPropId(prop.id);
-                                        setPhotoModalOpen(true);
-                                      }}
-                                      className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 flex items-center gap-1 font-semibold"
-                                    >
-                                      <i className="fas fa-camera"></i>
-                                      추가
-                                    </button>
-                                  )}
-                                </div>
-                                {prop.photos.length > 0 ? (
-                                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                    {prop.photos.map((photo, pIdx) => (
-                                      <div key={pIdx} className="relative aspect-square bg-gray-200 rounded overflow-hidden group border border-gray-300">
-                                        <img src={photo} alt={`photo-${pIdx}`} className="w-full h-full object-cover" />
-                                        <button
-                                          onClick={() => removePhoto(prop.id, pIdx)}
-                                          className="absolute top-1 right-1 bg-red-500 text-white w-5 h-5 flex items-center justify-center text-xs rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                          title="삭제"
-                                        >
-                                          ×
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div className="py-4 text-center text-gray-400 text-xs">
-                                    사진이 없습니다. 위의 "추가" 버튼을 누르세요.
-                                  </div>
-                                )}
-                              </div>
 
                             </div>
                           ))}
@@ -2087,7 +1749,7 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
 
                 {/* 체크리스트 목록 */}
                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                  {activeMeeting.meetingHistory.map((item, index) => (
+                  {(customer.meetingHistory || []).map((item, index, array) => (
                     <div key={item.id}>
                       <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 group">
                         <div className="flex justify-between items-start mb-2">
@@ -2131,12 +1793,12 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           )}
                         </div>
                       </div>
-                      {index < activeMeeting.meetingHistory.length - 1 && (
+                      {index < array.length - 1 && (
                         <div className="h-px bg-red-500 my-3"></div>
                       )}
                     </div>
                   ))}
-                  {activeMeeting.meetingHistory.length === 0 && (
+                  {(!customer.meetingHistory || customer.meetingHistory.length === 0) && (
                     <div className="text-center text-gray-400 py-10">
                       등록된 미팅히스토리가 없습니다.
                     </div>
@@ -2201,19 +1863,6 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
               </div>
             )}
 
-            {/* 사진들 */}
-            {prop.photos.length > 0 && (
-              <div>
-                <p className="text-sm font-semibold text-gray-700 mb-3">첨부 사진</p>
-                <div className="grid grid-cols-2 gap-4">
-                  {prop.photos.map((p, i) => (
-                    <div key={i} className="aspect-square bg-gray-100 rounded overflow-hidden border border-gray-300">
-                      <img src={p} className="w-full h-full object-cover" alt={`property-photo-${i}`} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>

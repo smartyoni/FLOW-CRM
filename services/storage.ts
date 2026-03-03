@@ -16,8 +16,7 @@ export const saveCustomers = (customers: Customer[]) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(customers));
   } catch (e) {
-    console.error("Failed to save customers (likely quota exceeded)", e);
-    alert("저장 용량이 부족합니다. 사진을 줄여주세요.");
+    alert("저장 용량이 부족합니다. 입력 내용을 줄여주세요.");
   }
 };
 
@@ -67,7 +66,6 @@ export const migratePropertyData = (customers: Customer[]): Customer[] => {
             jibun: '',
             agency: '',
             agencyPhone: '',
-            photos: prop.photos || [],
             parsedText: prop.description // 기존 description 보존
           };
         }
