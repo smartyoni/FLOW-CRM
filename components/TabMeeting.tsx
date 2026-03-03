@@ -1672,7 +1672,8 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                           <span className="mr-1 text-base">⛶</span> 크게 보기
                         </button>
                       </div>
-                      {renderPropertyList()}
+                      {/* 크게보기 모드에서는 일반 뷰의 매물 목록을 렌더링하지 않음 (인라인 편집 포커스 충돌 방지) */}
+                      {!isFullScreenMode && renderPropertyList()}
                     </div>
                   )}
                 </div>
