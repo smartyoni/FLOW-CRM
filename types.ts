@@ -58,6 +58,7 @@ export interface Customer {
   paymentAccount?: string; // 잔금입금계좌번호 (optional)
   managementFeeSettlementDate?: string; // 관리비정산 요청일 (optional)
   contractDetailMemo?: string; // 계약서 상세 메모 (추가)
+  paymentDetailMemo?: string; // 잔금일 상세 메모 (추가)
   meetingHistory?: ChecklistItem[]; // 전회차 통합 미팅 히스토리
 
   // Favorites
