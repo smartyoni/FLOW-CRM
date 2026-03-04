@@ -509,8 +509,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         <button
           onClick={() => setMobileContractTab('INFO')}
           className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobileContractTab === 'INFO'
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-gray-400'
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-gray-400'
             }`}
         >
           <i className="fas fa-file-contract text-lg"></i>
@@ -519,8 +519,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
         <button
           onClick={() => setMobileContractTab('CLIPBOARD')}
           className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobileContractTab === 'CLIPBOARD'
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-gray-400'
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-gray-400'
             }`}
         >
           <i className="fas fa-clipboard text-lg"></i>
@@ -625,6 +625,32 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
               />
             ) : (
               <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.contractPeriod || '-'}</span>
+            )}
+          </div>
+
+          {/* 계약서 상세 메모 (Phase 8) */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 group cursor-pointer" onDoubleClick={() => startEditingContract('contractDetailMemo', customer.contractDetailMemo || '')}>
+            <div className="flex items-center mb-1">
+              <i className="fas fa-sticky-note mr-2 text-primary"></i>
+              <span className="text-gray-700 font-bold">계약서 상세 메모</span>
+            </div>
+            {editingContractField === 'contractDetailMemo' ? (
+              <textarea
+                autoFocus
+                className="w-full border border-primary p-2 outline-none text-sm resize-none overflow-y-auto"
+                style={{
+                  minHeight: '4.5rem', // 3 lines approx
+                  maxHeight: '7.5rem'  // 5 lines approx
+                }}
+                rows={editingContractValue.split('\n').length > 5 ? 5 : Math.max(3, editingContractValue.split('\n').length)}
+                value={editingContractValue}
+                onChange={e => setEditingContractValue(e.target.value)}
+                onBlur={() => saveContractEdit('contractDetailMemo')}
+              />
+            ) : (
+              <div className="text-gray-800 whitespace-pre-wrap text-sm group-hover:bg-yellow-100 min-h-[4.5rem]">
+                {customer.contractDetailMemo || '내용을 입력하려면 더블클릭하세요.'}
+              </div>
             )}
           </div>
 
@@ -928,8 +954,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
               readOnly={!contentModalEditMode}
               onDoubleClick={() => setContentModalEditMode(true)}
               className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-primary ${contentModalEditMode
-                  ? 'border-2 border-blue-500 focus:border-transparent'
-                  : 'border-2 border-gray-200 cursor-pointer'
+                ? 'border-2 border-blue-500 focus:border-transparent'
+                : 'border-2 border-gray-200 cursor-pointer'
                 }`}
               value={contentModalText}
               onChange={handleContentChange}
