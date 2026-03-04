@@ -94,14 +94,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('customerList')}
-              className={`w-full flex items-center p-3 rounded-lg transition-colors group ${currentView === 'customerList'
-                ? 'bg-blue-600/20 text-blue-400'
-                // Cache bust comment to force new hash for PWA
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-colors group ${currentView === 'customerList'
+                ? 'bg-blue-600 text-white'
                 : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`text-2xl leading-none ${currentView === 'customerList' ? 'text-white' : 'text-red-500'}`}>•</span>
+                <i className={`fas fa-user-plus w-5 text-center ${currentView === 'customerList' ? 'text-white' : 'text-red-400'}`}></i>
                 <span className="font-medium text-sm">접수~첫미팅</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'customerList' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{customerListCount}</span>
@@ -112,13 +111,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('managingCustomer')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'managingCustomer'
+              className={`w-full flex items-center justify-between gap-3 px-3 py-3 rounded-lg transition-all ${currentView === 'managingCustomer'
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                : 'text-slate-300 hover:bg-slate-700/50'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`text-2xl leading-none ${currentView === 'managingCustomer' ? 'text-white' : 'text-red-500'}`}>•</span>
+                <i className={`fas fa-tasks w-5 text-center ${currentView === 'managingCustomer' ? 'text-white' : 'text-orange-400'}`}></i>
                 <span className="font-medium text-sm">재미팅~계약</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'managingCustomer' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{managingCustomerCount}</span>
@@ -129,13 +128,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <li>
             <button
               onClick={() => handleViewClick('contractCustomer')}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg transition-all ${currentView === 'contractCustomer'
+              className={`w-full flex items-center justify-between gap-3 px-3 py-3 rounded-lg transition-all ${currentView === 'contractCustomer'
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20'
-                : 'text-slate-300 hover:bg-slate-700/50'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`text-2xl leading-none ${currentView === 'contractCustomer' ? 'text-white' : 'text-red-500'}`}>•</span>
+                <i className={`fas fa-file-contract w-5 text-center ${currentView === 'contractCustomer' ? 'text-white' : 'text-green-400'}`}></i>
                 <span className="font-medium text-sm">계약~잔금</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'contractCustomer' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{contractCustomerCount}</span>

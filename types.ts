@@ -72,6 +72,7 @@ export interface Customer {
 
 export type ViewState = 'LIST' | 'DETAIL';
 export type TabState = 'BASIC' | 'MEETING' | 'GANTT' | 'CONTRACT' | 'PAYMENT' | 'REPORT';
+export type ViewMode = 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar';
 
 // 클립보드 하위 항목
 export interface ClipboardItem {

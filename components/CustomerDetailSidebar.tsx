@@ -11,9 +11,10 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (customer: Customer) => void;
+  setIsEditing: (isEditing: boolean) => void;
 }
 
-export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate }) => {
+export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate, setIsEditing }) => {
   const [activeTab, setActiveTab] = useState<TabState>('BASIC');
   const [sidebarWidth, setSidebarWidth] = useState('100vw');
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -76,7 +77,7 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
     <>
       {/* Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-25 z-30 transition-opacity"
           onClick={onClose}
         ></div>
@@ -84,15 +85,16 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
 
       {/* Sidebar Panel */}
       <div
-        className={`fixed inset-y-0 right-0 w-full bg-white shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed inset-y-0 right-0 w-full bg-white shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
         style={{ width: sidebarWidth }}
       >
         <div className="flex flex-col h-full">
           {/* Top Bar */}
           <div className="bg-primary text-white p-4 flex justify-between items-center shadow-md shrink-0">
-            <h2 className="text-lg font-bold truncate pr-4">{customer.name} 고객님</h2>
+            <div className="flex items-center gap-2 overflow-hidden">
+              <h2 className="text-lg font-bold truncate">{customer.name} 고객님</h2>
+            </div>
             <button onClick={onClose} className="hover:text-gray-200">
               <i className="fas fa-times text-xl"></i>
             </button>
@@ -101,41 +103,36 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
           {/* Navigation Tabs */}
           <div className="flex border-b shrink-0">
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'BASIC' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'BASIC' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setActiveTab('BASIC')}
             >
               고객정보
             </button>
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'MEETING' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'MEETING' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setActiveTab('MEETING')}
             >
               미팅실무
             </button>
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'GANTT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'GANTT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setActiveTab('GANTT')}
             >
               여정관리
             </button>
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'CONTRACT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'CONTRACT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setActiveTab('CONTRACT')}
             >
               계약
             </button>
             <button
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'PAYMENT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'PAYMENT' ? 'border-b-2 border-primary text-primary' : 'text-gray-500 hover:text-gray-700'
+                }`}
               onClick={() => setActiveTab('PAYMENT')}
             >
               잔금
