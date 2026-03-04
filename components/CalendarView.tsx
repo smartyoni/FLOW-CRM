@@ -418,7 +418,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
       {/* 헤더 */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 shrink-0 flex items-center justify-between shadow-sm z-10">
+      <header className="bg-white border-b border-slate-200 px-4 py-3 shrink-0 flex items-center justify-between shadow-sm z-10 h-14">
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuClick}

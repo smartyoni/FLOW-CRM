@@ -83,22 +83,24 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             {/* Main Content */}
             <div className="flex-1 overflow-hidden flex flex-col">
                 {/* Header Area */}
-                <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0 h-14">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={onCloseMobileSidebar}
-                            className="lg:hidden text-gray-500 hover:text-gray-700"
-                        >
-                            <i className="fas fa-bars text-xl"></i>
-                        </button>
-                        <h2 className="text-lg font-bold text-gray-800">
-                            {viewTitles[currentView]}
-                        </h2>
-                    </div>
+                {currentView !== 'calendar' && (
+                    <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0 h-14">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={onCloseMobileSidebar}
+                                className="lg:hidden text-gray-500 hover:text-gray-700"
+                            >
+                                <i className="fas fa-bars text-xl"></i>
+                            </button>
+                            <h2 className="text-lg font-bold text-gray-800">
+                                {viewTitles[currentView]}
+                            </h2>
+                        </div>
 
-                    <div className="flex items-center gap-2">
-                    </div>
-                </header>
+                        <div className="flex items-center gap-2">
+                        </div>
+                    </header>
+                )}
 
                 {/* Content Area */}
                 <div className="flex-1 overflow-hidden bg-slate-50">

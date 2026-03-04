@@ -509,8 +509,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
         <button
           onClick={() => setMobilePaymentTab('INFO')}
           className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobilePaymentTab === 'INFO'
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-gray-400'
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-gray-400'
             }`}
         >
           <i className="fas fa-won-sign text-lg"></i>
@@ -519,8 +519,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
         <button
           onClick={() => setMobilePaymentTab('CLIPBOARD')}
           className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobilePaymentTab === 'CLIPBOARD'
-              ? 'text-primary border-b-2 border-primary'
-              : 'text-gray-400'
+            ? 'text-primary border-b-2 border-primary'
+            : 'text-gray-400'
             }`}
         >
           <i className="fas fa-clipboard text-lg"></i>
@@ -625,6 +625,33 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
               <span className="text-gray-800 font-bold group-hover:bg-yellow-100">{customer.managementFeeSettlementDate || '-'}</span>
             )}
           </div>
+        </div>
+
+        {/* 잔금일 참고사항 (Phase 9) */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 group cursor-pointer" onDoubleClick={() => startEditingPayment('paymentDetailMemo', customer.paymentDetailMemo || '')}>
+          <div className="flex items-center mb-1">
+            <i className="fas fa-sticky-note mr-2 text-pink-500"></i>
+            <span className="text-gray-700 font-bold">잔금일 참고사항</span>
+          </div>
+          {editingPaymentField === 'paymentDetailMemo' ? (
+            <textarea
+              autoFocus
+              className="w-full border border-pink-500 p-2 outline-none text-sm resize-none overflow-y-auto"
+              placeholder="고객 요청사항 기타 확인할 것"
+              style={{
+                minHeight: '4.5rem', // 3 lines approx
+                maxHeight: '7.5rem'  // 5 lines approx
+              }}
+              rows={editingPaymentValue.split('\n').length > 5 ? 5 : Math.max(3, editingPaymentValue.split('\n').length)}
+              value={editingPaymentValue}
+              onChange={e => setEditingPaymentValue(e.target.value)}
+              onBlur={() => savePaymentEdit('paymentDetailMemo')}
+            />
+          ) : (
+            <div className={`whitespace-pre-wrap text-sm group-hover:bg-yellow-100 min-h-[4.5rem] ${!customer.paymentDetailMemo ? 'text-gray-400 italic' : 'text-gray-800'}`}>
+              {customer.paymentDetailMemo || '고객 요청사항 기타 확인할 것'}
+            </div>
+          )}
         </div>
 
         {/* 잔금 진행 현황 */}
@@ -915,8 +942,8 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
               readOnly={!contentModalEditMode}
               onDoubleClick={() => setContentModalEditMode(true)}
               className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-pink-500 ${contentModalEditMode
-                  ? 'border-2 border-pink-500 focus:border-transparent'
-                  : 'border-2 border-gray-200 cursor-pointer'
+                ? 'border-2 border-pink-500 focus:border-transparent'
+                : 'border-2 border-gray-200 cursor-pointer'
                 }`}
               value={contentModalText}
               onChange={handleContentChange}
