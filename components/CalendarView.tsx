@@ -104,19 +104,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         });
       }
 
-      // 4. 입주예정일
-      if (customer.moveInDate) {
-        allEvents.push({
-          id: `movein-${customer.id}`,
-          title: `입주: ${customer.name}`,
-          start: customer.moveInDate,
-          backgroundColor: '#ede9fe', // soft violet
-          borderColor: '#a78bfa',
-          textColor: '#5b21b6',
-          allDay: true,
-          extendedProps: { customer, type: 'movein' }
-        });
-      }
 
       // 6. 접수일
       if (customer.registrationDate) {
