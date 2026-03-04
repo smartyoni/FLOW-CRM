@@ -638,6 +638,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
               <textarea
                 autoFocus
                 className="w-full border border-primary p-2 outline-none text-sm resize-none overflow-y-auto"
+                placeholder="고객 요청사항 기타 확인할 것"
                 style={{
                   minHeight: '4.5rem', // 3 lines approx
                   maxHeight: '7.5rem'  // 5 lines approx
@@ -648,8 +649,8 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
                 onBlur={() => saveContractEdit('contractDetailMemo')}
               />
             ) : (
-              <div className="text-gray-800 whitespace-pre-wrap text-sm group-hover:bg-yellow-100 min-h-[4.5rem]">
-                {customer.contractDetailMemo || '내용을 입력하려면 더블클릭하세요.'}
+              <div className={`whitespace-pre-wrap text-sm group-hover:bg-yellow-100 min-h-[4.5rem] ${!customer.contractDetailMemo ? 'text-gray-400 italic' : 'text-gray-800'}`}>
+                {customer.contractDetailMemo || '고객 요청사항 기타 확인할 것'}
               </div>
             )}
           </div>
