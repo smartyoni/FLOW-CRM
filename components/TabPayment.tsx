@@ -257,11 +257,11 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
     const updated = paymentClipboard.map(cat =>
       cat.id === categoryId
         ? {
-            ...cat,
-            items: cat.items.map(item =>
-              item.id === editingItemId ? { ...item, title: editingItemTitle } : item
-            )
-          }
+          ...cat,
+          items: cat.items.map(item =>
+            item.id === editingItemId ? { ...item, title: editingItemTitle } : item
+          )
+        }
         : cat
     );
     await updatePaymentClipboard(updated);
@@ -298,13 +298,13 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
     const updated = paymentClipboard.map(cat =>
       cat.id === contentModalItem.categoryId
         ? {
-            ...cat,
-            items: cat.items.map(item =>
-              item.id === contentModalItem.item.id
-                ? { ...item, title: editingModalTitleText }
-                : item
-            )
-          }
+          ...cat,
+          items: cat.items.map(item =>
+            item.id === contentModalItem.item.id
+              ? { ...item, title: editingModalTitleText }
+              : item
+          )
+        }
         : cat
     );
     await updatePaymentClipboard(updated);
@@ -335,13 +335,13 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
       const updated = paymentClipboard.map(cat =>
         cat.id === contentModalItem.categoryId
           ? {
-              ...cat,
-              items: cat.items.map(item =>
-                item.id === contentModalItem.item.id
-                  ? { ...item, content: '' }
-                  : item
-              )
-            }
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === contentModalItem.item.id
+                ? { ...item, content: '' }
+                : item
+            )
+          }
           : cat
       );
       await updatePaymentClipboard(updated);
@@ -451,11 +451,11 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
       const updated = paymentClipboard.map(cat =>
         cat.id === categoryId
           ? {
-              ...cat,
-              items: cat.items.map(item =>
-                item.id === itemId ? { ...item, content: newContent } : item
-              )
-            }
+            ...cat,
+            items: cat.items.map(item =>
+              item.id === itemId ? { ...item, content: newContent } : item
+            )
+          }
           : cat
       );
       await updatePaymentClipboard(updated);
@@ -508,22 +508,20 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
       <div className="md:hidden flex border-b-2 border-gray-200">
         <button
           onClick={() => setMobilePaymentTab('INFO')}
-          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${
-            mobilePaymentTab === 'INFO'
+          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobilePaymentTab === 'INFO'
               ? 'text-primary border-b-2 border-primary'
               : 'text-gray-400'
-          }`}
+            }`}
         >
           <i className="fas fa-won-sign text-lg"></i>
           <span>잔금정보</span>
         </button>
         <button
           onClick={() => setMobilePaymentTab('CLIPBOARD')}
-          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${
-            mobilePaymentTab === 'CLIPBOARD'
+          className={`flex-1 py-3 font-bold flex items-center justify-center gap-2 transition ${mobilePaymentTab === 'CLIPBOARD'
               ? 'text-primary border-b-2 border-primary'
               : 'text-gray-400'
-          }`}
+            }`}
         >
           <i className="fas fa-clipboard text-lg"></i>
           <span>잔금일클립보드</span>
@@ -547,7 +545,7 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
             {editingPaymentField === 'paymentDate' ? (
               <input
                 autoFocus
-                type="date"
+                type="datetime-local"
                 className="flex-1 border border-pink-500 px-1 py-0.5 outline-none text-sm"
                 value={editingPaymentValue}
                 onChange={e => setEditingPaymentValue(e.target.value)}
@@ -779,11 +777,9 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
               onDragEnd={handleCategoryDragEnd}
               onDragLeave={() => setDragOverCategory(null)}
               onDragEnter={() => setDragOverCategory(category.id)}
-              className={`border rounded-lg overflow-hidden bg-white shadow-sm cursor-move transition ${
-                draggingCategory === category.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
-              } ${
-                dragOverCategory === category.id ? 'border-2 border-pink-500 bg-pink-50' : ''
-              }`}
+              className={`border rounded-lg overflow-hidden bg-white shadow-sm cursor-move transition ${draggingCategory === category.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+                } ${dragOverCategory === category.id ? 'border-2 border-pink-500 bg-pink-50' : ''
+                }`}
             >
               {/* 카테고리 헤더 */}
               <div className="bg-gray-100 p-3 flex items-center justify-between group">
@@ -856,11 +852,9 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
                         onDragEnd={handleDragEnd}
                         onDragLeave={() => setDragOverItem(null)}
                         onDragEnter={() => setDragOverItem({ categoryId: category.id, itemId: item.id })}
-                        className={`bg-gray-50 p-2.5 rounded border-2 group hover:bg-gray-100 transition cursor-move ${
-                          draggingItem?.itemId === item.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
-                        } ${
-                          dragOverItem?.itemId === item.id ? 'border-pink-500 bg-pink-50' : ''
-                        }`}
+                        className={`bg-gray-50 p-2.5 rounded border-2 group hover:bg-gray-100 transition cursor-move ${draggingItem?.itemId === item.id ? 'opacity-50 border-gray-400' : 'border-gray-200'
+                          } ${dragOverItem?.itemId === item.id ? 'border-pink-500 bg-pink-50' : ''
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           {editingItemId === item.id ? (
@@ -920,11 +914,10 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
               autoFocus
               readOnly={!contentModalEditMode}
               onDoubleClick={() => setContentModalEditMode(true)}
-              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-pink-500 ${
-                contentModalEditMode
+              className={`flex-1 p-4 resize-none outline-none focus:ring-2 focus:ring-pink-500 ${contentModalEditMode
                   ? 'border-2 border-pink-500 focus:border-transparent'
                   : 'border-2 border-gray-200 cursor-pointer'
-              }`}
+                }`}
               value={contentModalText}
               onChange={handleContentChange}
               placeholder="내용을 입력하세요... (더블클릭하면 편집 가능, 자동 저장됩니다)"

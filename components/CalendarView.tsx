@@ -85,7 +85,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           backgroundColor: '#dcfce7', // soft green
           borderColor: '#4ade80',
           textColor: '#15803d',
-          allDay: true,
+          allDay: !customer.contractDate.includes('T'),
           extendedProps: { customer, type: 'contract' }
         });
       }
@@ -99,7 +99,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           backgroundColor: '#fee2e2', // soft red
           borderColor: '#f87171',
           textColor: '#b91c1c',
-          allDay: true,
+          allDay: !customer.paymentDate.includes('T'),
           extendedProps: { customer, type: 'payment' }
         });
       }
