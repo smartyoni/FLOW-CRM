@@ -632,7 +632,7 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200 group cursor-pointer" onDoubleClick={() => startEditingContract('contractDetailMemo', customer.contractDetailMemo || '')}>
             <div className="flex items-center mb-1">
               <i className="fas fa-sticky-note mr-2 text-primary"></i>
-              <span className="text-gray-700 font-bold">계약서 상세 메모</span>
+              <span className="text-gray-700 font-bold">계약서작성시 참고사항</span>
             </div>
             {editingContractField === 'contractDetailMemo' ? (
               <textarea
