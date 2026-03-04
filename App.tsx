@@ -39,7 +39,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('calendar');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
-  const [isEditing, setIsEditing] = useState(false);
 
   // ── Side Effects ──────────────────────────────────────────────────
 
@@ -138,30 +137,7 @@ const App: React.FC = () => {
     setIsSidebarOpen(true);
   };
 
-  const handleDraftUpdate = (updatedCustomer: Customer) => {
-    setSelectedCustomer(updatedCustomer);
-    setIsEditing(true);
-  };
-
-  const handleSaveAll = async () => {
-    if (selectedCustomer) {
-      try {
-        await handleUpdateCustomer(selectedCustomer);
-        setIsEditing(false);
-        alert('성공적으로 저장되었습니다.');
-      } catch (err) {
-        alert('저장에 실패했습니다.');
-      }
-    }
-  };
-
   const handleViewChange = async (view: ViewMode) => {
-    if (isEditing) {
-      if (!window.confirm('저장하지 않은 변경사항이 있습니다. 무시하고 이동하시겠습니까?')) {
-        return;
-      }
-      setIsEditing(false);
-    }
     setCurrentView(view);
   };
 
@@ -205,8 +181,6 @@ const App: React.FC = () => {
         currentView={currentView}
         onViewChange={handleViewChange}
         customers={customers}
-        isEditing={isEditing}
-        onSave={handleSaveAll}
         overlays={
           <>
             {/* Right Detail Sidebar */}
@@ -214,8 +188,7 @@ const App: React.FC = () => {
               customer={selectedCustomer}
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}
-              onUpdate={handleDraftUpdate}
-              setIsEditing={setIsEditing}
+              onUpdate={handleUpdateCustomer}
             />
 
             {/* Customer Form Modal */}

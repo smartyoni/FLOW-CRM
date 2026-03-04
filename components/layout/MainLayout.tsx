@@ -5,10 +5,7 @@ import { MobileBottomTab } from './MobileBottomTab';
 
 interface MainLayoutProps {
     children: React.ReactNode;
-    isEditing?: boolean;
-    onSave?: () => void;
     overlays?: React.ReactNode;
-    // ... rest same props
     isOnline: boolean;
     pullDistance: number;
     isMobileSidebarOpen: boolean;
@@ -27,9 +24,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     onCloseMobileSidebar,
     currentView,
     onViewChange,
-    customers,
-    isEditing,
-    onSave
+    customers
 }) => {
     const viewTitles: Record<ViewMode, string> = {
         calendar: '캘린더 일정',
@@ -102,15 +97,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {isEditing && (
-                            <button
-                                onClick={onSave}
-                                className="bg-primary text-white px-4 py-1.5 rounded-lg font-bold text-sm shadow-sm hover:bg-blue-600 transition-colors flex items-center gap-2"
-                            >
-                                <i className="fas fa-save font-normal"></i>
-                                저장
-                            </button>
-                        )}
                     </div>
                 </header>
 

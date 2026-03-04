@@ -11,10 +11,9 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onUpdate: (customer: Customer) => void;
-  setIsEditing: (isEditing: boolean) => void;
 }
 
-export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate, setIsEditing }) => {
+export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClose, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<TabState>('BASIC');
   const [sidebarWidth, setSidebarWidth] = useState('100vw');
   const [touchStart, setTouchStart] = useState<number | null>(null);
