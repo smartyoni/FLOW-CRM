@@ -1,5 +1,5 @@
-import React from 'react';
 import { Customer } from '../types';
+import { useAppContext } from '../contexts/AppContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -16,6 +16,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onViewChange,
   customers = []
 }) => {
+  const { openSmsTemplateModal } = useAppContext();
+
   // 접수~첫미팅: checkpoint가 없는 고객
   const customerListCount = customers.filter(c => !c.checkpoint && !c.contractStatus).length;
 
@@ -117,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }`}
             >
               <div className="flex items-center gap-3">
-                <i className={`fas fa-tasks w-5 text-center ${currentView === 'managingCustomer' ? 'text-white' : 'text-orange-400'}`}></i>
+                <i className="fas fa-tasks w-5 text-center text-orange-400 group-hover:text-white"></i>
                 <span className="font-medium text-sm">재미팅~계약</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'managingCustomer' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{managingCustomerCount}</span>
@@ -134,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }`}
             >
               <div className="flex items-center gap-3">
-                <i className={`fas fa-file-contract w-5 text-center ${currentView === 'contractCustomer' ? 'text-white' : 'text-green-400'}`}></i>
+                <i className="fas fa-file-contract w-5 text-center text-green-400 group-hover:text-white"></i>
                 <span className="font-medium text-sm">계약~잔금</span>
               </div>
               <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${currentView === 'contractCustomer' ? 'bg-blue-700 text-white' : 'bg-slate-700 text-slate-200'}`}>{contractCustomerCount}</span>
@@ -143,6 +145,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         </ul>
       </nav>
+
+      {/* 사이드바 하단 설정 버튼 */}
+      <div className="p-4 border-t border-slate-700/50">
+        <button
+          onClick={() => openSmsTemplateModal()}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-slate-700/50 hover:text-white transition-all group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+            <i className="fas fa-cog text-sm"></i>
+          </div>
+          <span className="font-medium text-sm text-slate-300">SMS 템플릿 설정</span>
+        </button>
+      </div>
     </div>
   );
 };

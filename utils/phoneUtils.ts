@@ -20,8 +20,13 @@ export function extractDigits(phone: string): string {
 /**
  * SMS 링크를 생성합니다.
  */
-export function generateSmsLink(phone: string): string {
+export function generateSmsLink(phone: string, template?: string): string {
   const digits = extractDigits(phone);
+  if (template) {
+    // For iOS and Android compatibility, some systems use ? for the first param
+    // RFC 5724 specifies ?body=
+    return `sms:${digits}?body=${encodeURIComponent(template)}`;
+  }
   return `sms:${digits}`;
 }
 

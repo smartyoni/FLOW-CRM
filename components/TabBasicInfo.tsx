@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Customer, ChecklistItem, CustomerStage, CustomerCheckpoint, CustomerContractStatus } from '../types';
 import { generateId } from '../services/storage';
-import { formatPhoneNumber } from '../utils/phoneUtils';
+import { formatPhoneNumber, generateSmsLink } from '../utils/phoneUtils';
 import { useAppContext } from '../contexts/AppContext';
 
 interface Props {
@@ -14,7 +14,7 @@ const CHECKPOINTS: CustomerCheckpoint[] = ['은행방문중', '재미팅잡기',
 const CONTRACT_STATUSES: CustomerContractStatus[] = ['계약서작성예정', '잔금예정', '잔금일', '입주완료'];
 
 export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
-  const { showConfirm } = useAppContext();
+  const { showConfirm, openSmsTemplateModal, getSmsTemplateText } = useAppContext();
   const [newChecklistText, setNewChecklistText] = useState('');
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -333,13 +333,22 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                   onKeyDown={e => e.key === 'Enter' && saveInlineEdit('contact')}
                 />
               ) : (
-                <a
-                  href={`sms:${activeCustomer.contact?.replace(/\D/g, '')}`}
-                  className="text-blue-600 font-semibold hover:text-blue-800 hover:underline group-hover:bg-yellow-100"
-                  title="클릭하여 문자메시지 보내기"
-                >
-                  {activeCustomer.contact}
-                </a>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={generateSmsLink(customer.contact, getSmsTemplateText('basic'))}
+                    className="text-blue-600 font-semibold hover:text-blue-800 hover:underline group-hover:bg-yellow-100"
+                    title="클릭하여 문자메시지 보내기"
+                  >
+                    {activeCustomer.contact}
+                  </a>
+                  <button
+                    onClick={() => openSmsTemplateModal('basic')}
+                    className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                    title="기본 SMS 템플릿 설정"
+                  >
+                    <i className="fas fa-cog text-xs"></i>
+                  </button>
+                </div>
               )}
             </div>
 

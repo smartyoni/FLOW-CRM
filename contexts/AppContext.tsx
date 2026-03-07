@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ClipboardCategory, ChecklistItem } from '../types';
+import { ClipboardCategory, ChecklistItem, SmsTemplates } from '../types';
 import {
   subscribeToContractClipboard,
   updateContractClipboard,
   getContractClipboard,
   subscribeToPaymentClipboard,
   updatePaymentClipboard as updatePaymentClipboardFirestore,
-  getPaymentClipboard
+  getPaymentClipboard,
+  subscribeToSmsTemplates,
+  updateSmsTemplates,
+  getSmsTemplates
 } from '../services/firestore';
 import { generateId } from '../services/storage';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -28,13 +31,59 @@ interface AppContextType {
   confirmModal: ConfirmState;
   showConfirm: (title: string, message: string, confirmText?: string, cancelText?: string) => Promise<boolean>;
   closeConfirm: (confirmed: boolean) => void;
+  smsTemplates: SmsTemplates;
+  updateSmsTemplates: (templates: SmsTemplates) => Promise<void>;
+  isSmsTemplateModalOpen: boolean;
+  setSmsTemplateModalOpen: (isOpen: boolean) => void;
+  smsTemplateModalCategory: keyof SmsTemplates | null;
+  openSmsTemplateModal: (category?: keyof SmsTemplates) => void;
+  getSmsTemplateText: (category: keyof SmsTemplates) => string;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Migration logic for SMS templates
+const migrateSmsTemplates = (templates: any): SmsTemplates => {
+  const keys: (keyof SmsTemplates)[] = ['meeting', 'contract', 'payment', 'basic'];
+  const migrated: any = {};
+
+  keys.forEach(key => {
+    const data = templates[key];
+    // If it's already in the new format, keep it
+    if (data && typeof data === 'object' && Array.isArray(data.options)) {
+      migrated[key] = {
+        options: data.options.length === 3 ? data.options : [...data.options, '', '', ''].slice(0, 3),
+        selectedIndex: typeof data.selectedIndex === 'number' ? data.selectedIndex : 0
+      };
+    }
+    // If it's the old string format, convert it
+    else if (typeof data === 'string') {
+      migrated[key] = {
+        options: [data, '', ''],
+        selectedIndex: 0
+      };
+    }
+    // If missing or corrupted, use default
+    else {
+      migrated[key] = {
+        options: ['', '', ''],
+        selectedIndex: 0
+      };
+    }
+  });
+
+  return migrated as SmsTemplates;
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [contractClipboard, setContractClipboard] = useState<ClipboardCategory[]>([]);
   const [paymentClipboard, setPaymentClipboard] = useState<ClipboardCategory[]>([]);
+  const [smsTemplates, setSmsTemplates] = useState<SmsTemplates>({
+    meeting: { options: ['', '', ''], selectedIndex: 0 },
+    contract: { options: ['', '', ''], selectedIndex: 0 },
+    payment: { options: ['', '', ''], selectedIndex: 0 },
+    basic: { options: ['', '', ''], selectedIndex: 0 }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState<ConfirmState>({
     isOpen: false,
@@ -42,6 +91,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     message: '',
   });
   const [confirmResolve, setConfirmResolve] = useState<((value: boolean) => void) | null>(null);
+  const [isSmsTemplateModalOpen, setIsSmsTemplateModalOpen] = useState(false);
+  const [smsTemplateModalCategory, setSmsTemplateModalCategory] = useState<keyof SmsTemplates | null>(null);
+
+  const openSmsTemplateModal = (category?: keyof SmsTemplates) => {
+    setSmsTemplateModalCategory(category || null);
+    setIsSmsTemplateModalOpen(true);
+  };
 
   // Initialize and subscribe to contract clipboard
   useEffect(() => {
@@ -133,9 +189,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPaymentClipboard(categories);
     });
 
+    // Initial load of SMS templates
+    (async () => {
+      try {
+        const templates = await getSmsTemplates();
+        setSmsTemplates(migrateSmsTemplates(templates));
+      } catch (error) {
+        console.error('[AppContext] ❌ Error loading SMS templates:', error);
+      }
+    })();
+
+    // Subscribe to SMS templates updates
+    const unsubscribeSms = subscribeToSmsTemplates((templates) => {
+      setSmsTemplates(migrateSmsTemplates(templates));
+    });
+
     return () => {
       unsubscribe();
       unsubscribePayment();
+      unsubscribeSms();
     };
   }, []);
 
@@ -192,8 +264,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Update SMS templates
+  const handleUpdateSmsTemplates = async (templates: SmsTemplates): Promise<void> => {
+    // Optimistic update
+    setSmsTemplates(templates);
+
+    try {
+      // Sync to Firebase
+      await updateSmsTemplates(templates);
+      console.log('[AppContext] ✓ SMS templates synced to Firebase');
+    } catch (error) {
+      console.error('[AppContext] ❌ Error syncing SMS templates:', error);
+    }
+  };
+
   return (
-    <AppContext.Provider value={{ contractClipboard, updateClipboard, paymentClipboard, updatePaymentClipboard, isLoading, confirmModal, showConfirm, closeConfirm }}>
+    <AppContext.Provider value={{
+      contractClipboard,
+      updateClipboard,
+      paymentClipboard,
+      updatePaymentClipboard,
+      isLoading,
+      confirmModal,
+      showConfirm,
+      closeConfirm,
+      smsTemplates,
+      updateSmsTemplates: handleUpdateSmsTemplates,
+      isSmsTemplateModalOpen,
+      setSmsTemplateModalOpen: setIsSmsTemplateModalOpen,
+      smsTemplateModalCategory,
+      openSmsTemplateModal,
+      getSmsTemplateText: (category: keyof SmsTemplates) => {
+        const cat = smsTemplates[category];
+        if (!cat || !cat.options || !Array.isArray(cat.options)) return '';
+        const index = typeof cat.selectedIndex === 'number' ? cat.selectedIndex : 0;
+        return cat.options[index] || '';
+      }
+    }}>
       {children}
       <ConfirmModal
         isOpen={confirmModal.isOpen}

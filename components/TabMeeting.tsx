@@ -18,7 +18,7 @@ interface Props {
 }
 
 export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
-  const { showConfirm } = useAppContext();
+  const { showConfirm, openSmsTemplateModal, getSmsTemplateText } = useAppContext();
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
   const [propertyText, setPropertyText] = useState('');
   const [isAddingProperty, setIsAddingProperty] = useState(false);
@@ -1052,14 +1052,23 @@ export const TabMeeting: React.FC<Props> = ({ customer, onUpdate }) => {
                       )}
                     </div>
                     {prop.agencyPhone && isValidPhoneNumber(prop.agencyPhone) && (
-                      <a
-                        href={generateSmsLink(prop.agencyPhone)}
-                        className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] hover:bg-blue-600 flex-shrink-0"
-                        title="문자 보내기"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        SMS
-                      </a>
+                      <div className="flex items-center gap-1">
+                        <a
+                          href={generateSmsLink(prop.agencyPhone, getSmsTemplateText('meeting'))}
+                          className="px-2 py-1 bg-blue-500 text-white rounded text-[10px] hover:bg-blue-600 flex-shrink-0"
+                          title="문자 보내기"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          SMS
+                        </a>
+                        <button
+                          onClick={() => openSmsTemplateModal('meeting')}
+                          className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                          title="미팅 SMS 템플릿 설정"
+                        >
+                          <i className="fas fa-cog text-xs"></i>
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}

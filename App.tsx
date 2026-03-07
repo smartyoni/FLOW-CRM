@@ -4,8 +4,19 @@ import { CustomerDetailSidebar } from './components/CustomerDetailSidebar';
 import { CustomerForm } from './components/CustomerForm';
 import { MainLayout } from './components/layout/MainLayout';
 import { ContentSwitcher } from './components/views/ContentSwitcher';
-import { AppProvider } from './contexts/AppContext';
+import { AppProvider, useAppContext } from './contexts/AppContext';
 import { useCustomerData } from './hooks/useCustomerData';
+import { SmsTemplateModal } from './components/SmsTemplateModal';
+
+const GlobalModals: React.FC = () => {
+  const { isSmsTemplateModalOpen, setSmsTemplateModalOpen } = useAppContext();
+  return (
+    <SmsTemplateModal
+      isOpen={isSmsTemplateModalOpen}
+      onClose={() => setSmsTemplateModalOpen(false)}
+    />
+  );
+};
 
 const App: React.FC = () => {
   // ── Data Layer (Custom Hook) ──────────────────────────────────────
@@ -173,6 +184,7 @@ const App: React.FC = () => {
 
   return (
     <AppProvider>
+      <GlobalModals />
       <MainLayout
         isOnline={isOnline}
         pullDistance={pullDistance}

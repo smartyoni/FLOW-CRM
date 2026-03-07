@@ -106,9 +106,22 @@ export interface ManualEvent {
   createdAt: number;
 }
 
+export interface SmsTemplateCategory {
+  options: string[];
+  selectedIndex: number;
+}
+
+export interface SmsTemplates {
+  meeting: SmsTemplateCategory;
+  contract: SmsTemplateCategory;
+  payment: SmsTemplateCategory;
+  basic: SmsTemplateCategory;
+}
+
 export interface AppSettings {
-  contractClipboard: ClipboardCategory[];
-  paymentClipboard: ClipboardCategory[];
+  contractClipboard?: ClipboardCategory[];
+  paymentClipboard?: ClipboardCategory[];
+  smsTemplates?: SmsTemplates;
   updatedAt?: number;
   createdAt?: number;
 }

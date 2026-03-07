@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Customer, CustomerCheckpoint } from '../types';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useAppContext } from '../contexts/AppContext';
+import { generateSmsLink } from '../utils/phoneUtils';
 
 interface Props {
   customers: Customer[];
@@ -50,6 +52,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
   onMenuClick,
   onUpdate
 }) => {
+  const { getSmsTemplateText } = useAppContext();
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [activeCheckpointTab, setActiveCheckpointTab] = useState<CustomerCheckpoint>('은행방문중');
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -210,7 +213,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   {customer.contact && (
                     <a
-                      href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                      href={generateSmsLink(customer.contact, (checkpoint === '약속확정' || checkpoint === '미팅진행') ? getSmsTemplateText('meeting') : getSmsTemplateText('basic'))}
                       onClick={(e) => e.stopPropagation()}
                       className="text-blue-600 hover:text-blue-800 p-2 transition-colors font-bold"
                       title="문자 메시지 보내기"
@@ -304,7 +307,7 @@ export const ManagingCustomerView: React.FC<Props> = ({
                       <div className="flex gap-1 ml-2 shrink-0">
                         {customer.contact && (
                           <a
-                            href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                            href={generateSmsLink(customer.contact, (checkpoint === '약속확정' || checkpoint === '미팅진행') ? getSmsTemplateText('meeting') : getSmsTemplateText('basic'))}
                             onClick={(e) => e.stopPropagation()}
                             className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
                             title="문자 메시지 보내기"

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Customer, CustomerStage, CustomerCheckpoint } from '../types';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { useAppContext } from '../contexts/AppContext';
+import { generateSmsLink } from '../utils/phoneUtils';
 
 interface Props {
   customers: Customer[];
@@ -53,6 +55,7 @@ const STAGE_CONFIG: Record<CustomerStage, { label: string; desc: string; color: 
 const STAGE_ORDER: CustomerStage[] = ['접수고객', '연락대상', '약속확정', '미팅진행'];
 
 export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick, onDelete, onToggleFavorite, onMenuClick, onUpdate }) => {
+  const { getSmsTemplateText } = useAppContext();
   const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
   const [activeStageTab, setActiveStageTab] = useState<CustomerStage>('접수고객');
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -203,7 +206,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                 <div className="flex items-center gap-2">
                   {customer.contact && (
                     <a
-                      href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                      href={generateSmsLink(customer.contact, (key === '약속확정' || key === '미팅진행') ? getSmsTemplateText('meeting') : getSmsTemplateText('basic'))}
                       onClick={(e) => e.stopPropagation()}
                       className="text-blue-600 hover:text-blue-800 p-2 transition-colors font-bold"
                       title="문자 메시지 보내기"
@@ -317,7 +320,7 @@ export const CustomerList: React.FC<Props> = ({ customers, onSelect, onAddClick,
                       <div className="flex gap-1 ml-2 shrink-0">
                         {customer.contact && (
                           <a
-                            href={`sms:${customer.contact.replace(/\D/g, '')}`}
+                            href={generateSmsLink(customer.contact, (searchKey === '약속확정' || searchKey === '미팅진행') ? getSmsTemplateText('meeting') : getSmsTemplateText('basic'))}
                             onClick={(e) => e.stopPropagation()}
                             className="text-blue-600 hover:text-blue-800 p-1 transition-colors font-bold"
                             title="문자 메시지 보내기"

@@ -1,4 +1,4 @@
-import { Customer, Meeting, Property, ChecklistItem, AppSettings, ClipboardCategory, ManualEvent } from '../types';
+import { Customer, Meeting, Property, ChecklistItem, AppSettings, ClipboardCategory, ManualEvent, SmsTemplates } from '../types';
 import { db } from './firebase';
 import {
   collection,
@@ -665,6 +665,104 @@ export const subscribeToPaymentClipboard = (
     return unsubscribe;
   } catch (error) {
     console.error('Error setting up payment clipboard listener:', error);
+    return () => { };
+  }
+};
+
+// =====================
+// SMS TEMPLATE OPERATIONS
+// =====================
+
+/**
+ * Get SMS templates from Firestore
+ */
+export const getSmsTemplates = async (): Promise<SmsTemplates> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'smsTemplates');
+    const snapshot = await getDoc(settingsRef);
+
+    const defaultTemplates: SmsTemplates = {
+      meeting: { options: ['', '', ''], selectedIndex: 0 },
+      contract: { options: ['', '', ''], selectedIndex: 0 },
+      payment: { options: ['', '', ''], selectedIndex: 0 },
+      basic: { options: ['', '', ''], selectedIndex: 0 }
+    };
+
+    if (snapshot.exists()) {
+      const data = snapshot.data() as AppSettings;
+      return data.smsTemplates || defaultTemplates;
+    }
+
+    return defaultTemplates;
+  } catch (error) {
+    console.error('Error fetching SMS templates:', error);
+    return {
+      meeting: { options: ['', '', ''], selectedIndex: 0 },
+      contract: { options: ['', '', ''], selectedIndex: 0 },
+      payment: { options: ['', '', ''], selectedIndex: 0 },
+      basic: { options: ['', '', ''], selectedIndex: 0 }
+    };
+  }
+};
+
+/**
+ * Update SMS templates in Firestore
+ */
+export const updateSmsTemplates = async (templates: SmsTemplates): Promise<void> => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'smsTemplates');
+    await setDoc(
+      settingsRef,
+      {
+        smsTemplates: templates,
+        updatedAt: Timestamp.now(),
+      },
+      { merge: true }
+    );
+    console.log('✓ SMS templates updated');
+  } catch (error) {
+    console.error('Error updating SMS templates:', error);
+    throw error;
+  }
+};
+
+/**
+ * Real-time listener for SMS templates
+ */
+export const subscribeToSmsTemplates = (
+  callback: (templates: SmsTemplates) => void
+): (() => void) => {
+  try {
+    const settingsRef = doc(db, 'appSettings', 'smsTemplates');
+
+    const unsubscribe = onSnapshot(
+      settingsRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.data() as AppSettings;
+          callback(data.smsTemplates || {
+            meeting: { options: ['', '', ''], selectedIndex: 0 },
+            contract: { options: ['', '', ''], selectedIndex: 0 },
+            payment: { options: ['', '', ''], selectedIndex: 0 },
+            basic: { options: ['', '', ''], selectedIndex: 0 }
+          });
+        } else {
+          callback({
+            meeting: { options: ['', '', ''], selectedIndex: 0 },
+            contract: { options: ['', '', ''], selectedIndex: 0 },
+            payment: { options: ['', '', ''], selectedIndex: 0 },
+            basic: { options: ['', '', ''], selectedIndex: 0 }
+          });
+        }
+      },
+      (error) => {
+        console.error('Error in SMS templates listener:', error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('Error setting up SMS templates listener:', error);
     return () => { };
   }
 };

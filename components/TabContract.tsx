@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Customer, ChecklistItem, ClipboardCategory, ClipboardItem } from '../types';
 import { generateId } from '../services/storage';
 import { useAppContext } from '../contexts/AppContext';
+import { generateSmsLink } from '../utils/phoneUtils';
 
 interface Props {
   customer: Customer;
@@ -28,7 +29,7 @@ function debounce<T extends (...args: any[]) => void>(
 
 export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
   const contractAreaRef = useRef<HTMLDivElement>(null);
-  const { contractClipboard, updateClipboard, showConfirm } = useAppContext();
+  const { contractClipboard, updateClipboard, showConfirm, openSmsTemplateModal, getSmsTemplateText } = useAppContext();
 
   // 모바일 탭 상태
   const [mobileContractTab, setMobileContractTab] = useState<'INFO' | 'CLIPBOARD'>('INFO');
@@ -538,6 +539,33 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
           계약정보
         </h3>
         <div className="space-y-3 text-sm">
+          {/* 고객명 및 연락처 (공통 표시) */}
+          <div className="flex flex-col gap-1.5 pb-2 border-b border-gray-100">
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 고객명:</span>
+              <span className="text-gray-800 font-bold">{customer.name}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-red-500">•</span> 연락처:</span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={generateSmsLink(customer.contact, getSmsTemplateText('contract'))}
+                  className="text-blue-600 font-semibold hover:text-blue-800 hover:underline"
+                  title="클릭하여 문자메시지 보내기"
+                >
+                  {customer.contact}
+                </a>
+                <button
+                  onClick={() => openSmsTemplateModal('contract')}
+                  className="p-1 text-slate-400 hover:text-blue-500 transition-colors"
+                  title="계약 SMS 템플릿 설정"
+                >
+                  <i className="fas fa-cog text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* 계약서작성일 */}
           <div className="flex items-center gap-1.5 group cursor-pointer" onDoubleClick={() => startEditingContract('contractDate', customer.contractDate || '')}>
             <span className="text-gray-800 font-bold min-w-fit"><span className="text-xl text-blue-500">•</span> 계약서작성일:</span>
