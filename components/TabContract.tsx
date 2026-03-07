@@ -769,45 +769,63 @@ export const TabContract: React.FC<Props> = ({ customer, onUpdate }) => {
             </div>
           </div>
 
-          {/* 메모 모달 */}
           {contractMemoItem && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
-                <div className="p-4 border-b flex justify-between items-center">
-                  <h4 className="font-bold">메모 관리</h4>
-                  <button onClick={() => setContractMemoItem(null)} className="text-gray-400 hover:text-gray-600">
-                    <i className="fas fa-times"></i>
-                  </button>
-                </div>
-                <div className="p-4">
+              <div
+                className="bg-white rounded-lg shadow-xl w-full flex flex-col overflow-hidden"
+                style={{ height: '80vh', maxWidth: '700px' }} // Approx 120% of max-w-xl (576px -> 691px)
+              >
+                {/* 헤더 제거됨 */}
+                <div className="flex-1 flex flex-col">
                   {contractMemoMode === 'VIEW' ? (
-                    <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
-                      {contractMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
+                    <div
+                      className="flex-1 overflow-y-auto whitespace-pre-wrap text-gray-700 p-4 bg-gray-50 cursor-pointer"
+                      onClick={() => setContractMemoMode('EDIT')}
+                    >
+                      {contractMemoText || <span className="text-gray-400 italic">메모가 없습니다. (클릭하여 입력)</span>}
                     </div>
                   ) : (
                     <textarea
-                      className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-primary outline-none"
+                      autoFocus
+                      className="flex-1 w-full p-4 resize-none focus:ring-0 outline-none border-none text-base"
                       value={contractMemoText}
                       onChange={(e) => setContractMemoText(e.target.value)}
                       placeholder="메모를 입력하세요..."
                     />
                   )}
                 </div>
-                <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+                {/* 푸터 - 높이 60% 축소 (p-4 -> py-2 px-4) */}
+                <div className="py-2 px-4 border-t flex justify-end items-center gap-2 bg-gray-50">
                   {contractMemoMode === 'VIEW' ? (
-                    <button
-                      onClick={() => setContractMemoMode('EDIT')}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                    >
-                      수정
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setContractMemoMode('EDIT')}
+                        className="px-4 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-bold"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => setContractMemoItem(null)}
+                        className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-bold"
+                      >
+                        닫기
+                      </button>
+                    </>
                   ) : (
-                    <button
-                      onClick={saveContractMemo}
-                      className="px-4 py-2 bg-primary text-white rounded hover:bg-blue-600"
-                    >
-                      저장
-                    </button>
+                    <>
+                      <button
+                        onClick={saveContractMemo}
+                        className="px-4 py-1.5 bg-primary text-white rounded hover:bg-blue-600 text-sm font-bold"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => setContractMemoItem(null)}
+                        className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-bold"
+                      >
+                        취소
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

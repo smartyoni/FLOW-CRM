@@ -757,45 +757,63 @@ export const TabPayment: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         </div>
 
-        {/* 메모 모달 */}
         {paymentMemoItem && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-xl">
-              <div className="p-4 border-b flex justify-between items-center">
-                <h4 className="font-bold">메모 관리</h4>
-                <button onClick={() => setPaymentMemoItem(null)} className="text-gray-400 hover:text-gray-600">
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-              <div className="p-4">
+            <div
+              className="bg-white rounded-lg shadow-xl w-full flex flex-col overflow-hidden"
+              style={{ height: '80vh', maxWidth: '700px' }} // Approx 120% of max-w-xl (576px -> 691px)
+            >
+              {/* 헤더 제거됨 */}
+              <div className="flex-1 flex flex-col">
                 {paymentMemoMode === 'VIEW' ? (
-                  <div className="h-44 overflow-y-auto whitespace-pre-wrap text-gray-700 border p-2 rounded bg-gray-50">
-                    {paymentMemoText || <span className="text-gray-400 italic">메모가 없습니다.</span>}
+                  <div
+                    className="flex-1 overflow-y-auto whitespace-pre-wrap text-gray-700 p-4 bg-gray-50 cursor-pointer"
+                    onClick={() => setPaymentMemoMode('EDIT')}
+                  >
+                    {paymentMemoText || <span className="text-gray-400 italic">메모가 없습니다. (클릭하여 입력)</span>}
                   </div>
                 ) : (
                   <textarea
-                    className="w-full h-44 border p-2 rounded resize-none focus:ring-1 focus:ring-pink-500 outline-none"
+                    autoFocus
+                    className="flex-1 w-full p-4 resize-none focus:ring-0 outline-none border-none text-base"
                     value={paymentMemoText}
                     onChange={(e) => setPaymentMemoText(e.target.value)}
                     placeholder="메모를 입력하세요..."
                   />
                 )}
               </div>
-              <div className="p-4 border-t flex justify-end gap-2 bg-gray-50 rounded-b-lg">
+              {/* 푸터 - 높이 60% 축소 (p-4 -> py-2 px-4) */}
+              <div className="py-2 px-4 border-t flex justify-end items-center gap-2 bg-gray-50">
                 {paymentMemoMode === 'VIEW' ? (
-                  <button
-                    onClick={() => setPaymentMemoMode('EDIT')}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                  >
-                    수정
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setPaymentMemoMode('EDIT')}
+                      className="px-4 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-bold"
+                    >
+                      수정
+                    </button>
+                    <button
+                      onClick={() => setPaymentMemoItem(null)}
+                      className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-bold"
+                    >
+                      닫기
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    onClick={savePaymentMemo}
-                    className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
-                  >
-                    저장
-                  </button>
+                  <>
+                    <button
+                      onClick={savePaymentMemo}
+                      className="px-4 py-1.5 bg-pink-500 text-white rounded hover:bg-pink-600 text-sm font-bold"
+                    >
+                      저장
+                    </button>
+                    <button
+                      onClick={() => setPaymentMemoItem(null)}
+                      className="px-4 py-1.5 bg-gray-100 text-gray-600 rounded hover:bg-gray-200 text-sm font-bold"
+                    >
+                      취소
+                    </button>
+                  </>
                 )}
               </div>
             </div>
