@@ -66,8 +66,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* 헤더 */}
-      <div className="p-4 border-b border-slate-700 pr-12 md:pr-4">
-        <h1 className="text-lg font-bold text-white">인사이트고객관리</h1>
+      <div className="p-4 border-b border-slate-700 pr-12 md:pr-4 flex items-center gap-3">
+        <img src="./고객관리.png" alt="고객관리 로고" className="w-8 h-8 rounded-lg object-contain" />
+        <h1 className="text-lg font-bold text-white">고객관리</h1>
       </div>
 
       {/* 메뉴 */}

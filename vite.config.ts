@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => {
           start_url: './',
           icons: [
             {
-              src: 'pwa-64x64.png',
+              src: 'favicon.png',
               sizes: '64x64',
               type: 'image/png'
             },
