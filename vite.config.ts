@@ -116,41 +116,8 @@ export default defineConfig(({ mode }) => {
                 }
               }
             },
-            {
-              urlPattern: /^https:\/\/generativelanguage\.googleapis\.com\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'gemini-api-cache',
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 5
-                },
-                networkTimeoutSeconds: 10,
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            },
-            {
-              urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'firestore-api-cache',
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 5
-                },
-                networkTimeoutSeconds: 10,
-                cacheableResponse: {
-                  statuses: [0, 200]
-                }
-              }
-            },
           ],
-          navigateFallback: isDev ? 'index.html' : '/FLOW-CRM/index.html',
-          modifyURLPrefix: isDev ? {} : {
-            '': '/FLOW-CRM/'
-          },
+          navigateFallback: 'index.html',
           cleanupOutdatedCaches: true
         },
         devOptions: {
