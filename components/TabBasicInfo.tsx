@@ -108,6 +108,31 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   // ⭐ 렌더링할 때는 로컬 상태 우선 사용
   const activeCustomer = localCustomer || customer;
 
+  // 전화번호를 찾아 클릭 가능한 SMS 링크로 변환하는 헬퍼 함수
+  const linkifyPhoneNumbers = (text: string) => {
+    if (!text) return text;
+    // 휴대폰(010), 지역번호 포함 유선번호 감지 정규식
+    const phoneRegex = /(01[016789]-?\d{3,4}-?\d{4}|0[2-6]\d-?\d{3,4}-?\d{4})/g;
+    const parts = text.split(phoneRegex);
+
+    return parts.map((part, i) => {
+      if (i % 2 === 1) { // 정규식 매칭된 부분
+        const digits = part.replace(/\D/g, '');
+        return (
+          <a
+            key={i}
+            href={`sms:${digits}`}
+            className="text-blue-600 hover:text-blue-800 hover:underline font-extrabold px-0.5 rounded transition-all active:scale-95 inline-block"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   // Inline Edit Handlers
   const startInlineEdit = (field: string, value: string) => {
     setEditingField(field);
@@ -652,7 +677,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                       setEditingFieldValueMeeting(prop.parsedText || '');
                     }}
                   >
-                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold">{prop.parsedText}</pre>
+                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
+                      {linkifyPhoneNumbers(prop.parsedText)}
+                    </pre>
                   </div>
                 )}
               </div>
