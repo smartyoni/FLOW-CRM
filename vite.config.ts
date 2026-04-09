@@ -147,7 +147,10 @@ export default defineConfig(({ mode }) => {
               }
             },
           ],
-          navigateFallback: 'index.html',
+          navigateFallback: isDev ? 'index.html' : '/FLOW-CRM/index.html',
+          modifyURLPrefix: isDev ? {} : {
+            '': '/FLOW-CRM/'
+          },
           cleanupOutdatedCaches: true
         },
         devOptions: {
