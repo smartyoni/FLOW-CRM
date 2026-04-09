@@ -60,7 +60,7 @@ export const TabGantt: React.FC<Props> = ({ customer, onUpdate }) => {
         id: meeting.id,
         type: 'MEETING',
         date: date,
-        title: `${meeting.round}차 미팅 ${meeting.date ? (new Date() < new Date(meeting.date) ? '(예정)' : '(완료)') : '(일자 미정)'}`,
+        title: `미팅 ${meeting.date ? (new Date() < new Date(meeting.date) ? '(예정)' : '(완료)') : '(일자 미정)'}`,
         subText: `매물 ${meeting.properties.length}건`,
         originalItem: meeting
       });

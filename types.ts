@@ -23,7 +23,7 @@ export interface Property {
 
 export interface Meeting {
   id: string;
-  round: number; // 1차, 2차...
+  round: number; // 기본값 1 (차수 관리 제거됨)
   date: string; // ISO string for datetime-local
   properties: Property[];
   meetingHistory: ChecklistItem[]; // 미팅 진행 체크리스트

@@ -21,22 +21,22 @@ const CHECKPOINT_CONFIG: Record<CustomerCheckpoint, { label: string; desc: strin
     bg: 'bg-blue-100'
   },
   '재미팅잡기': {
-    label: '재미팅잡기',
+    label: '추가미팅잡기',
     desc: '추가 미팅 필요',
     color: 'text-amber-600',
     icon: 'fa-redo',
     bg: 'bg-amber-100'
   },
   '약속확정': {
-    label: '약속확정(재미팅)',
-    desc: '재미팅 약속 확정',
+    label: '약속확정',
+    desc: '미팅 약속 확정',
     color: 'text-purple-600',
     icon: 'fa-calendar-check',
     bg: 'bg-purple-100'
   },
   '미팅진행': {
     label: '미팅진행',
-    desc: '재미팅 진행 중',
+    desc: '미팅 진행 중',
     color: 'text-green-600',
     icon: 'fa-handshake',
     bg: 'bg-green-100'

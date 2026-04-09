@@ -43,16 +43,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
   // 미팅 관련 상태 (TabMeeting에서 가져옴)
   const [activeMeetingId, setActiveMeetingId] = useState<string | null>(null);
-  const [propertyText, setPropertyText] = useState('');
-  const [isAddingProperty, setIsAddingProperty] = useState(false);
+  const [draftProperties, setDraftProperties] = useState<{ id: string, text: string }[]>([]);
   const [editingPropertyId, setEditingPropertyId] = useState<string | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
-  const [parsedRoomName, setParsedRoomName] = useState('');
-  const [parsedJibun, setParsedJibun] = useState('');
-  const [parsedAgency, setParsedAgency] = useState('');
-  const [parsedAgencyPhone, setParsedAgencyPhone] = useState('');
-  const [parsedText, setParsedText] = useState('');
-  const [selectedPlatform, setSelectedPlatform] = useState<'TEN' | 'TEN_COMMERCIAL' | 'NAVER'>('TEN');
   const [localMeeting, setLocalMeeting] = useState<Meeting | null>(null);
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoTextMeeting, setMemoTextMeeting] = useState('');
@@ -72,6 +65,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   const [reportProperties, setReportProperties] = useState<Property[]>([]);
   const [editingPropertyIdx, setEditingPropertyIdx] = useState<number | null>(null);
   const [editingPropertyText, setEditingPropertyText] = useState('');
+  const [isTOCModalOpen, setIsTOCModalOpen] = useState(false);
+  const [tocModalPos, setTocModalPos] = useState<{ top: number, left: number } | null>(null);
+  const tocButtonRef = useRef<HTMLButtonElement>(null);
 
   const lastTouchRef = useRef<{ time: number; target: string }>({ time: 0, target: '' });
 
@@ -279,23 +275,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     }
   };
 
-  const handleAddMeeting = () => {
-    const nextRound = (activeCustomer.meetings || []).length + 1;
-    const newMeeting: Meeting = {
-      id: generateId(),
-      round: nextRound,
-      date: '',
-      properties: [],
-      meetingHistory: [],
-      createdAt: Date.now()
-    };
-    setLocalMeeting(newMeeting);
-    setActiveMeetingId(newMeeting.id);
-    onUpdate({
-      ...customer,
-      meetings: [...(customer.meetings || []), newMeeting]
-    });
-  };
 
   const handleDeleteClick = (e: React.MouseEvent, type: 'ROUND' | 'PROPERTY', id: string, round?: number) => {
     e.stopPropagation();
@@ -305,6 +284,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         type,
         id,
         round,
+        message: `미팅 정보와 해당 미팅의 모든 매물 정보를 삭제하시겠습니까?`,
         rect: {
           top: rect.top,
           left: rect.left,
@@ -319,6 +299,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         type,
         id,
         round,
+        message: `미팅 정보와 해당 미팅의 모든 매물 정보를 삭제하시겠습니까?`,
         rect: { top: 200, left: 200, width: 0, height: 0 }
       });
     }
@@ -330,20 +311,14 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     if (deleteConfirm.type === 'ROUND') {
       const updatedMeetings = (activeCustomer.meetings || []).filter(m => m.id !== deleteConfirm.id);
       
-      // Re-order rounds to stay sequential
-      const reorderedMeetings = updatedMeetings.map((m, index) => ({
-        ...m,
-        round: index + 1
-      }));
-
-      const updatedCustomer = { ...activeCustomer, meetings: reorderedMeetings };
+      const updatedCustomer = { ...activeCustomer, meetings: updatedMeetings };
       setLocalCustomer(updatedCustomer);
       onUpdate(updatedCustomer);
       
       if (activeMeetingId === deleteConfirm.id) {
-        const newActiveMeetingId = reorderedMeetings.length > 0 ? reorderedMeetings[reorderedMeetings.length - 1].id : null;
+        const newActiveMeetingId = updatedMeetings.length > 0 ? updatedMeetings[updatedMeetings.length - 1].id : null;
         setActiveMeetingId(newActiveMeetingId);
-        setLocalMeeting(reorderedMeetings.find(m => m.id === newActiveMeetingId) || null);
+        setLocalMeeting(updatedMeetings.find(m => m.id === newActiveMeetingId) || null);
       }
     } else if (deleteConfirm.type === 'PROPERTY') {
       const activeM = (localMeeting || propsActiveMeeting);
@@ -371,21 +346,98 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const activeMeeting = (localMeeting || propsActiveMeeting);
-    if (!activeMeeting) return;
     const newDate = e.target.value;
-    const updatedLocalMeeting = { ...activeMeeting, date: newDate };
+    const activeM = (localMeeting || propsActiveMeeting);
     
+    if (!activeM) {
+      // 미팅이 없는 경우 첫 번째 미팅 자동 생성
+      const newMeeting: Meeting = {
+        id: Date.now().toString(),
+        round: 1,
+        date: new Date().toISOString().substring(0, 16),
+        properties: [],
+        meetingHistory: [],
+        createdAt: Date.now()
+      };
+      setLocalMeeting(newMeeting);
+      setActiveMeetingId(newMeeting.id);
+      const updatedCustomer = {
+        ...activeCustomer,
+        meetings: [newMeeting]
+      };
+      setLocalCustomer(updatedCustomer);
+      onUpdate(updatedCustomer);
+      return;
+    }
+
+    const updatedLocalMeeting = { ...activeM, date: newDate };
     const updatedCustomer = {
       ...activeCustomer,
       meetings: activeCustomer.meetings.map(m =>
-        m.id === activeMeeting.id ? updatedLocalMeeting : m
+        m.id === activeM.id ? updatedLocalMeeting : m
       )
     };
 
     setLocalMeeting(updatedLocalMeeting);
     setLocalCustomer(updatedCustomer);
     onUpdate(updatedCustomer);
+  };
+
+  const handleAddNewDraft = () => {
+    setDraftProperties(prev => [...prev, { id: generateId(), text: '' }]);
+  };
+
+  const handleUpdateDraft = (id: string, text: string) => {
+    setDraftProperties(prev => prev.map(d => d.id === id ? { ...d, text } : d));
+  };
+
+  const handleCancelDraft = (id: string) => {
+    setDraftProperties(prev => prev.filter(d => d.id !== id));
+  };
+
+  const handleSaveDraft = async (draftId: string) => {
+    const draft = draftProperties.find(d => d.id === draftId);
+    if (!draft || !draft.text.trim()) return;
+    
+    let activeM = (localMeeting || propsActiveMeeting);
+    let updatedCustomer = { ...activeCustomer };
+    
+    if (!activeM) {
+      activeM = {
+        id: generateId(),
+        round: 1,
+        date: '',
+        properties: [],
+        meetingHistory: [],
+        createdAt: Date.now()
+      };
+      updatedCustomer.meetings = [activeM];
+      setLocalMeeting(activeM);
+      setActiveMeetingId(activeM.id);
+    }
+
+    const newProperty: Property = {
+      id: generateId(),
+      rawInput: draft.text,
+      agency: '',
+      agencyPhone: '',
+      jibun: '',
+      parsedText: draft.text
+    };
+    
+    const updatedProperties = [...activeM.properties, newProperty];
+    const updatedLocalMeeting = { ...activeM, properties: updatedProperties };
+    
+    updatedCustomer.meetings = updatedCustomer.meetings.map(m => 
+      m.id === activeM.id ? updatedLocalMeeting : m
+    );
+
+    setLocalMeeting(updatedLocalMeeting);
+    setLocalCustomer(updatedCustomer);
+    onUpdate(updatedCustomer);
+
+    // 저장 성공 시 해당 드래프트 제거
+    setDraftProperties(prev => prev.filter(d => d.id !== draftId));
   };
 
   const updatePropertyField = (propId: string, field: keyof Property, value: string) => {
@@ -412,70 +464,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     setEditingFieldValueMeeting('');
   };
 
-  const handleAutoParse = () => {
-    if (!propertyText.trim()) return;
-    try {
-      const fields = parsePropertyDetailsByPlatform(propertyText, selectedPlatform);
-      setParsedRoomName(fields.roomName);
-      setParsedJibun(fields.jibun);
-      setParsedAgency(fields.agency);
-      setParsedAgencyPhone(fields.agencyPhone);
-      const structured = generateStructuredPropertyInfoByPlatform(propertyText, selectedPlatform);
-      setParsedText(structured);
-      setPropertyText('');
-    } catch (error) {
-      console.error('파싱 오류:', error);
-    }
-  };
 
-  const handleAddProperty = async () => {
-    const activeMeeting = (localMeeting || propsActiveMeeting);
-    if ((!propertyText.trim() && !parsedText.trim()) || !activeMeeting) return;
-
-    let updatedProperties;
-    if (editingPropertyId) {
-      updatedProperties = activeMeeting.properties.map(p =>
-        p.id === editingPropertyId ? {
-          ...p,
-          rawInput: parsedText || propertyText,
-          unit: parsedRoomName,
-          jibun: parsedJibun,
-          agency: parsedAgency,
-          agencyPhone: parsedAgencyPhone,
-          parsedText: parsedText || propertyText
-        } : p
-      );
-    } else {
-      const newProperty: Property = {
-        id: generateId(),
-        rawInput: parsedText || propertyText,
-        unit: parsedRoomName,
-        jibun: parsedJibun,
-        agency: parsedAgency,
-        agencyPhone: parsedAgencyPhone,
-        parsedText: parsedText || propertyText
-      };
-      updatedProperties = [...activeMeeting.properties, newProperty];
-    }
-
-    const updatedLocalMeeting = { ...activeMeeting, properties: updatedProperties };
-    const updatedCustomer = {
-      ...activeCustomer,
-      meetings: activeCustomer.meetings.map(m => m.id === activeMeeting.id ? updatedLocalMeeting : m)
-    };
-    setLocalMeeting(updatedLocalMeeting);
-    setLocalCustomer(updatedCustomer);
-    onUpdate(updatedCustomer);
-
-    setPropertyText('');
-    setParsedRoomName('');
-    setParsedJibun('');
-    setParsedAgency('');
-    setParsedAgencyPhone('');
-    setParsedText('');
-    setIsAddingProperty(false);
-    setEditingPropertyId(null);
-  };
 
   const saveMemoMeeting = (propId: string) => {
     const activeMeeting = (localMeeting || propsActiveMeeting);
@@ -497,7 +486,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
   const generateReportPreview = async () => {
     const activeMeeting = (localMeeting || propsActiveMeeting);
-    if (!activeMeeting || activeMeeting.properties.length === 0) return;
+    const defaultFileName = activeMeeting ? 
+      (activeMeeting.properties.length > 0 ? `미팅 제안서` : '검색결과') : '제안서';
     setReportLoading(true);
     try {
       const sortedProperties = [...activeMeeting.properties].sort((a, b) => (a.visitTime || '99:99').localeCompare(b.visitTime || '99:99'));
@@ -505,7 +495,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
       const initialMemos: { [propId: string]: string } = {};
       for (const prop of sortedProperties) initialMemos[prop.id] = prop.memo || '';
       setReportMemos(initialMemos);
-      setReportFileName(`${customer.name}_${activeMeeting.round}차미팅_매물보고서`);
+      setReportFileName(`${customer.name}_매물보고서`);
       setReportPreviewOpen(true);
     } catch (err) {
       console.error(err);
@@ -668,57 +658,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
               </div>
             )}
 
-            {/* 호실, 연락처, 지번 */}
-            <div className="flex flex-col md:flex-row gap-2 mb-4 items-start md:items-center">
-              <div className="w-full md:flex-1 flex items-center gap-1">
-                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">호실:</span>
-                <input
-                  type="text"
-                  value={prop.unit || ''}
-                  onChange={(e) => updatePropertyField(prop.id, 'unit', e.target.value)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-bold"
-                  placeholder="호실명"
-                />
-              </div>
-              <div className="w-full md:flex-1 flex items-center gap-1">
-                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">연락처:</span>
-                <input
-                  type="text"
-                  value={prop.agencyPhone || ''}
-                  onChange={(e) => updatePropertyField(prop.id, 'agencyPhone', e.target.value)}
-                  className="w-full px-2 py-1 border border-gray-300 rounded text-xs font-bold"
-                  placeholder="연락처"
-                />
-              </div>
-              <div className="w-full md:flex-1 flex items-center gap-1">
-                <span className="text-xs text-gray-600 font-bold whitespace-nowrap">지번:</span>
-                <input
-                  type="text"
-                  value={prop.jibun || ''}
-                  onChange={(e) => updatePropertyField(prop.id, 'jibun', e.target.value)}
-                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs font-bold"
-                  placeholder="지번"
-                />
-                {prop.jibun && (
-                  <button
-                    onClick={() => window.open(`https://map.kakao.com/?q=${encodeURIComponent(prop.jibun || '')}`, '_blank')}
-                    className="px-2 py-1 bg-yellow-400 text-black rounded text-xs hover:bg-yellow-500 font-bold"
-                  >
-                    지도
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 메모 영역 */}
-            <div className="mt-2 pt-2 border-t border-gray-200">
-              <textarea
-                value={prop.memo || ''}
-                onChange={(e) => updatePropertyField(prop.id, 'memo', e.target.value)}
-                placeholder="메모를 입력하세요..."
-                className="w-full border p-2 rounded min-h-[80px] bg-white text-sm focus:ring-1 focus:ring-primary outline-none"
-              />
-            </div>
           </div>
         ))}
     </div>
@@ -731,7 +670,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         <div className="flex items-center gap-2">
           {/* Stage Dropdown */}
           <div className="flex flex-col md:flex-row md:items-center bg-white rounded px-2 py-1 border border-gray-200 gap-1">
-            <span className="text-gray-500 text-xs font-bold md:mr-2">첫미팅</span>
+            <span className="text-gray-500 text-xs font-bold md:mr-2">고객상태</span>
             <select
               value={activeCustomer.stage || ''}
               onChange={handleStageChange}
@@ -747,7 +686,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
 
           {/* Checkpoint Dropdown */}
           <div className="flex flex-col md:flex-row md:items-center bg-white rounded px-2 py-1 border border-gray-200 gap-1">
-            <span className="text-gray-500 text-xs font-bold md:mr-2">재미팅</span>
+            <span className="text-gray-500 text-xs font-bold md:mr-2">진행단계</span>
             <select
               value={activeCustomer.checkpoint || ''}
               onChange={handleCheckpointChange}
@@ -940,102 +879,61 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           className={`w-full md:w-1/2 min-h-0 flex flex-col border-t-2 md:border-t-0 md:border-l-2 border-black pt-4 md:pt-0 md:pl-4 ${mobileBasicInfoTab === 'MEETING' ? 'flex-1' : 'hidden md:flex'
             }`}
         >
-          {/* 차수 네비게이션 */}
-          <div className="flex overflow-x-auto space-x-2 pb-3 mb-4 no-scrollbar items-center border-b shrink-0">
+
+          {/* 미팅일시 선택 및 매물추가 (상시 노출) */}
+          <div className="flex items-center gap-2 mb-2 shrink-0 pt-2">
+            <input
+              type="datetime-local"
+              value={activeMeeting?.date || ''}
+              onChange={handleDateChange}
+              className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
+            />
             <button
-              onClick={handleAddMeeting}
-              className="flex-shrink-0 px-4 py-2 rounded border-2 border-gray-900 bg-yellow-300 text-gray-900 font-bold text-sm hover:bg-yellow-400 transition-colors"
+              onClick={handleAddNewDraft}
+              className="px-3 py-1.5 bg-primary text-white rounded hover:bg-blue-600 font-bold text-xs whitespace-nowrap"
             >
-              + 차수추가
+              매물추가
             </button>
-            {activeCustomer.meetings?.map((meeting) => (
-              <div
-                key={meeting.id}
-                onClick={() => setActiveMeetingId(meeting.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm cursor-pointer whitespace-nowrap flex items-center gap-2 transition-all ${activeMeetingId === meeting.id
-                  ? 'bg-primary border-primary text-white shadow-md'
-                  : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
-                  }`}
-              >
-                <span className="font-bold">{meeting.round}차</span>
-                <button
-                  onClick={(e) => handleDeleteClick(e, 'ROUND', meeting.id, meeting.round)}
-                  className={`ml-1 w-4 h-4 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white ${activeMeetingId === meeting.id ? 'text-blue-200' : 'text-gray-300'}`}
-                >
-                  <i className="fas fa-times text-[10px]"></i>
-                </button>
-              </div>
-            ))}
+            <button
+              ref={tocButtonRef}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTocModalPos({ 
+                  top: rect.bottom, 
+                  left: rect.left - 320 // Modal width is 320px. Bottom-left of button (X=rect.left) matches top-right of modal.
+                });
+                setIsTOCModalOpen(true);
+              }}
+              className="px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 font-bold text-xs whitespace-nowrap flex items-center gap-1"
+            >
+              <i className="fas fa-list-ul"></i>
+              목차
+            </button>
           </div>
+
+          {/* 다중 매물 등록 드래프트 리스트 */}
+          {draftProperties.map((draft) => (
+            <div key={draft.id} className="bg-white border-2 border-primary rounded-lg p-4 shadow-lg mb-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-bold text-sm text-primary">매물 등록</h3>
+              </div>
+              <textarea
+                autoFocus
+                className="w-full border-2 border-gray-200 p-2 rounded h-32 text-sm mb-3 focus:border-primary outline-none"
+                placeholder="매물정보를 붙여넣으세요..."
+                value={draft.text}
+                onChange={(e) => handleUpdateDraft(draft.id, e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button onClick={() => handleCancelDraft(draft.id)} className="flex-1 py-2 bg-gray-400 text-white rounded font-bold text-sm">취소</button>
+                <button onClick={() => handleSaveDraft(draft.id)} className="flex-1 py-2 bg-primary text-white rounded font-bold text-sm">저장</button>
+              </div>
+            </div>
+          ))}
 
           {activeMeeting ? (
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex flex-col gap-3 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-gray-700 flex items-center">
-                    <i className="fas fa-handshake mr-2 text-primary"></i>
-                    미팅실무 ({activeMeeting.round}차)
-                  </h3>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={generateReportPreview}
-                      disabled={!activeMeeting.properties.length}
-                      className="px-3 py-1.5 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 transition-colors font-bold text-xs"
-                    >
-                      제안서
-                    </button>
-                    {!isAddingProperty && (
-                      <button
-                        onClick={() => setIsAddingProperty(true)}
-                        className="px-3 py-1.5 bg-primary text-white rounded hover:bg-blue-600 font-bold text-xs"
-                      >
-                        매물추가
-                      </button>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-gray-600 whitespace-nowrap">미팅일시:</label>
-                  <input
-                    type="datetime-local"
-                    value={activeMeeting.date}
-                    onChange={handleDateChange}
-                    className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
-                  />
-                </div>
-              </div>
 
-              {isAddingProperty && (
-                <div className="bg-white border-2 border-primary rounded-lg p-4 shadow-lg mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-bold text-sm text-primary">매물 등록</h3>
-                    <div className="flex border border-gray-300 rounded overflow-hidden text-[10px]">
-                      {['TEN', 'TEN_COMMERCIAL', 'NAVER'].map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setSelectedPlatform(p as any)}
-                          className={`px-2 py-1 ${selectedPlatform === p ? 'bg-primary text-white' : 'bg-white text-gray-600'}`}
-                        >
-                          {p === 'TEN' ? '텐(주거)' : p === 'TEN_COMMERCIAL' ? '텐(상업)' : '네이버'}
-                        </button>
-                      ))}
-                    </div>
-                    <button onClick={handleAutoParse} className="px-2 py-1 bg-yellow-500 text-white rounded text-[10px] font-bold">파싱</button>
-                  </div>
-                  <textarea
-                    autoFocus
-                    className="w-full border-2 border-gray-200 p-2 rounded h-32 text-sm mb-3 focus:border-primary outline-none"
-                    placeholder="매물정보를 붙여넣으세요..."
-                    value={propertyText || parsedText}
-                    onChange={(e) => parsedText ? setParsedText(e.target.value) : setPropertyText(e.target.value)}
-                  />
-                  <div className="flex gap-2">
-                    <button onClick={() => { setIsAddingProperty(false); setPropertyText(''); setParsedText(''); }} className="flex-1 py-2 bg-gray-400 text-white rounded font-bold text-sm">취소</button>
-                    <button onClick={handleAddProperty} className="flex-1 py-2 bg-primary text-white rounded font-bold text-sm">저장</button>
-                  </div>
-                </div>
-              )}
 
               <div className="flex-1 overflow-y-auto pr-1">
                 {renderPropertyList()}
@@ -1045,7 +943,6 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-center py-20">
               <i className="fas fa-handshake text-5xl mb-4 opacity-20"></i>
               <p className="font-bold">등록된 미팅이 없습니다.</p>
-              <p className="text-sm">위의 '+ 차수추가' 버튼을 눌러 미팅을 시작하세요.</p>
             </div>
           )}
         </div>
@@ -1168,6 +1065,66 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           </div>
         </div>
       )}
+      {/* TOC (Table of Contents) Modal */}
+      {isTOCModalOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[9998] bg-transparent" onClick={() => setIsTOCModalOpen(false)} />
+          <div 
+            className="fixed z-[9999] bg-white rounded-xl w-[320px] shadow-2xl overflow-hidden flex flex-col border border-gray-200 animate-in fade-in zoom-in duration-200"
+            style={{ 
+              top: `${tocModalPos?.top || 0}px`, 
+              left: `${tocModalPos?.left || 0}px`,
+              maxHeight: 'calc(100vh - 100px)'
+            }}
+          >
+            <div className="px-4 py-2 bg-gray-800 text-white flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-2">
+                <i className="fas fa-list-ul text-lg"></i>
+                <h4 className="font-bold text-sm">매물 목차 (건물명 리스트)</h4>
+              </div>
+              <button onClick={() => setIsTOCModalOpen(false)} className="hover:bg-white/20 p-2 rounded-full transition-colors text-white">
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[60vh] bg-gray-50/30">
+              {localMeeting?.properties && localMeeting.properties.length > 0 ? (
+                <div className="space-y-2">
+                  {localMeeting.properties.map((prop, idx) => {
+                    const lines = (prop.parsedText || '').split('\n');
+                    const buildingLine = lines.find(line => line.trim().startsWith('건물명:'));
+                    const buildingName = buildingLine ? buildingLine.replace('건물명:', '').trim() : '(건물명 정보 없음)';
+                    
+                    return (
+                      <div key={prop.id} className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm group hover:border-primary transition-colors">
+                        <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[10px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs font-bold text-gray-700 truncate">{buildingName}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-gray-400">
+                  <i className="fas fa-info-circle text-2xl mb-2 opacity-20"></i>
+                  <p className="text-xs">등록된 매물이 없습니다.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-3 bg-white border-t border-gray-100 flex justify-end">
+              <button 
+                onClick={() => setIsTOCModalOpen(false)}
+                className="px-4 py-1.5 bg-gray-800 text-white rounded font-bold text-xs hover:bg-gray-900 transition-all active:scale-[0.98]"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </>
+      , document.body)}
+
       {/* Deletion Confirmation Popover */}
       {deleteConfirm && createPortal(
         <>
@@ -1181,7 +1138,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
           >
             <div className="text-center">
               <p className="text-xs font-bold text-gray-800 mb-3">
-                {deleteConfirm.type === 'ROUND' ? `${deleteConfirm.round}차 미팅을` : '해당 매물을'}
+                {deleteConfirm.type === 'ROUND' ? `미팅 정보를` : '해당 매물을'}
                 <br />정말 삭제하시겠습니까?
               </p>
               <div className="flex gap-2">

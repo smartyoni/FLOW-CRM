@@ -51,7 +51,7 @@ export const ReMeetingView: React.FC<ReMeetingViewProps> = ({ customers, onSelec
         >
           <i className="fas fa-bars text-lg"></i>
         </button>
-        <h2 className="text-lg font-bold text-gray-800">재미팅 고객현황</h2>
+        <h2 className="text-lg font-bold text-gray-800">심화 고객현황</h2>
         <div className="w-10"></div>
       </div>
 
@@ -61,7 +61,7 @@ export const ReMeetingView: React.FC<ReMeetingViewProps> = ({ customers, onSelec
         <div className="mb-14 hidden md:block">
           <div className="flex items-baseline justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">재미팅 고객현황</h1>
+              <h1 className="text-3xl font-bold text-gray-800">심화 고객현황</h1>
               <p className="text-gray-500 text-sm mt-1">재미팅 약속 확정</p>
             </div>
             <p className="text-red-500 font-semibold text-lg">{dateString}</p>
@@ -93,7 +93,7 @@ export const ReMeetingView: React.FC<ReMeetingViewProps> = ({ customers, onSelec
 
           {/* 카드 3: 약속확정(재미팅) */}
           <DashboardCard
-            title="약속확정(재미팅)"
+            title="약속확정"
             icon="fa-check-circle"
             customers={confirmedCustomers}
             onSelectCustomer={onSelectCustomer}
