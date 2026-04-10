@@ -25,6 +25,7 @@ export interface Meeting {
   id: string;
   round: number; // 기본값 1 (차수 관리 제거됨)
   date: string; // ISO string for datetime-local
+  location?: string; // 약속 장소
   properties: Property[];
   meetingHistory: ChecklistItem[]; // 미팅 진행 체크리스트
   createdAt: number;

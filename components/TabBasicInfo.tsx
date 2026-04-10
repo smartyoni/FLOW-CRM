@@ -380,7 +380,8 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
       const newMeeting: Meeting = {
         id: Date.now().toString(),
         round: 1,
-        date: new Date().toISOString().substring(0, 16),
+        date: newDate,
+        location: '',
         properties: [],
         meetingHistory: [],
         createdAt: Date.now()
@@ -397,6 +398,44 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     }
 
     const updatedLocalMeeting = { ...activeM, date: newDate };
+    const updatedCustomer = {
+      ...activeCustomer,
+      meetings: activeCustomer.meetings.map(m =>
+        m.id === activeM.id ? updatedLocalMeeting : m
+      )
+    };
+
+    setLocalMeeting(updatedLocalMeeting);
+    setLocalCustomer(updatedCustomer);
+    onUpdate(updatedCustomer);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newLocation = e.target.value;
+    const activeM = (localMeeting || propsActiveMeeting);
+
+    if (!activeM) {
+      const newMeeting: Meeting = {
+        id: Date.now().toString(),
+        round: 1,
+        date: new Date().toISOString().substring(0, 16),
+        location: newLocation,
+        properties: [],
+        meetingHistory: [],
+        createdAt: Date.now()
+      };
+      setLocalMeeting(newMeeting);
+      setActiveMeetingId(newMeeting.id);
+      const updatedCustomer = {
+        ...activeCustomer,
+        meetings: [newMeeting]
+      };
+      setLocalCustomer(updatedCustomer);
+      onUpdate(updatedCustomer);
+      return;
+    }
+
+    const updatedLocalMeeting = { ...activeM, location: newLocation };
     const updatedCustomer = {
       ...activeCustomer,
       meetings: activeCustomer.meetings.map(m =>
@@ -433,6 +472,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         id: generateId(),
         round: 1,
         date: '',
+        location: '',
         properties: [],
         meetingHistory: [],
         createdAt: Date.now()
@@ -926,34 +966,51 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
         >
 
           {/* 미팅일시 선택 및 매물추가 (상시 노출) */}
-          <div className="flex items-center gap-2 mb-2 shrink-0 pt-2">
-            <input
-              type="datetime-local"
-              value={activeMeeting?.date || ''}
-              onChange={handleDateChange}
-              className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
-            />
-            <button
-              onClick={handleAddNewDraft}
-              className="px-3 py-1.5 bg-primary text-white rounded hover:bg-blue-600 font-bold text-xs whitespace-nowrap"
-            >
-              매물추가
-            </button>
-            <button
-              ref={tocButtonRef}
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTocModalPos({ 
-                  top: rect.bottom, 
-                  left: rect.left - 320 // Modal width is 320px. Bottom-left of button (X=rect.left) matches top-right of modal.
-                });
-                setIsTOCModalOpen(true);
-              }}
-              className="px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 font-bold text-xs whitespace-nowrap flex items-center gap-1"
-            >
-              <i className="fas fa-list-ul"></i>
-              목차
-            </button>
+          <div className="flex flex-col gap-2 mb-4 shrink-0 pt-2 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+            <div className="flex items-center gap-2">
+              <input
+                type="datetime-local"
+                value={activeMeeting?.date || ''}
+                onChange={handleDateChange}
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary font-medium"
+              />
+              <button
+                onClick={handleAddNewDraft}
+                className="px-3 py-1.5 bg-primary text-white rounded hover:bg-blue-600 font-bold text-xs whitespace-nowrap"
+              >
+                매물추가
+              </button>
+              <button
+                ref={tocButtonRef}
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTocModalPos({ 
+                    top: rect.bottom, 
+                    left: rect.left - 320 // Modal width is 320px
+                  });
+                  setIsTOCModalOpen(true);
+                }}
+                className="px-3 py-1.5 bg-gray-600 text-white rounded hover:bg-gray-700 font-bold text-xs whitespace-nowrap flex items-center gap-1"
+              >
+                <i className="fas fa-list-ul"></i>
+                목차
+              </button>
+            </div>
+            
+            {/* 약속 장소 입력 */}
+            <div className="flex items-center gap-2">
+              <div className="bg-gray-200 px-2 py-1 rounded text-[10px] font-bold text-gray-600 flex items-center gap-1 min-w-fit">
+                <i className="fas fa-map-marker-alt text-[10px]"></i>
+                약속장소
+              </div>
+              <input
+                type="text"
+                placeholder="만나기로 한 장소를 입력하세요"
+                value={activeMeeting?.location || ''}
+                onChange={handleLocationChange}
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
+              />
+            </div>
           </div>
 
           {/* 다중 매물 등록 드래프트 리스트 */}
