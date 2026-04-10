@@ -999,16 +999,12 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             
             {/* 약속 장소 입력 */}
             <div className="flex items-center gap-2">
-              <div className="bg-gray-200 px-2 py-1 rounded text-[10px] font-bold text-gray-600 flex items-center gap-1 min-w-fit">
-                <i className="fas fa-map-marker-alt text-[10px]"></i>
-                약속장소
-              </div>
               <input
                 type="text"
-                placeholder="만나기로 한 장소를 입력하세요"
+                placeholder="약속장소를 입력하세요 (만나기로 한 곳)"
                 value={activeMeeting?.location || ''}
                 onChange={handleLocationChange}
-                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary"
+                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-primary focus:border-primary bg-white"
               />
             </div>
           </div>
