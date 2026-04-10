@@ -10,6 +10,7 @@ import {
 } from '../utils/textParser';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
 interface Props {
   customer: Customer;
@@ -584,110 +585,154 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     setReportMemos(prev => ({ ...prev, [propId]: newMemo }));
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const activeM = (localMeeting || propsActiveMeeting);
+    if (!activeM) return;
+
+    const items = Array.from(activeM.properties);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    const updatedLocalMeeting = { ...activeM, properties: items };
+    const updatedCustomer = {
+      ...activeCustomer,
+      meetings: activeCustomer.meetings.map(m =>
+        m.id === activeM.id ? updatedLocalMeeting : m
+      )
+    };
+
+    setLocalMeeting(updatedLocalMeeting);
+    setLocalCustomer(updatedCustomer);
+    onUpdate(updatedCustomer);
+  };
+
   const activeMeeting = (localMeeting || propsActiveMeeting) ? {
     ...(localMeeting || propsActiveMeeting),
     meetingHistory: (localMeeting || propsActiveMeeting)?.meetingHistory || []
   } : null;
 
   const renderPropertyList = () => (
-    <div className="space-y-3">
-      {activeMeeting && activeMeeting.properties
-        .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
-        .slice()
-        .sort((a, b) => {
-          const timeA = a.visitTime || '99:99';
-          const timeB = b.visitTime || '99:99';
-          return timeA.localeCompare(timeB);
-        })
-        .map((prop) => (
-          <div key={prop.id} className="p-4 bg-gray-50 border border-black rounded-lg">
-            {/* 시간 선택 및 상태 필터 */}
-            <div className="flex gap-1 md:gap-3 mb-4 items-center">
-              <div className="flex gap-1 md:gap-2 items-center">
-                <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
-                <select
-                  value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
-                  onChange={(e) => {
-                    const hour = e.target.value || '00';
-                    const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
-                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
-                  }}
-                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">시</option>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
-                  ))}
-                </select>
-                <select
-                  value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
-                  onChange={(e) => {
-                    const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
-                    const minute = e.target.value || '00';
-                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
-                  }}
-                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  <option value="">분</option>
-                  {Array.from({ length: 60 }, (_, i) => (
-                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
-                  ))}
-                </select>
-              </div>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="properties">
+        {(provided) => (
+          <div 
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+            className="space-y-3"
+          >
+            {activeMeeting && activeMeeting.properties
+              .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
+              .map((prop, index) => (
+                <Draggable key={prop.id} draggableId={prop.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div 
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`p-4 bg-gray-50 border border-black rounded-lg ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary ring-opacity-50 z-50' : ''}`}
+                    >
+                      {/* Drag Handle */}
+                      <div className="flex items-center justify-between mb-4">
+                        <div {...provided.dragHandleProps} className="flex items-center gap-2 cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-200 rounded transition-colors">
+                          <i className="fas fa-grip-vertical text-gray-400"></i>
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">DRAG TO REORDER</span>
+                        </div>
+                        
+                        <div className="flex-1"></div>
 
-              <select
-                value={prop.status || '확인전'}
-                onChange={(e) => updatePropertyField(prop.id, 'status', e.target.value as any)}
-                className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary font-bold"
-              >
-                <option value="확인전">확인전</option>
-                <option value="확인중">확인중</option>
-                <option value="볼수있음">볼수있음</option>
-                <option value="현장방문완료">현장방문완료</option>
-                <option value="오늘못봄">오늘못봄</option>
-              </select>
+                        <button
+                          onClick={(e) => handleDeleteClick(e, 'PROPERTY', prop.id)}
+                          className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-bold whitespace-nowrap"
+                        >
+                          매물삭제
+                        </button>
+                      </div>
 
-              <div className="flex-1"></div>
+                      {/* 시간 선택 및 상태 필터 */}
+                      <div className="flex gap-1 md:gap-3 mb-4 items-center">
+                        <div className="flex gap-1 md:gap-2 items-center">
+                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
+                          <select
+                            value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
+                            onChange={(e) => {
+                              const hour = e.target.value || '00';
+                              const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
+                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                            }}
+                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">시</option>
+                            {Array.from({ length: 24 }, (_, i) => (
+                              <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
+                            onChange={(e) => {
+                              const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
+                              const minute = e.target.value || '00';
+                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                            }}
+                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            <option value="">분</option>
+                            {Array.from({ length: 60 }, (_, i) => (
+                              <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                            ))}
+                          </select>
+                        </div>
 
-              <button
-                onClick={(e) => handleDeleteClick(e, 'PROPERTY', prop.id)}
-                className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-bold whitespace-nowrap"
-              >
-                매물삭제
-              </button>
-            </div>
+                        <select
+                          value={prop.status || '확인전'}
+                          onChange={(e) => updatePropertyField(prop.id, 'status', e.target.value as any)}
+                          className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary font-bold"
+                        >
+                          <option value="확인전">확인전</option>
+                          <option value="확인중">확인중</option>
+                          <option value="볼수있음">볼수있음</option>
+                          <option value="현장방문완료">현장방문완료</option>
+                          <option value="오늘못봄">오늘못봄</option>
+                        </select>
+                      </div>
 
-            {/* 정리본 텍스트 표시 */}
-            {prop.parsedText && (
-              <div className="mb-4">
-                {editingFieldMeeting === `${prop.id}-parsedText` ? (
-                  <textarea
-                    autoFocus
-                    className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
-                    value={editingFieldValueMeeting}
-                    onChange={(e) => setEditingFieldValueMeeting(e.target.value)}
-                    onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
-                    rows={10}
-                  />
-                ) : (
-                  <div
-                    className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
-                    onDoubleClick={() => {
-                      setEditingFieldMeeting(`${prop.id}-parsedText`);
-                      setEditingFieldValueMeeting(prop.parsedText || '');
-                    }}
-                  >
-                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
-                      {linkifyPhoneNumbers(prop.parsedText)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            )}
+                      {/* 정리본 텍스트 표시 */}
+                      {prop.parsedText && (
+                        <div className="mb-4">
+                          {editingFieldMeeting === `${prop.id}-parsedText` ? (
+                            <textarea
+                              autoFocus
+                              className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                              value={editingFieldValueMeeting}
+                              onChange={(e) => setEditingFieldValueMeeting(e.target.value)}
+                              onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
+                              rows={10}
+                            />
+                          ) : (
+                            <div
+                              className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                              onDoubleClick={() => {
+                                setEditingFieldMeeting(`${prop.id}-parsedText`);
+                                setEditingFieldValueMeeting(prop.parsedText || '');
+                              }}
+                            >
+                              <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
+                                {linkifyPhoneNumbers(prop.parsedText)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+            {provided.placeholder}
           </div>
-        ))}
-    </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 
   return (
