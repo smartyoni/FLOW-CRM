@@ -618,7 +618,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
       {activeMeeting && activeMeeting.properties
         .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
         .map((prop) => (
-          <div key={prop.id} className="p-4 bg-gray-50 border border-black rounded-lg">
+          <div key={prop.id} id={`property-${prop.id}`} className="p-4 bg-gray-50 border border-black rounded-lg">
             {/* 시간 선택 및 상태 필터 */}
             <div className="flex gap-1 md:gap-3 mb-4 items-center">
               <div className="flex gap-1 md:gap-2 items-center">
@@ -1154,7 +1154,19 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className={`flex items-center gap-3 bg-white p-3 rounded-lg border shadow-sm group hover:border-primary transition-all ${snapshot.isDragging ? 'border-primary ring-2 ring-primary ring-opacity-20 z-[10000] scale-[1.02] shadow-xl' : 'border-gray-100'}`}
+                                  onClick={() => {
+                                    const element = document.getElementById(`property-${prop.id}`);
+                                    if (element) {
+                                      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      // 잠깐 강조 효과
+                                      element.classList.add('ring-4', 'ring-primary', 'ring-opacity-50');
+                                      setTimeout(() => {
+                                        element.classList.remove('ring-4', 'ring-primary', 'ring-opacity-50');
+                                      }, 2000);
+                                    }
+                                    setIsTOCModalOpen(false);
+                                  }}
+                                  className={`flex items-center gap-3 bg-white p-3 rounded-lg border shadow-sm group hover:border-primary transition-all ${snapshot.isDragging ? 'border-primary ring-2 ring-primary ring-opacity-20 z-[10000] scale-[1.02] shadow-xl' : 'border-gray-100'} cursor-pointer`}
                                 >
                                   <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[11px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                                     {idx + 1}
