@@ -614,125 +614,98 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
   } : null;
 
   const renderPropertyList = () => (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="properties">
-        {(provided) => (
-          <div 
-            {...provided.droppableProps}
-            ref={provided.innerRef}
-            className="space-y-3"
-          >
-            {activeMeeting && activeMeeting.properties
-              .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
-              .map((prop, index) => (
-                <Draggable key={prop.id} draggableId={prop.id} index={index}>
-                  {(provided, snapshot) => (
-                    <div 
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className={`p-4 bg-gray-50 border border-black rounded-lg ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-primary ring-opacity-50 z-50' : ''}`}
-                    >
-                      {/* Drag Handle */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div {...provided.dragHandleProps} className="flex items-center gap-2 cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-gray-200 rounded transition-colors">
-                          <i className="fas fa-grip-vertical text-gray-400"></i>
-                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">DRAG TO REORDER</span>
-                        </div>
-                        
-                        <div className="flex-1"></div>
+    <div className="space-y-3">
+      {activeMeeting && activeMeeting.properties
+        .filter(prop => showRegisteredOnly ? (prop.status !== '현장방문완료' && prop.status !== '오늘못봄') : true)
+        .map((prop) => (
+          <div key={prop.id} className="p-4 bg-gray-50 border border-black rounded-lg">
+            {/* 시간 선택 및 상태 필터 */}
+            <div className="flex gap-1 md:gap-3 mb-4 items-center">
+              <div className="flex gap-1 md:gap-2 items-center">
+                <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
+                <select
+                  value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
+                  onChange={(e) => {
+                    const hour = e.target.value || '00';
+                    const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
+                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                  }}
+                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">시</option>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                  ))}
+                </select>
+                <select
+                  value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
+                  onChange={(e) => {
+                    const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
+                    const minute = e.target.value || '00';
+                    updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
+                  }}
+                  className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">분</option>
+                  {Array.from({ length: 60 }, (_, i) => (
+                    <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
+                  ))}
+                </select>
+              </div>
 
-                        <button
-                          onClick={(e) => handleDeleteClick(e, 'PROPERTY', prop.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-bold whitespace-nowrap"
-                        >
-                          매물삭제
-                        </button>
-                      </div>
+              <select
+                value={prop.status || '확인전'}
+                onChange={(e) => updatePropertyField(prop.id, 'status', e.target.value as any)}
+                className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary font-bold"
+              >
+                <option value="확인전">확인전</option>
+                <option value="확인중">확인중</option>
+                <option value="볼수있음">볼수있음</option>
+                <option value="현장방문완료">현장방문완료</option>
+                <option value="오늘못봄">오늘못봄</option>
+              </select>
 
-                      {/* 시간 선택 및 상태 필터 */}
-                      <div className="flex gap-1 md:gap-3 mb-4 items-center">
-                        <div className="flex gap-1 md:gap-2 items-center">
-                          <span className="text-xs text-gray-600 font-bold whitespace-nowrap hidden sm:inline">방문시간:</span>
-                          <select
-                            value={prop.visitTime ? prop.visitTime.split(':')[0] : ''}
-                            onChange={(e) => {
-                              const hour = e.target.value || '00';
-                              const minute = prop.visitTime ? prop.visitTime.split(':')[1] : '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
-                            }}
-                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
-                          >
-                            <option value="">시</option>
-                            {Array.from({ length: 24 }, (_, i) => (
-                              <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
-                            ))}
-                          </select>
-                          <select
-                            value={prop.visitTime ? prop.visitTime.split(':')[1] : ''}
-                            onChange={(e) => {
-                              const hour = prop.visitTime ? prop.visitTime.split(':')[0] : '00';
-                              const minute = e.target.value || '00';
-                              updatePropertyField(prop.id, 'visitTime', `${hour}:${minute}`);
-                            }}
-                            className="w-12 sm:w-16 px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-1 focus:ring-primary"
-                          >
-                            <option value="">분</option>
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <option key={i} value={String(i).padStart(2, '0')}>{String(i).padStart(2, '0')}</option>
-                            ))}
-                          </select>
-                        </div>
+              <div className="flex-1"></div>
 
-                        <select
-                          value={prop.status || '확인전'}
-                          onChange={(e) => updatePropertyField(prop.id, 'status', e.target.value as any)}
-                          className="px-1 sm:px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-primary font-bold"
-                        >
-                          <option value="확인전">확인전</option>
-                          <option value="확인중">확인중</option>
-                          <option value="볼수있음">볼수있음</option>
-                          <option value="현장방문완료">현장방문완료</option>
-                          <option value="오늘못봄">오늘못봄</option>
-                        </select>
-                      </div>
+              <button
+                onClick={(e) => handleDeleteClick(e, 'PROPERTY', prop.id)}
+                className="px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 font-bold whitespace-nowrap"
+              >
+                매물삭제
+              </button>
+            </div>
 
-                      {/* 정리본 텍스트 표시 */}
-                      {prop.parsedText && (
-                        <div className="mb-4">
-                          {editingFieldMeeting === `${prop.id}-parsedText` ? (
-                            <textarea
-                              autoFocus
-                              className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
-                              value={editingFieldValueMeeting}
-                              onChange={(e) => setEditingFieldValueMeeting(e.target.value)}
-                              onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
-                              rows={10}
-                            />
-                          ) : (
-                            <div
-                              className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
-                              onDoubleClick={() => {
-                                setEditingFieldMeeting(`${prop.id}-parsedText`);
-                                setEditingFieldValueMeeting(prop.parsedText || '');
-                              }}
-                            >
-                              <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
-                                {linkifyPhoneNumbers(prop.parsedText)}
-                              </pre>
-                            </div>
-                          )}
-                        </div>
-                      )}
+            {/* 정리본 텍스트 표시 */}
+            {prop.parsedText && (
+              <div className="mb-4">
+                {editingFieldMeeting === `${prop.id}-parsedText` ? (
+                  <textarea
+                    autoFocus
+                    className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                    value={editingFieldValueMeeting}
+                    onChange={(e) => setEditingFieldValueMeeting(e.target.value)}
+                    onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
+                    rows={10}
+                  />
+                ) : (
+                  <div
+                    className="p-2 bg-white border border-gray-300 rounded cursor-pointer hover:bg-gray-50"
+                    onDoubleClick={() => {
+                      setEditingFieldMeeting(`${prop.id}-parsedText`);
+                      setEditingFieldValueMeeting(prop.parsedText || '');
+                    }}
+                  >
+                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
+                      {linkifyPhoneNumbers(prop.parsedText)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
 
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-            {provided.placeholder}
           </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+        ))}
+    </div>
   );
 
   return (
@@ -1161,22 +1134,45 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
             
             <div className="p-4 overflow-y-auto max-h-[60vh] bg-gray-50/30">
               {localMeeting?.properties && localMeeting.properties.length > 0 ? (
-                <div className="space-y-2">
-                  {localMeeting.properties.map((prop, idx) => {
-                    const lines = (prop.parsedText || '').split('\n');
-                    const buildingLine = lines.find(line => line.trim().startsWith('건물명:'));
-                    const buildingName = buildingLine ? buildingLine.replace('건물명:', '').trim() : '(건물명 정보 없음)';
-                    
-                    return (
-                      <div key={prop.id} className="flex items-center gap-3 bg-white p-2 rounded-lg border border-gray-100 shadow-sm group hover:border-primary transition-colors">
-                        <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[10px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                          {idx + 1}
-                        </span>
-                        <span className="text-xs font-bold text-gray-700 truncate">{buildingName}</span>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="toc-properties">
+                    {(provided) => (
+                      <div 
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-2"
+                      >
+                        {localMeeting.properties.map((prop, idx) => {
+                          const lines = (prop.parsedText || '').split('\n');
+                          const buildingLine = lines.find(line => line.trim().startsWith('건물명:'));
+                          const buildingName = buildingLine ? buildingLine.replace('건물명:', '').trim() : '(건물명 정보 없음)';
+                          
+                          return (
+                            <Draggable key={prop.id} draggableId={prop.id} index={idx}>
+                              {(provided, snapshot) => (
+                                <div 
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className={`flex items-center gap-3 bg-white p-3 rounded-lg border shadow-sm group hover:border-primary transition-all ${snapshot.isDragging ? 'border-primary ring-2 ring-primary ring-opacity-20 z-[10000] scale-[1.02] shadow-xl' : 'border-gray-100'}`}
+                                >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <i className="fas fa-grip-vertical text-gray-300 group-hover:text-primary transition-colors"></i>
+                                    <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[9px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                      {idx + 1}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-bold text-gray-700 truncate flex-1">{buildingName}</span>
+                                </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               ) : (
                 <div className="text-center py-6 text-gray-400">
                   <i className="fas fa-info-circle text-2xl mb-2 opacity-20"></i>
