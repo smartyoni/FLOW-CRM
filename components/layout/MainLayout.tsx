@@ -1,5 +1,5 @@
 import React from 'react';
-import { Customer, ViewMode } from '../../types';
+import { Customer, ViewMode, SyncStatus } from '../../types';
 import { Sidebar } from '../Sidebar';
 import { MobileBottomTab } from './MobileBottomTab';
 
@@ -7,6 +7,7 @@ interface MainLayoutProps {
     children: React.ReactNode;
     overlays?: React.ReactNode;
     isOnline: boolean;
+    syncStatus: SyncStatus;
     pullDistance: number;
     isMobileSidebarOpen: boolean;
     onCloseMobileSidebar: () => void;
@@ -19,6 +20,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     children,
     overlays,
     isOnline,
+    syncStatus,
     pullDistance,
     isMobileSidebarOpen,
     onCloseMobileSidebar,
@@ -78,6 +80,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 currentView={currentView}
                 onViewChange={onViewChange}
                 customers={customers}
+                syncStatus={syncStatus}
             />
 
             {/* Main Content */}

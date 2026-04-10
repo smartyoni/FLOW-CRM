@@ -37,6 +37,7 @@ const App: React.FC = () => {
     createManualEvent,
     updateManualEvent,
     deleteManualEvent,
+    syncStatus,
   } = useCustomerData({
     onSelectedCustomerDeleted: () => setIsSidebarOpen(false),
   });
@@ -187,6 +188,7 @@ const App: React.FC = () => {
       <GlobalModals />
       <MainLayout
         isOnline={isOnline}
+        syncStatus={syncStatus}
         pullDistance={pullDistance}
         isMobileSidebarOpen={isMobileSidebarOpen}
         onCloseMobileSidebar={() => setIsMobileSidebarOpen(false)}

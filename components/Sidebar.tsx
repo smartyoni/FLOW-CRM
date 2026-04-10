@@ -1,4 +1,4 @@
-import { Customer } from '../types';
+import { Customer, SyncStatus } from '../types';
 import { useAppContext } from '../contexts/AppContext';
 
 interface SidebarProps {
@@ -7,14 +7,15 @@ interface SidebarProps {
   currentView?: 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar';
   onViewChange?: (view: 'customerList' | 'managingCustomer' | 'contractCustomer' | 'calendar') => void;
   customers?: Customer[];
+  syncStatus?: SyncStatus;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
-  currentView = 'customerList',
   onViewChange,
-  customers = []
+  customers = [],
+  syncStatus
 }) => {
   const { openSmsTemplateModal } = useAppContext();
 
@@ -66,9 +67,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* 헤더 */}
-      <div className="p-4 border-b border-slate-700 pr-12 md:pr-4 flex items-center gap-3">
-        <img src="./고객관리.png" alt="고객관리 로고" className="w-8 h-8 rounded-lg object-contain" />
-        <h1 className="text-lg font-bold text-white">고객관리</h1>
+      <div className="p-4 border-b border-slate-700 pr-12 md:pr-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <img src="./고객관리.png" alt="고객관리 로고" className="w-8 h-8 rounded-lg object-contain" />
+            {syncStatus?.isListening && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-[#1e293b]"></span>
+              </span>
+            )}
+          </div>
+          <h1 className="text-lg font-bold text-white">고객관리</h1>
+        </div>
+        
+        {syncStatus?.lastSync && (
+          <div className="text-[10px] text-slate-500 whitespace-nowrap">
+            <i className="fas fa-sync-alt mr-1 animate-spin-slow"></i>
+            {new Date(syncStatus.lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
+        )}
       </div>
 
       {/* 메뉴 */}

@@ -83,7 +83,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     if (customer.meetings && customer.meetings.length > 0 && activeMeetingId === null) {
       setActiveMeetingId(customer.meetings[customer.meetings.length - 1].id);
     }
-  }, [customer.id]);
+  }, [customer]);
 
   // 탭 전환 시 스크롤 리셋
   useEffect(() => {
@@ -104,7 +104,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
     if (propsActiveMeeting) {
       setLocalMeeting(propsActiveMeeting);
     }
-  }, [propsActiveMeeting?.id]);
+  }, [propsActiveMeeting]);
 
   // ⭐ 렌더링할 때는 로컬 상태 우선 사용
   const activeCustomer = localCustomer || customer;

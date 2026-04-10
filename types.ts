@@ -119,6 +119,13 @@ export interface SmsTemplates {
   basic: SmsTemplateCategory;
 }
 
+export interface SyncStatus {
+  isListening: boolean;
+  lastSync: number | null;
+  customerCount: number;
+  detailListening: boolean;
+}
+
 export interface AppSettings {
   contractClipboard?: ClipboardCategory[];
   paymentClipboard?: ClipboardCategory[];
