@@ -516,10 +516,10 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
       (activeMeeting.properties.length > 0 ? `미팅 제안서` : '검색결과') : '제안서';
     setReportLoading(true);
     try {
-      const sortedProperties = [...activeMeeting.properties].sort((a, b) => (a.visitTime || '99:99').localeCompare(b.visitTime || '99:99'));
-      setReportProperties(sortedProperties);
+      const currentProperties = [...activeMeeting.properties];
+      setReportProperties(currentProperties);
       const initialMemos: { [propId: string]: string } = {};
-      for (const prop of sortedProperties) initialMemos[prop.id] = prop.memo || '';
+      for (const prop of currentProperties) initialMemos[prop.id] = prop.memo || '';
       setReportMemos(initialMemos);
       setReportFileName(`${customer.name}_매물보고서`);
       setReportPreviewOpen(true);
