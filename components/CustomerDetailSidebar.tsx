@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Customer, TabState } from '../types';
 import { TabBasicInfo } from './TabBasicInfo';
-import { TabBasicInfo } from './TabBasicInfo';
 import { TabContract } from './TabContract';
 import { TabPayment } from './TabPayment';
 
@@ -122,7 +121,6 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
             >
               잔금
             </button>
-            </button>
           </div>
 
           {/* Content Area */}
@@ -149,7 +147,6 @@ export const CustomerDetailSidebar: React.FC<Props> = ({ customer, isOpen, onClo
                 customer={customer}
                 onUpdate={onUpdate}
               />
-            )}
             )}
           </div>
         </div>
