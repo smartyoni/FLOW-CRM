@@ -1156,12 +1156,9 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                                   {...provided.dragHandleProps}
                                   className={`flex items-center gap-3 bg-white p-3 rounded-lg border shadow-sm group hover:border-primary transition-all ${snapshot.isDragging ? 'border-primary ring-2 ring-primary ring-opacity-20 z-[10000] scale-[1.02] shadow-xl' : 'border-gray-100'}`}
                                 >
-                                  <div className="flex flex-col items-center gap-1">
-                                    <i className="fas fa-grip-vertical text-gray-300 group-hover:text-primary transition-colors"></i>
-                                    <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[9px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                                      {idx + 1}
-                                    </span>
-                                  </div>
+                                  <span className="w-6 h-6 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-bold text-[11px] shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                    {idx + 1}
+                                  </span>
                                   <span className="text-xs font-bold text-gray-700 truncate flex-1">{buildingName}</span>
                                 </div>
                               )}
