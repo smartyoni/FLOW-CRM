@@ -13,6 +13,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen = false,
   onClose,
+  currentView = 'customerList',
   onViewChange,
   customers = [],
   syncStatus

@@ -721,7 +721,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                 {editingFieldMeeting === `${prop.id}-parsedText` ? (
                   <textarea
                     autoFocus
-                    className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold"
+                    className="w-full p-2 bg-white border border-gray-300 rounded focus:ring-1 focus:ring-primary outline-none text-sm font-semibold font-sans leading-relaxed"
                     value={editingFieldValueMeeting}
                     onChange={(e) => setEditingFieldValueMeeting(e.target.value)}
                     onBlur={() => savePropertyInlineField(prop.id, 'parsedText')}
@@ -735,7 +735,7 @@ export const TabBasicInfo: React.FC<Props> = ({ customer, onUpdate }) => {
                       setEditingFieldValueMeeting(prop.parsedText || '');
                     }}
                   >
-                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed">
+                    <pre className="whitespace-pre-wrap text-gray-700 text-sm font-semibold leading-relaxed font-sans">
                       {linkifyPhoneNumbers(prop.parsedText)}
                     </pre>
                   </div>

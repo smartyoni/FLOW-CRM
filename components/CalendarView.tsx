@@ -51,9 +51,31 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const [allDayModalEvents, setAllDayModalEvents] = useState<any[]>([]);
   // 종일 일정 모달 드래그 앤 드롭 상태
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-  // 캘린더 컨테이너 ref
+  // 캘린더 컨테이너 및 API 제어 상태
   const calendarContainerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<any>(null);
+  const [activeView, setActiveView] = useState(initialView);
+  const [currentTitle, setCurrentTitle] = useState('');
+
+  // 뷰 전환 핸들러
+  const handleViewChange = (view: string) => {
+    const api = calendarRef.current?.getApi();
+    if (api) {
+      api.changeView(view);
+      setActiveView(view);
+    }
+  };
+
+  // 네비게이션 핸들러
+  const handlePrev = () => calendarRef.current?.getApi().prev();
+  const handleNext = () => calendarRef.current?.getApi().next();
+  const handleToday = () => calendarRef.current?.getApi().today();
+
+  // FullCalendar 뷰 변경 감지
+  const handleDatesSet = (dateInfo: any) => {
+    setCurrentTitle(dateInfo.view.title);
+    setActiveView(dateInfo.view.type);
+  };
 
   // 고객 데이터를 FullCalendar 이벤트 형식으로 변환
   const events = useMemo(() => {
@@ -418,18 +440,67 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">
       {/* 헤더 */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 shrink-0 flex items-center justify-between shadow-sm z-10 h-14">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
-          >
-            <i className="fas fa-bars text-xl"></i>
-          </button>
-          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <i className="fas fa-calendar-alt text-blue-600"></i>
-            캘린더 일정
-          </h2>
+      <header className="bg-white border-b border-slate-200 px-4 py-3 shrink-0 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm z-10 min-h-[56px] lg:h-14">
+        <div className="flex items-center justify-between w-full md:w-auto gap-4">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors"
+            >
+              <i className="fas fa-bars text-xl"></i>
+            </button>
+            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 shrink-0">
+              <i className="fas fa-calendar-alt text-blue-600"></i>
+              {currentTitle || '캘린더 일정'}
+            </h2>
+          </div>
+
+          <div className="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 shadow-sm">
+            <button
+              onClick={handlePrev}
+              className="p-1.5 hover:bg-white hover:text-blue-600 hover:shadow-sm rounded-md text-slate-500 transition-all"
+              aria-label="이전"
+            >
+              <i className="fas fa-chevron-left text-xs"></i>
+            </button>
+            <button
+              onClick={handleToday}
+              className="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:shadow-sm rounded-md text-xs font-bold transition-all mx-0.5"
+            >
+              오늘
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-1.5 hover:bg-white hover:text-blue-600 hover:shadow-sm rounded-md text-slate-500 transition-all"
+              aria-label="다음"
+            >
+              <i className="fas fa-chevron-right text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        {/* 뷰 전환 세그먼트 탭 */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner w-full md:w-auto overflow-x-auto no-scrollbar">
+          {[
+            { id: 'dayGridMonth', label: '월간', color: 'bg-rose-50 text-rose-700 ring-rose-200' },
+            { id: weekViewName, label: '주간', color: 'bg-sky-50 text-sky-700 ring-sky-200' },
+            { id: 'timeGridDay', label: '일간', color: 'bg-violet-50 text-violet-700 ring-violet-200' },
+            { id: 'listMonth', label: '일정', color: 'bg-amber-50 text-amber-700 ring-amber-200' }
+          ].map((view) => (
+            <button
+              key={view.id}
+              onClick={() => handleViewChange(view.id)}
+              className={`
+                flex-1 md:flex-none px-4 py-1.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap
+                ${activeView === view.id
+                  ? `${view.color} shadow-sm ring-1`
+                  : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
+                }
+              `}
+            >
+              {view.label}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -455,11 +526,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 }
               }
             }}
-            headerToolbar={{
-              left: '',
-              center: 'title',
-              right: `prev,next customToday dayGridMonth,${weekViewName},timeGridDay,listMonth`
-            }}
+            headerToolbar={false}
+            datesSet={handleDatesSet}
             events={events}
             eventOrder="order,title,start"
             eventClick={handleEventClick}
@@ -638,13 +706,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={openEditFromView}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg text-sm font-bold transition-colors shadow-sm"
                 >
                   <i className="fas fa-pencil-alt"></i>수정
                 </button>
                 <button
                   onClick={handleDeleteFromView}
-                  className="flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-sm font-bold transition-colors"
                 >
                   <i className="fas fa-trash-alt"></i>삭제
                 </button>
@@ -735,9 +803,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 <button
                   onClick={handleSaveModal}
                   disabled={!modalData.title}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
                 >
-                  <i className="fas fa-check"></i>저장
+                  <i className="fas fa-check"></i>저장하기
                 </button>
               </div>
             </div>
@@ -778,83 +846,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         .calendar-container .fc-scrollgrid {
           border: 1px solid #cbd5e1 !important;
         }
-        .calendar-container .fc-toolbar-title {
-          font-size: 1.25rem !important;
-          font-weight: 700 !important;
-          color: #1e293b;
-        }
-        .calendar-container .fc-button {
-          font-weight: 500 !important;
-          text-transform: none !important;
-          padding: 0.5rem 0.75rem !important;
-        }
-        .calendar-container .fc-button-primary:not(:disabled).fc-button-active,
-        .calendar-container .fc-button-primary:not(:disabled):active {
-          color: white !important;
-        }
-
-        /* 오늘 버튼: 녹색 (더 진하게) */
-        .calendar-container .fc-customToday-button {
-          background-color: #166534 !important; /* green-800 */
-          border-color: #14532d !important; /* green-900 */
-          color: #000000 !important;
-          font-weight: 900 !important;
-        }
-        .calendar-container .fc-customToday-button:hover,
-        .calendar-container .fc-customToday-button:active {
-          background-color: #14532d !important; /* green-900 */
-        }
-
-        /* 월간 버튼: 빨강 */
-        .calendar-container .fc-dayGridMonth-button {
-          background-color: #ef4444 !important; /* red-500 */
-          border-color: #dc2626 !important;
-          color: white !important;
-        }
-        .calendar-container .fc-dayGridMonth-button:hover,
-        .calendar-container .fc-dayGridMonth-button.fc-button-active {
-          background-color: #b91c1c !important; /* red-700 */
-          border-color: #991b1b !important;
-        }
-
-        /* 주간 버튼: 파랑 */
-        .calendar-container .fc-timeGridWeek-button,
-        .calendar-container .fc-timeGridThreeDay-button {
-          background-color: #3b82f6 !important; /* blue-500 */
-          border-color: #2563eb !important;
-          color: white !important;
-        }
-        .calendar-container .fc-timeGridWeek-button:hover,
-        .calendar-container .fc-timeGridWeek-button.fc-button-active,
-        .calendar-container .fc-timeGridThreeDay-button:hover,
-        .calendar-container .fc-timeGridThreeDay-button.fc-button-active {
-          background-color: #1d4ed8 !important; /* blue-700 */
-          border-color: #1e40af !important;
-        }
-
-        /* 일간 버튼: 보라 */
-        .calendar-container .fc-timeGridDay-button {
-          background-color: #a855f7 !important; /* purple-500 */
-          border-color: #9333ea !important;
-          color: white !important;
-        }
-        .calendar-container .fc-timeGridDay-button:hover,
-        .calendar-container .fc-timeGridDay-button.fc-button-active {
-          background-color: #7e22ce !important; /* purple-700 */
-          border-color: #6b21a8 !important;
-        }
-
-        /* 일정 버튼: 주황 */
-        .calendar-container .fc-listMonth-button {
-          background-color: #f97316 !important; /* orange-500 */
-          border-color: #ea580c !important;
-          color: white !important;
-        }
-        .calendar-container .fc-listMonth-button:hover,
-        .calendar-container .fc-listMonth-button.fc-button-active {
-          background-color: #c2410c !important; /* orange-700 */
-          border-color: #9a3412 !important;
-        }
         .calendar-container .fc-event {
           cursor: pointer;
           border: 1px solid var(--fc-event-border-color) !important;
@@ -863,81 +854,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           font-size: 0.85rem !important;
           font-weight: 600 !important;
           box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-        }
-        .calendar-container .fc-event-main {
-          color: inherit !important;
-        }
-        .calendar-container .fc-col-header-cell {
-          padding: 10px 0 !important;
-          background-color: #f8fafc;
-          border-bottom: 2px solid #e2e8f0 !important;
-        }
-        .calendar-container .fc-daygrid-day-number {
-          padding: 8px !important;
-          font-weight: 500;
-          color: #64748b;
-          text-decoration: none !important;
-        }
-        .calendar-container .fc-daygrid-day-number:hover {
-          color: #2563eb;
-          text-decoration: underline !important;
-        }
-        .calendar-container .fc-day-today .fc-daygrid-day-number {
-          color: #16a34a;
-          background-color: #dcfce7;
-          border-radius: 50%;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 4px;
-          padding: 0 !important;
-        }
-
-        /* 모바일 헤더 최적화 */
-        @media (max-width: 768px) {
-          .calendar-container .fc-header-toolbar {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            gap: 2px !important;
-            margin-bottom: 0.75rem !important;
-            padding: 0 4px !important;
-          }
-          .calendar-container .fc-toolbar-chunk {
-            display: flex !important;
-            align-items: center !important;
-            gap: 2px !important;
-          }
-          .calendar-container .fc-toolbar-title {
-            font-size: 0.95rem !important;
-            font-weight: 700 !important;
-            margin: 0 !important;
-            max-width: 80px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            text-align: center;
-          }
-          .calendar-container .fc-button {
-            padding: 4px 6px !important;
-            font-size: 0.75rem !important;
-            height: 32px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-          }
-          .calendar-container .fc-toolbar-chunk:nth-child(2) {
-            flex: 1;
-            justify-content: center;
-          }
-          /* 버튼 그룹 간격 조정 */
-          .calendar-container .fc-button-group {
-            gap: 1px !important;
-          }
         }
         /* 시간구분선 뚜렷하게 */
         .calendar-container .fc-timegrid-slot {
