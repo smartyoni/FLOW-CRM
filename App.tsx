@@ -185,6 +185,12 @@ const App: React.FC = () => {
 
   return (
     <AppProvider>
+      {/* Diagnostic Banner - Temporary for deployment debugging */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#fef3c7', borderBottom: '1px solid #fde68a', padding: '4px 16px', fontSize: '10px', color: '#92400e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>🚀 Vercel Deploy: {import.meta.env.VITE_FIREBASE_PROJECT_ID ? '✅ Config Found' : '❌ Config Missing'}</span>
+        <span>Version: BF2018A-FIX</span>
+        <span>{new Date().toLocaleTimeString()}</span>
+      </div>
       <GlobalModals />
       <MainLayout
         isOnline={isOnline}
